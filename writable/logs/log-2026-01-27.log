@@ -1,0 +1,690 @@
+ERROR - 2026-01-27 07:32:01 --> Harmful injection detected by _get_clean_value where the key:  and value: Artículo de blog "cómo ocultar un pinganillo antes de un examen"
+Function: _get_clean_value File: /home/gestiontictaccom/public_html/app/Models/Crud_model.php Line: 580 
+Function: _get_clean_value File: /home/gestiontictaccom/public_html/app/Models/Crud_model.php Line: 580 
+Function: _get_clean_value File: /home/gestiontictaccom/public_html/app/Models/Crud_model.php Line: 580 
+Function: _get_clean_value File: /home/gestiontictaccom/public_html/app/Models/Crud_model.php Line: 580 
+Function: _get_clean_value File: /home/gestiontictaccom/public_html/app/Models/Notifications_model.php Line: 50 
+
+CRITICAL - 2026-01-27 10:42:44 --> ErrorException: Undefined variable $cellspacingx
+[Method: GET, Route: proposals/download_pdf/9/view]
+in APPPATH/ThirdParty/tcpdf/tcpdf.php on line 18325.
+ 1 APPPATH/ThirdParty/tcpdf/tcpdf.php(18325): CodeIgniter\Debug\Exceptions->errorHandler(2, 'Undefined variable $cellspacingx', '/home/gestiontictaccom/public_html/app/ThirdParty/tcpdf/tcpdf.php', 18325)
+ 2 APPPATH/Libraries/Pdf.php(98): TCPDF->writeHTML('<style>
+                h1 { font-size: 32px; font-weight: normal; }
+                h2 { font-size: 28px; font-weight: normal; }
+                h3 { font-size: 24px; font-weight: normal; }
+                h4 { font-size: 18px; font-weight: normal; }
+                h5 { font-size: 17px; }
+                h6 { font-size: 14px; font-weight: normal; }
+                </style><div style="display: flex; flex-direction: column;">
+
+ <table style="margin-top: 0; margin-bottom: 40px" cellpadding="10">
+ <tbody>
+ <tr>
+ <td style="padding: 0;">
+ <div style="background-size: cover; background-position: center top; background-image: url("https://fairsketch.com/media/proposal/bg-2.png\'); padding: 140px 10px 100px;">
+ <div style="color:#FFFFFF;font-size:50px;line-height:62px !important;font-weight:600;letter-spacing:0px; text-align: center;">App Development<br>Proposal</div>
+ <div style="color: #FFFFFF;
+ font-size: 15px;
+ text-align: center;
+  padding-top: 30px;">We develop amazing apps for your business. <br>Here is our best offer for you.</div>
+     </div>
+ </td>
+  </tr>
+        </tbody>
+    </table>We are excited to get to work on your new mobile app, and we want to make sure you are satisfied with our proposal and have a full understanding of what to expect in this lengthy process. Creating a mobile app is exciting and our expert team is fully capable of giving you something unique that will help grow your business.<table style="margin-top: 0; margin-bottom: 40px" cellpadding="10"><tbody>
+        </tbody>
+    </table>
+
+    <table style="margin-top: 0; margin-bottom: 40px" cellpadding="10">
+        <tbody>
+  <tr>
+ <td style="padding: 0;">
+     <div style="text-align: center">
+         <div style="font-size: 30px">PROPUESTA #9</div>
+         <div style="height: 3px;
+  width: 80px;
+  background-color: #2AA384;
+  margin: 25px auto 20px;"></div>
+         <div style="margin-bottom: 20px;"><div style="text-align: center;">Proposal Date:&nbsp;<span style="text-align: start;">28-01-2026&nbsp;</span></div><div style="text-align: center;"><span style="text-align: start;">Expiry Date:&nbsp;&nbsp;01-02-2026</span></div><div style="text-align: left;"><br></div></div>
+     </div>
+     <div style="clear: both;">
+         <div style="width: 380.31522222222px; float: left;  padding-right: 10px">
+ <img src="https://fairsketch.com/media/proposal/proposal-to.png" style="width: 760.63044444444px; margin-bottom: 15px">
+ <span style="line-height: 20px;"><i>Proposal For</i></span><br style="line-height: 23px;" />
+ <br>
+ 
+<strong>PRUEBA SL</strong>
+<div style="line-height: 3px;"> </div>
+<span class="invoice-meta text-default">
+    </span>
+         </div>
+
+         <div style="width: 380.31522222222px; float: left; padding-left: 10px">
+ <img src="https://fairsketch.com/media/proposal/proposal-from.png" style="width: 760.63044444444px; margin-bottom: 15px">
+ <span style="line-height: 20px;"><i>Proposal From</i></span><br style="line-height: 23px;" />
+ <br>
+ <strong>Tictac Comunicación Digital SL</strong><br /><div style="line-height: 3px;"> </div>
+<span class="invoice-meta text-default">Plaza de los Carrillos, 5<br />
+14001 - Córdoba            <br />Teléfono: 957 048 147                <br />Correo electrónico: hola@tictac-comunicacion.es                <br />Website: <a style="color:#666; text-decoration: none;" href="www.tictac-comunicacion.es">www.tictac-comunicacion.es</a>
+        <br />Número VAT: B09912478</span>
+         </div>
+     </div>
+ </td>
+  </tr>
+        </tbody>
+    </table>
+
+    <table style="margin-top: 0; margin-bottom: 40px" cellpadding="10">
+        <tbody>
+  <tr>
+ <td style="padding: 0;">
+     <div style="margin-top: 20px">
+         <div style="text-align: center">
+ <div style="font-size: 30px">Our Best Offer</div>
+ <div style="height: 3px; width: 80px; background-color: #2AA384; margin: 25px auto 20px;"></div>
+ <div style="margin-bottom: 20px;">We would like to develop a mobile app for your business. <br>Please feel free to contact us if you have any questions.</div>
+         </div>
+
+         <span style="line-height: 20px;">
+ 
+<table class="table-responsive" style="width: 760.63044444444px;" cellpadding="10">
+    <tr style="font-weight: bold; background-color: #000000; color: #fff;  ">
+        <th style="width: 342.2837px; border-right: 1px solid #eee;"> Artículo </th>
+        <th style="text-align: center;  width: 114.09456666667px; border-right: 1px solid #eee;"> Cantidad</th>
+        <th style="text-align: right;  width: 152.12608888889px; border-right: 1px solid #eee;"> Tarifa</th>
+        <th style="text-align: right;  width: 152.12608888889px; "> Total</th>
+    </tr>
+        <tr>
+        <td colspan="3" style="text-align: right;">Sub Total</td>
+        <td style="text-align: right; width: 152.12608888889px; border: 1px solid #fff; background-color: #f4f4f4;">
+            0,00€        </td>
+    </tr>
+                    <tr>
+        <td colspan="3" style="text-align: right;">Total</td>
+        <td style="text-align: right; width: 152.12608888889px; background-color: #000000; color: #fff;">
+            0,00€        </td>
+    </tr>
+</table>
+         </p>
+     </div>
+ </td>
+  </tr>
+        </tbody>
+    </table>
+
+    <table style="margin-top: 0; margin-bottom: 60px" cellpadding="10">
+        <tbody>
+  <tr>
+ <td style="padding: 0;">
+
+     <div style="">
+         <div style="text-align: center">
+ <div style="font-size: 30px">Our Objective</div>
+ <div style="height: 3px;
+   width: 80px;
+   background-color: #2AA384;
+   margin: 25px auto 20px;"></div>
+ <div style="margin-bottom: 20px;">We build professional apps for business. Customer satisfaction is our main goal.&nbsp;</div><div style="margin-bottom: 20px;"><br></div>
+         </div>
+
+         <div style="clear: both;">
+ <div style="width: 380.31522222222px; float: left;  padding-right: 10px">
+  <img src="https://fairsketch.com/media/proposal/phone-picture.png" style="    display: block; border: 0;
+       width: 100%;
+       max-width: 290px;">
+ </div>
+
+ <div style="width: 380.31522222222px; float: left; padding-left: 10px">
+  <div style="font-size:18px;line-height:28px;font-weight:600;letter-spacing:0px;padding:0;padding-bottom:20px; padding-top: 80px;">
+      We Provide High Quality and Cost Effective Services.
+  </div>
+  <div style="font-size:15px;line-height:28px;letter-spacing:0px;padding:0;padding-bottom:30px;">Our app development process contains different levels of testing. We can confirm you the largest amount of device support guaranty.</div>
+  <div>Work with us.</div>
+  <div style="font-size: 15px; color:  #2AA384; padding-top: 5px;">Be a part of our happy customers.</div><div style="font-size: 15px; color:  #2AA384; padding-top: 5px;"><br></div><div style="font-size: 15px; color:  #2AA384; padding-top: 5px;"><br></div><br></div>
+         </div>
+     </div>
+
+ </td>
+  </tr>
+        </tbody>
+    </table>
+
+    <table style="margin-top: 0; margin-bottom: 40px" cellpadding="10">
+        <tbody>
+  <tr>
+ <td style="padding: 0;">
+
+     <div style="">
+         <div style="text-align: center">
+ <div style="font-size: 30px">Our Portfolio</div>
+ <div style="height: 3px;
+   width: 80px;
+   background-color: #2AA384;
+   margin: 25px auto 20px;"></div>
+ <div style="margin-bottom: 20px;">Some of our previous work here</div>
+         </div>
+
+         <div style="clear: both; margin: 0 -10px;">
+ <div style="width: 33.33%; float: left;  padding: 0 10px; margin-bottom: 20px">
+  <img src="https://fairsketch.com/media/proposal/portfolio-1.png" style="    display: block; border: 0;
+       width: 100%;
+       max-width: 290px;">
+ </div>
+ <div style="width: 33.33%; float: left; padding: 0 10px; margin-bottom: 20px">
+  <img src="https://fairsketch.com/media/proposal/portfolio-2.png" style="    display: block; border: 0;
+       width: 100%;
+       max-width: 290px;">
+ </div>
+ <div style="width: 33.33%; float: left;  padding: 0 10px; margin-bottom: 20px">
+  <img src="https://fairsketch.com/media/proposal/portfolio-3.png" style="    display: block; border: 0;
+       width: 100%;
+       max-width: 290px;">
+ </div>
+         </div>
+         <div style="clear: both; margin: 0 -10px;">
+ <div style="width: 33.33%; float: left;  padding: 0 10px; margin-bottom: 20px">
+  <img src="https://fairsketch.com/media/proposal/portfolio-4.png" style="    display: block; border: 0;
+       width: 100%;
+       max-width: 290px;">
+ </div>
+ <div style="width: 33.33%; float: left; padding: 0 10px; margin-bottom: 20px">
+  <img src="https://fairsketch.com/media/proposal/portfolio-5.png" style="    display: block; border: 0;
+       width: 100%;
+       max-width: 290px;">
+ </div>
+ <div style="width: 33.33%; float: left;  padding: 0 10px; margin-bottom: 20px">
+  <img src="https://fairsketch.com/media/proposal/portfolio-6.png" style="    display: block; border: 0;
+       width: 100%;
+       max-width: 290px;">
+ </div>
+         </div>
+
+     </div>
+
+ </td>
+  </tr>
+        </tbody>
+    </table>
+
+    <table style="margin-top: 0; margin-bottom: 40px" cellpadding="10">
+        <tbody>
+  <tr>
+ <td style="padding: 0;">
+
+     <div style="">
+         <div style="text-align: center">
+ <div style="font-size: 30px">Contact Us</div>
+ <div style="height: 3px;
+   width: 80px;
+   background-color: #2AA384;
+   margin: 25px auto 20px;"></div>
+ <div style="margin-bottom: 20px;"></div>
+         </div>
+
+         <span style="text-align: center; margin-bottom: 20px;; line-height: 20px;">We are looking forward working with you. Please feel free to contact us.&nbsp;</span><br style="line-height: 23px;" /><span style="text-align: center; margin-bottom: 20px;; line-height: 20px;"><br></span><br style="line-height: 23px;" />
+         <div style="text-align: center;"><img src="https://fairsketch.com/media/proposal/bg-1.png" style="width: 760.63044444444px;"></div></div>
+
+ </td>
+  </tr>
+        </tbody>
+    </table>
+
+    
+
+</div>', true, false, true, false, '')
+ 3 APPPATH/Libraries/Pdf.php(65): App\Libraries\Pdf->writeHTML('<style>
+                h1 { font-size: 32px; font-weight: normal; }
+                h2 { font-size: 28px; font-weight: normal; }
+                h3 { font-size: 24px; font-weight: normal; }
+                h4 { font-size: 18px; font-weight: normal; }
+                h5 { font-size: 17px; }
+                h6 { font-size: 14px; font-weight: normal; }
+                </style><div style="display: flex; flex-direction: column;">
+
+ <table style="margin-top: 0; margin-bottom: 40px" cellpadding="10">
+ <tbody>
+ <tr>
+ <td style="padding: 0;">
+ <div style="background-size: cover; background-position: center top; background-image: url("https://fairsketch.com/media/proposal/bg-2.png\'); padding: 140px 10px 100px;">
+ <div style="color:#FFFFFF;font-size:50px;line-height:62px !important;font-weight:600;letter-spacing:0px; text-align: center;">App Development<br>Proposal</div>
+ <div style="color: #FFFFFF;
+ font-size: 15px;
+ text-align: center;
+  padding-top: 30px;">We develop amazing apps for your business. <br>Here is our best offer for you.</div>
+     </div>
+ </td>
+  </tr>
+        </tbody>
+    </table>We are excited to get to work on your new mobile app, and we want to make sure you are satisfied with our proposal and have a full understanding of what to expect in this lengthy process. Creating a mobile app is exciting and our expert team is fully capable of giving you something unique that will help grow your business.<table style="margin-top: 0; margin-bottom: 40px" cellpadding="10"><tbody>
+        </tbody>
+    </table>
+
+    <table style="margin-top: 0; margin-bottom: 40px" cellpadding="10">
+        <tbody>
+  <tr>
+ <td style="padding: 0;">
+     <div style="text-align: center">
+         <div style="font-size: 30px">PROPUESTA #9</div>
+         <div style="height: 3px;
+  width: 80px;
+  background-color: #2AA384;
+  margin: 25px auto 20px;"></div>
+         <div style="margin-bottom: 20px;"><div style="text-align: center;">Proposal Date:&nbsp;<span style="text-align: start;">28-01-2026&nbsp;</span></div><div style="text-align: center;"><span style="text-align: start;">Expiry Date:&nbsp;&nbsp;01-02-2026</span></div><div style="text-align: left;"><br></div></div>
+     </div>
+     <div style="clear: both;">
+         <div style="width: 380.31522222222px; float: left;  padding-right: 10px">
+ <img src="https://fairsketch.com/media/proposal/proposal-to.png" style="width: 760.63044444444px; margin-bottom: 15px">
+ <span style="line-height: 20px;"><i>Proposal For</i></span><br style="line-height: 23px;" />
+ <br>
+ 
+<strong>PRUEBA SL</strong>
+<div style="line-height: 3px;"> </div>
+<span class="invoice-meta text-default">
+    </span>
+         </div>
+
+         <div style="width: 380.31522222222px; float: left; padding-left: 10px">
+ <img src="https://fairsketch.com/media/proposal/proposal-from.png" style="width: 760.63044444444px; margin-bottom: 15px">
+ <span style="line-height: 20px;"><i>Proposal From</i></span><br style="line-height: 23px;" />
+ <br>
+ <strong>Tictac Comunicación Digital SL</strong><br /><div style="line-height: 3px;"> </div>
+<span class="invoice-meta text-default">Plaza de los Carrillos, 5<br />
+14001 - Córdoba            <br />Teléfono: 957 048 147                <br />Correo electrónico: hola@tictac-comunicacion.es                <br />Website: <a style="color:#666; text-decoration: none;" href="www.tictac-comunicacion.es">www.tictac-comunicacion.es</a>
+        <br />Número VAT: B09912478</span>
+         </div>
+     </div>
+ </td>
+  </tr>
+        </tbody>
+    </table>
+
+    <table style="margin-top: 0; margin-bottom: 40px" cellpadding="10">
+        <tbody>
+  <tr>
+ <td style="padding: 0;">
+     <div style="margin-top: 20px">
+         <div style="text-align: center">
+ <div style="font-size: 30px">Our Best Offer</div>
+ <div style="height: 3px; width: 80px; background-color: #2AA384; margin: 25px auto 20px;"></div>
+ <div style="margin-bottom: 20px;">We would like to develop a mobile app for your business. <br>Please feel free to contact us if you have any questions.</div>
+         </div>
+
+         <span style="line-height: 20px;">
+ 
+<table class="table-responsive" style="width: 760.63044444444px;" cellpadding="10">
+    <tr style="font-weight: bold; background-color: #000000; color: #fff;  ">
+        <th style="width: 342.2837px; border-right: 1px solid #eee;"> Artículo </th>
+        <th style="text-align: center;  width: 114.09456666667px; border-right: 1px solid #eee;"> Cantidad</th>
+        <th style="text-align: right;  width: 152.12608888889px; border-right: 1px solid #eee;"> Tarifa</th>
+        <th style="text-align: right;  width: 152.12608888889px; "> Total</th>
+    </tr>
+        <tr>
+        <td colspan="3" style="text-align: right;">Sub Total</td>
+        <td style="text-align: right; width: 152.12608888889px; border: 1px solid #fff; background-color: #f4f4f4;">
+            0,00€        </td>
+    </tr>
+                    <tr>
+        <td colspan="3" style="text-align: right;">Total</td>
+        <td style="text-align: right; width: 152.12608888889px; background-color: #000000; color: #fff;">
+            0,00€        </td>
+    </tr>
+</table>
+         </p>
+     </div>
+ </td>
+  </tr>
+        </tbody>
+    </table>
+
+    <table style="margin-top: 0; margin-bottom: 60px" cellpadding="10">
+        <tbody>
+  <tr>
+ <td style="padding: 0;">
+
+     <div style="">
+         <div style="text-align: center">
+ <div style="font-size: 30px">Our Objective</div>
+ <div style="height: 3px;
+   width: 80px;
+   background-color: #2AA384;
+   margin: 25px auto 20px;"></div>
+ <div style="margin-bottom: 20px;">We build professional apps for business. Customer satisfaction is our main goal.&nbsp;</div><div style="margin-bottom: 20px;"><br></div>
+         </div>
+
+         <div style="clear: both;">
+ <div style="width: 380.31522222222px; float: left;  padding-right: 10px">
+  <img src="https://fairsketch.com/media/proposal/phone-picture.png" style="    display: block; border: 0;
+       width: 100%;
+       max-width: 290px;">
+ </div>
+
+ <div style="width: 380.31522222222px; float: left; padding-left: 10px">
+  <div style="font-size:18px;line-height:28px;font-weight:600;letter-spacing:0px;padding:0;padding-bottom:20px; padding-top: 80px;">
+      We Provide High Quality and Cost Effective Services.
+  </div>
+  <div style="font-size:15px;line-height:28px;letter-spacing:0px;padding:0;padding-bottom:30px;">Our app development process contains different levels of testing. We can confirm you the largest amount of device support guaranty.</div>
+  <div>Work with us.</div>
+  <div style="font-size: 15px; color:  #2AA384; padding-top: 5px;">Be a part of our happy customers.</div><div style="font-size: 15px; color:  #2AA384; padding-top: 5px;"><br></div><div style="font-size: 15px; color:  #2AA384; padding-top: 5px;"><br></div><br></div>
+         </div>
+     </div>
+
+ </td>
+  </tr>
+        </tbody>
+    </table>
+
+    <table style="margin-top: 0; margin-bottom: 40px" cellpadding="10">
+        <tbody>
+  <tr>
+ <td style="padding: 0;">
+
+     <div style="">
+         <div style="text-align: center">
+ <div style="font-size: 30px">Our Portfolio</div>
+ <div style="height: 3px;
+   width: 80px;
+   background-color: #2AA384;
+   margin: 25px auto 20px;"></div>
+ <div style="margin-bottom: 20px;">Some of our previous work here</div>
+         </div>
+
+         <div style="clear: both; margin: 0 -10px;">
+ <div style="width: 33.33%; float: left;  padding: 0 10px; margin-bottom: 20px">
+  <img src="https://fairsketch.com/media/proposal/portfolio-1.png" style="    display: block; border: 0;
+       width: 100%;
+       max-width: 290px;">
+ </div>
+ <div style="width: 33.33%; float: left; padding: 0 10px; margin-bottom: 20px">
+  <img src="https://fairsketch.com/media/proposal/portfolio-2.png" style="    display: block; border: 0;
+       width: 100%;
+       max-width: 290px;">
+ </div>
+ <div style="width: 33.33%; float: left;  padding: 0 10px; margin-bottom: 20px">
+  <img src="https://fairsketch.com/media/proposal/portfolio-3.png" style="    display: block; border: 0;
+       width: 100%;
+       max-width: 290px;">
+ </div>
+         </div>
+         <div style="clear: both; margin: 0 -10px;">
+ <div style="width: 33.33%; float: left;  padding: 0 10px; margin-bottom: 20px">
+  <img src="https://fairsketch.com/media/proposal/portfolio-4.png" style="    display: block; border: 0;
+       width: 100%;
+       max-width: 290px;">
+ </div>
+ <div style="width: 33.33%; float: left; padding: 0 10px; margin-bottom: 20px">
+  <img src="https://fairsketch.com/media/proposal/portfolio-5.png" style="    display: block; border: 0;
+       width: 100%;
+       max-width: 290px;">
+ </div>
+ <div style="width: 33.33%; float: left;  padding: 0 10px; margin-bottom: 20px">
+  <img src="https://fairsketch.com/media/proposal/portfolio-6.png" style="    display: block; border: 0;
+       width: 100%;
+       max-width: 290px;">
+ </div>
+         </div>
+
+     </div>
+
+ </td>
+  </tr>
+        </tbody>
+    </table>
+
+    <table style="margin-top: 0; margin-bottom: 40px" cellpadding="10">
+        <tbody>
+  <tr>
+ <td style="padding: 0;">
+
+     <div style="">
+         <div style="text-align: center">
+ <div style="font-size: 30px">Contact Us</div>
+ <div style="height: 3px;
+   width: 80px;
+   background-color: #2AA384;
+   margin: 25px auto 20px;"></div>
+ <div style="margin-bottom: 20px;"></div>
+         </div>
+
+         <span style="text-align: center; margin-bottom: 20px;; line-height: 20px;">We are looking forward working with you. Please feel free to contact us.&nbsp;</span><br style="line-height: 23px;" /><span style="text-align: center; margin-bottom: 20px;; line-height: 20px;"><br></span><br style="line-height: 23px;" />
+         <div style="text-align: center;"><img src="https://fairsketch.com/media/proposal/bg-1.png" style="width: 760.63044444444px;"></div></div>
+
+ </td>
+  </tr>
+        </tbody>
+    </table>
+
+    
+
+</div>', true, false, true, false, '')
+ 4 APPPATH/Helpers/general_helper.php(2954): App\Libraries\Pdf->PreparePDF('<div style="display: flex; flex-direction: column;">
+
+ <table style="margin-top: 0; margin-bottom: 40px">
+ <tbody>
+ <tr>
+ <td style="padding: 0;">
+ <div style="background-size: cover; background-position: center top; background-image: url(\'https://fairsketch.com/media/proposal/bg-2.png\'); padding: 140px 10px 100px;">
+ <div style="color:#FFFFFF;font-size:50px;line-height:62px !important;font-weight:600;letter-spacing:0px; text-align: center;">App Development<br>Proposal</div>
+ <div style="color: #FFFFFF;
+ font-size: 15px;
+ text-align: center;
+  padding-top: 30px;">We develop amazing apps for your business. <br>Here is our best offer for you.</div>
+     </div>
+ </td>
+  </tr>
+        </tbody>
+    </table>We are excited to get to work on your new mobile app, and we want to make sure you are satisfied with our proposal and have a full understanding of what to expect in this lengthy process. Creating a mobile app is exciting and our expert team is fully capable of giving you something unique that will help grow your business.<table style="margin-top: 0; margin-bottom: 40px"><tbody>
+        </tbody>
+    </table>
+
+    <table style="margin-top: 0; margin-bottom: 40px">
+        <tbody>
+  <tr>
+ <td style="padding: 0;">
+     <div style="text-align: center">
+         <div style="font-size: 30px">PROPUESTA #9</div>
+         <div style="height: 3px;
+  width: 80px;
+  background-color: #2AA384;
+  margin: 25px auto 20px;"></div>
+         <div style="margin-bottom: 20px;"><div style="text-align: center;">Proposal Date:&nbsp;<span style="text-align: start;">28-01-2026&nbsp;</span></div><div style="text-align: center;"><span style="text-align: start;">Expiry Date:&nbsp;&nbsp;01-02-2026</span></div><div style="text-align: left;"><br></div></div>
+     </div>
+     <div style="clear: both;">
+         <div style="width: 50%; float: left;  padding-right: 10px">
+ <img src="https://fairsketch.com/media/proposal/proposal-to.png" style="width: 100%; margin-bottom: 15px">
+ <p><i>Proposal For</i></p>
+ <br>
+ 
+<strong>PRUEBA SL</strong>
+<div style="line-height: 3px;"> </div>
+<span class="invoice-meta text-default">
+    </span>
+         </div>
+
+         <div style="width: 50%; float: left; padding-left: 10px">
+ <img src="https://fairsketch.com/media/proposal/proposal-from.png" style="width: 100%; margin-bottom: 15px">
+ <p><i>Proposal From</i></p>
+ <br>
+ <strong>Tictac Comunicación Digital SL</strong><br /><div style="line-height: 3px;"> </div>
+<span class="invoice-meta text-default">Plaza de los Carrillos, 5<br />
+14001 - Córdoba            <br />Teléfono: 957 048 147                <br />Correo electrónico: hola@tictac-comunicacion.es                <br />Website: <a style="color:#666; text-decoration: none;" href="www.tictac-comunicacion.es">www.tictac-comunicacion.es</a>
+        <br />Número VAT: B09912478</span>
+         </div>
+     </div>
+ </td>
+  </tr>
+        </tbody>
+    </table>
+
+    <table style="margin-top: 0; margin-bottom: 40px">
+        <tbody>
+  <tr>
+ <td style="padding: 0;">
+     <div style="margin-top: 20px">
+         <div style="text-align: center">
+ <div style="font-size: 30px">Our Best Offer</div>
+ <div style="height: 3px; width: 80px; background-color: #2AA384; margin: 25px auto 20px;"></div>
+ <div style="margin-bottom: 20px;">We would like to develop a mobile app for your business. <br>Please feel free to contact us if you have any questions.</div>
+         </div>
+
+         <p>
+ 
+<table class="table-responsive" style="width: 100%;">
+    <tr style="font-weight: bold; background-color: #000000; color: #fff;  ">
+        <th style="width: 45%; border-right: 1px solid #eee;"> Artículo </th>
+        <th style="text-align: center;  width: 15%; border-right: 1px solid #eee;"> Cantidad</th>
+        <th style="text-align: right;  width: 20%; border-right: 1px solid #eee;"> Tarifa</th>
+        <th style="text-align: right;  width: 20%; "> Total</th>
+    </tr>
+        <tr>
+        <td colspan="3" style="text-align: right;">Sub Total</td>
+        <td style="text-align: right; width: 20%; border: 1px solid #fff; background-color: #f4f4f4;">
+            0,00€        </td>
+    </tr>
+                    <tr>
+        <td colspan="3" style="text-align: right;">Total</td>
+        <td style="text-align: right; width: 20%; background-color: #000000; color: #fff;">
+            0,00€        </td>
+    </tr>
+</table>
+         </p>
+     </div>
+ </td>
+  </tr>
+        </tbody>
+    </table>
+
+    <table style="margin-top: 0; margin-bottom: 60px">
+        <tbody>
+  <tr>
+ <td style="padding: 0;">
+
+     <div style="">
+         <div style="text-align: center">
+ <div style="font-size: 30px">Our Objective</div>
+ <div style="height: 3px;
+   width: 80px;
+   background-color: #2AA384;
+   margin: 25px auto 20px;"></div>
+ <div style="margin-bottom: 20px;">We build professional apps for business. Customer satisfaction is our main goal.&nbsp;</div><div style="margin-bottom: 20px;"><br></div>
+         </div>
+
+         <div style="clear: both;">
+ <div style="width: 50%; float: left;  padding-right: 10px">
+  <img src="https://fairsketch.com/media/proposal/phone-picture.png" style="    display: block; border: 0;
+       width: 100%;
+       max-width: 290px;">
+ </div>
+
+ <div style="width: 50%; float: left; padding-left: 10px">
+  <div style="font-size:18px;line-height:28px;font-weight:600;letter-spacing:0px;padding:0;padding-bottom:20px; padding-top: 80px;">
+      We Provide High Quality and Cost Effective Services.
+  </div>
+  <div style="font-size:15px;line-height:28px;letter-spacing:0px;padding:0;padding-bottom:30px;">Our app development process contains different levels of testing. We can confirm you the largest amount of device support guaranty.</div>
+  <div>Work with us.</div>
+  <div style="font-size: 15px; color:  #2AA384; padding-top: 5px;">Be a part of our happy customers.</div><div style="font-size: 15px; color:  #2AA384; padding-top: 5px;"><br></div><div style="font-size: 15px; color:  #2AA384; padding-top: 5px;"><br></div><br></div>
+         </div>
+     </div>
+
+ </td>
+  </tr>
+        </tbody>
+    </table>
+
+    <table style="margin-top: 0; margin-bottom: 40px">
+        <tbody>
+  <tr>
+ <td style="padding: 0;">
+
+     <div style="">
+         <div style="text-align: center">
+ <div style="font-size: 30px">Our Portfolio</div>
+ <div style="height: 3px;
+   width: 80px;
+   background-color: #2AA384;
+   margin: 25px auto 20px;"></div>
+ <div style="margin-bottom: 20px;">Some of our previous work here</div>
+         </div>
+
+         <div style="clear: both; margin: 0 -10px;">
+ <div style="width: 33.33%; float: left;  padding: 0 10px; margin-bottom: 20px">
+  <img src="https://fairsketch.com/media/proposal/portfolio-1.png" style="    display: block; border: 0;
+       width: 100%;
+       max-width: 290px;">
+ </div>
+ <div style="width: 33.33%; float: left; padding: 0 10px; margin-bottom: 20px">
+  <img src="https://fairsketch.com/media/proposal/portfolio-2.png" style="    display: block; border: 0;
+       width: 100%;
+       max-width: 290px;">
+ </div>
+ <div style="width: 33.33%; float: left;  padding: 0 10px; margin-bottom: 20px">
+  <img src="https://fairsketch.com/media/proposal/portfolio-3.png" style="    display: block; border: 0;
+       width: 100%;
+       max-width: 290px;">
+ </div>
+         </div>
+         <div style="clear: both; margin: 0 -10px;">
+ <div style="width: 33.33%; float: left;  padding: 0 10px; margin-bottom: 20px">
+  <img src="https://fairsketch.com/media/proposal/portfolio-4.png" style="    display: block; border: 0;
+       width: 100%;
+       max-width: 290px;">
+ </div>
+ <div style="width: 33.33%; float: left; padding: 0 10px; margin-bottom: 20px">
+  <img src="https://fairsketch.com/media/proposal/portfolio-5.png" style="    display: block; border: 0;
+       width: 100%;
+       max-width: 290px;">
+ </div>
+ <div style="width: 33.33%; float: left;  padding: 0 10px; margin-bottom: 20px">
+  <img src="https://fairsketch.com/media/proposal/portfolio-6.png" style="    display: block; border: 0;
+       width: 100%;
+       max-width: 290px;">
+ </div>
+         </div>
+
+     </div>
+
+ </td>
+  </tr>
+        </tbody>
+    </table>
+
+    <table style="margin-top: 0; margin-bottom: 40px">
+        <tbody>
+  <tr>
+ <td style="padding: 0;">
+
+     <div style="">
+         <div style="text-align: center">
+ <div style="font-size: 30px">Contact Us</div>
+ <div style="height: 3px;
+   width: 80px;
+   background-color: #2AA384;
+   margin: 25px auto 20px;"></div>
+ <div style="margin-bottom: 20px;"></div>
+         </div>
+
+         <p style="text-align: center; margin-bottom: 20px;">We are looking forward working with you. Please feel free to contact us.&nbsp;</p><p style="text-align: center; margin-bottom: 20px;"><br></p>
+         <div style="text-align: center;"><img src="https://fairsketch.com/media/proposal/bg-1.png" style="width: 100%;"></div></div>
+
+ </td>
+  </tr>
+        </tbody>
+    </table>
+
+    
+
+</div>', 'PROPUESTA #9', 'view', false)
+ 5 APPPATH/Controllers/Proposals.php(1148): prepare_proposal_pdf([...], 'view')
+ 6 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\Proposals->download_pdf('9', 'view')
+ 7 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Proposals))
+ 8 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 9 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+10 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+11 FCPATH/index.php(75): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ERROR - 2026-01-27 23:40:02 --> Harmful injection detected by _get_clean_value where the key:  and value: Artículo de blog "cómo ocultar un pinganillo antes de un examen"
+Function: _get_clean_value File: /home/gestiontictaccom/public_html/app/Models/Crud_model.php Line: 580 
+Function: _get_clean_value File: /home/gestiontictaccom/public_html/app/Models/Crud_model.php Line: 580 
+Function: _get_clean_value File: /home/gestiontictaccom/public_html/app/Models/Crud_model.php Line: 580 
+Function: _get_clean_value File: /home/gestiontictaccom/public_html/app/Models/Crud_model.php Line: 580 
+Function: _get_clean_value File: /home/gestiontictaccom/public_html/app/Models/Notifications_model.php Line: 50 
+

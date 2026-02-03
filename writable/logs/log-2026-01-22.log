@@ -1,0 +1,625 @@
+WARNING - 2026-01-22 01:25:49 --> [DEPRECATED] Return type of Google_Model::offsetExists($offset) should either be compatible with ArrayAccess::offsetExists(mixed $offset): bool, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Model.php on line 249.
+ 1 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Model.php')
+ 2 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Model.php')
+ 3 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php(12): Composer\Autoload\ClassLoader->loadClass('Google_Model')
+ 4 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php')
+ 5 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php')
+ 6 APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php(18): Composer\Autoload\ClassLoader->loadClass('Google_Collection')
+ 7 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php')
+ 8 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php')
+ 9 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(128): Composer\Autoload\ClassLoader->loadClass('Google_Service_Drive_FileList')
+10 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(94): Google_Http_REST::decodeHttpResponse(Object(GuzzleHttp\Psr7\Response), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+11 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Task/Runner.php(176): Google_Http_REST::doExecute(Object(GuzzleHttp\Client), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+12 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(58): Google_Task_Runner->run()
+13 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Client.php(798): Google_Http_REST::execute(Object(GuzzleHttp\Client), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList', [])
+14 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Service/Resource.php(232): Google_Client->execute(Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+15 APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/Resource/Files.php(206): Google_Service_Resource->call('list', [...], 'Google_Service_Drive_FileList')
+16 APPPATH/Libraries/Google.php(83): Google_Service_Drive_Resource_Files->listFiles([...])
+17 APPPATH/Libraries/Google.php(158): App\Libraries\Google->_is_folder_exists(Object(Google_Service_Drive), 'profile_images')
+18 APPPATH/Libraries/Google.php(204): App\Libraries\Google->_create_folder('profile_images')
+19 APPPATH/Helpers/app_files_helper.php(294): App\Libraries\Google->upload_file('/tmp/phpLZ6qWT', '_file6971d0fc4fdf5-avatar.png', 'profile_images', '/home/gestiontictaccom/public_html')
+20 APPPATH/Controllers/Team_members.php(784): move_temp_file('avatar.png', 'FCPATH/files/profile_images', '/home/gestiontictaccom/public_html', '/tmp/phpLZ6qWT')
+21 SYSTEMPATH/CodeIgniter.php(934): App\Controllers\Team_members->save_profile_image('36')
+22 SYSTEMPATH/CodeIgniter.php(499): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Team_members))
+23 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+24 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+WARNING - 2026-01-22 01:25:49 --> [DEPRECATED] Return type of Google_Model::offsetGet($offset) should either be compatible with ArrayAccess::offsetGet(mixed $offset): mixed, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Model.php on line 254.
+ 1 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Model.php')
+ 2 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Model.php')
+ 3 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php(12): Composer\Autoload\ClassLoader->loadClass('Google_Model')
+ 4 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php')
+ 5 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php')
+ 6 APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php(18): Composer\Autoload\ClassLoader->loadClass('Google_Collection')
+ 7 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php')
+ 8 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php')
+ 9 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(128): Composer\Autoload\ClassLoader->loadClass('Google_Service_Drive_FileList')
+10 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(94): Google_Http_REST::decodeHttpResponse(Object(GuzzleHttp\Psr7\Response), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+11 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Task/Runner.php(176): Google_Http_REST::doExecute(Object(GuzzleHttp\Client), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+12 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(58): Google_Task_Runner->run()
+13 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Client.php(798): Google_Http_REST::execute(Object(GuzzleHttp\Client), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList', [])
+14 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Service/Resource.php(232): Google_Client->execute(Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+15 APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/Resource/Files.php(206): Google_Service_Resource->call('list', [...], 'Google_Service_Drive_FileList')
+16 APPPATH/Libraries/Google.php(83): Google_Service_Drive_Resource_Files->listFiles([...])
+17 APPPATH/Libraries/Google.php(158): App\Libraries\Google->_is_folder_exists(Object(Google_Service_Drive), 'profile_images')
+18 APPPATH/Libraries/Google.php(204): App\Libraries\Google->_create_folder('profile_images')
+19 APPPATH/Helpers/app_files_helper.php(294): App\Libraries\Google->upload_file('/tmp/phpLZ6qWT', '_file6971d0fc4fdf5-avatar.png', 'profile_images', '/home/gestiontictaccom/public_html')
+20 APPPATH/Controllers/Team_members.php(784): move_temp_file('avatar.png', 'FCPATH/files/profile_images', '/home/gestiontictaccom/public_html', '/tmp/phpLZ6qWT')
+21 SYSTEMPATH/CodeIgniter.php(934): App\Controllers\Team_members->save_profile_image('36')
+22 SYSTEMPATH/CodeIgniter.php(499): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Team_members))
+23 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+24 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+WARNING - 2026-01-22 01:25:49 --> [DEPRECATED] Return type of Google_Model::offsetSet($offset, $value) should either be compatible with ArrayAccess::offsetSet(mixed $offset, mixed $value): void, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Model.php on line 261.
+ 1 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Model.php')
+ 2 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Model.php')
+ 3 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php(12): Composer\Autoload\ClassLoader->loadClass('Google_Model')
+ 4 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php')
+ 5 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php')
+ 6 APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php(18): Composer\Autoload\ClassLoader->loadClass('Google_Collection')
+ 7 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php')
+ 8 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php')
+ 9 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(128): Composer\Autoload\ClassLoader->loadClass('Google_Service_Drive_FileList')
+10 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(94): Google_Http_REST::decodeHttpResponse(Object(GuzzleHttp\Psr7\Response), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+11 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Task/Runner.php(176): Google_Http_REST::doExecute(Object(GuzzleHttp\Client), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+12 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(58): Google_Task_Runner->run()
+13 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Client.php(798): Google_Http_REST::execute(Object(GuzzleHttp\Client), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList', [])
+14 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Service/Resource.php(232): Google_Client->execute(Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+15 APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/Resource/Files.php(206): Google_Service_Resource->call('list', [...], 'Google_Service_Drive_FileList')
+16 APPPATH/Libraries/Google.php(83): Google_Service_Drive_Resource_Files->listFiles([...])
+17 APPPATH/Libraries/Google.php(158): App\Libraries\Google->_is_folder_exists(Object(Google_Service_Drive), 'profile_images')
+18 APPPATH/Libraries/Google.php(204): App\Libraries\Google->_create_folder('profile_images')
+19 APPPATH/Helpers/app_files_helper.php(294): App\Libraries\Google->upload_file('/tmp/phpLZ6qWT', '_file6971d0fc4fdf5-avatar.png', 'profile_images', '/home/gestiontictaccom/public_html')
+20 APPPATH/Controllers/Team_members.php(784): move_temp_file('avatar.png', 'FCPATH/files/profile_images', '/home/gestiontictaccom/public_html', '/tmp/phpLZ6qWT')
+21 SYSTEMPATH/CodeIgniter.php(934): App\Controllers\Team_members->save_profile_image('36')
+22 SYSTEMPATH/CodeIgniter.php(499): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Team_members))
+23 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+24 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+WARNING - 2026-01-22 01:25:49 --> [DEPRECATED] Return type of Google_Model::offsetUnset($offset) should either be compatible with ArrayAccess::offsetUnset(mixed $offset): void, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Model.php on line 271.
+ 1 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Model.php')
+ 2 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Model.php')
+ 3 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php(12): Composer\Autoload\ClassLoader->loadClass('Google_Model')
+ 4 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php')
+ 5 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php')
+ 6 APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php(18): Composer\Autoload\ClassLoader->loadClass('Google_Collection')
+ 7 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php')
+ 8 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php')
+ 9 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(128): Composer\Autoload\ClassLoader->loadClass('Google_Service_Drive_FileList')
+10 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(94): Google_Http_REST::decodeHttpResponse(Object(GuzzleHttp\Psr7\Response), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+11 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Task/Runner.php(176): Google_Http_REST::doExecute(Object(GuzzleHttp\Client), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+12 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(58): Google_Task_Runner->run()
+13 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Client.php(798): Google_Http_REST::execute(Object(GuzzleHttp\Client), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList', [])
+14 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Service/Resource.php(232): Google_Client->execute(Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+15 APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/Resource/Files.php(206): Google_Service_Resource->call('list', [...], 'Google_Service_Drive_FileList')
+16 APPPATH/Libraries/Google.php(83): Google_Service_Drive_Resource_Files->listFiles([...])
+17 APPPATH/Libraries/Google.php(158): App\Libraries\Google->_is_folder_exists(Object(Google_Service_Drive), 'profile_images')
+18 APPPATH/Libraries/Google.php(204): App\Libraries\Google->_create_folder('profile_images')
+19 APPPATH/Helpers/app_files_helper.php(294): App\Libraries\Google->upload_file('/tmp/phpLZ6qWT', '_file6971d0fc4fdf5-avatar.png', 'profile_images', '/home/gestiontictaccom/public_html')
+20 APPPATH/Controllers/Team_members.php(784): move_temp_file('avatar.png', 'FCPATH/files/profile_images', '/home/gestiontictaccom/public_html', '/tmp/phpLZ6qWT')
+21 SYSTEMPATH/CodeIgniter.php(934): App\Controllers\Team_members->save_profile_image('36')
+22 SYSTEMPATH/CodeIgniter.php(499): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Team_members))
+23 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+24 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+WARNING - 2026-01-22 01:25:49 --> [DEPRECATED] Return type of Google_Collection::current() should either be compatible with Iterator::current(): mixed, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php on line 24.
+ 1 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php')
+ 2 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php')
+ 3 APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php(18): Composer\Autoload\ClassLoader->loadClass('Google_Collection')
+ 4 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php')
+ 5 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php')
+ 6 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(128): Composer\Autoload\ClassLoader->loadClass('Google_Service_Drive_FileList')
+ 7 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(94): Google_Http_REST::decodeHttpResponse(Object(GuzzleHttp\Psr7\Response), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+ 8 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Task/Runner.php(176): Google_Http_REST::doExecute(Object(GuzzleHttp\Client), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+ 9 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(58): Google_Task_Runner->run()
+10 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Client.php(798): Google_Http_REST::execute(Object(GuzzleHttp\Client), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList', [])
+11 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Service/Resource.php(232): Google_Client->execute(Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+12 APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/Resource/Files.php(206): Google_Service_Resource->call('list', [...], 'Google_Service_Drive_FileList')
+13 APPPATH/Libraries/Google.php(83): Google_Service_Drive_Resource_Files->listFiles([...])
+14 APPPATH/Libraries/Google.php(158): App\Libraries\Google->_is_folder_exists(Object(Google_Service_Drive), 'profile_images')
+15 APPPATH/Libraries/Google.php(204): App\Libraries\Google->_create_folder('profile_images')
+16 APPPATH/Helpers/app_files_helper.php(294): App\Libraries\Google->upload_file('/tmp/phpLZ6qWT', '_file6971d0fc4fdf5-avatar.png', 'profile_images', '/home/gestiontictaccom/public_html')
+17 APPPATH/Controllers/Team_members.php(784): move_temp_file('avatar.png', 'FCPATH/files/profile_images', '/home/gestiontictaccom/public_html', '/tmp/phpLZ6qWT')
+18 SYSTEMPATH/CodeIgniter.php(934): App\Controllers\Team_members->save_profile_image('36')
+19 SYSTEMPATH/CodeIgniter.php(499): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Team_members))
+20 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+21 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+WARNING - 2026-01-22 01:25:49 --> [DEPRECATED] Return type of Google_Collection::next() should either be compatible with Iterator::next(): void, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php on line 40.
+ 1 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php')
+ 2 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php')
+ 3 APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php(18): Composer\Autoload\ClassLoader->loadClass('Google_Collection')
+ 4 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php')
+ 5 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php')
+ 6 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(128): Composer\Autoload\ClassLoader->loadClass('Google_Service_Drive_FileList')
+ 7 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(94): Google_Http_REST::decodeHttpResponse(Object(GuzzleHttp\Psr7\Response), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+ 8 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Task/Runner.php(176): Google_Http_REST::doExecute(Object(GuzzleHttp\Client), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+ 9 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(58): Google_Task_Runner->run()
+10 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Client.php(798): Google_Http_REST::execute(Object(GuzzleHttp\Client), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList', [])
+11 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Service/Resource.php(232): Google_Client->execute(Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+12 APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/Resource/Files.php(206): Google_Service_Resource->call('list', [...], 'Google_Service_Drive_FileList')
+13 APPPATH/Libraries/Google.php(83): Google_Service_Drive_Resource_Files->listFiles([...])
+14 APPPATH/Libraries/Google.php(158): App\Libraries\Google->_is_folder_exists(Object(Google_Service_Drive), 'profile_images')
+15 APPPATH/Libraries/Google.php(204): App\Libraries\Google->_create_folder('profile_images')
+16 APPPATH/Helpers/app_files_helper.php(294): App\Libraries\Google->upload_file('/tmp/phpLZ6qWT', '_file6971d0fc4fdf5-avatar.png', 'profile_images', '/home/gestiontictaccom/public_html')
+17 APPPATH/Controllers/Team_members.php(784): move_temp_file('avatar.png', 'FCPATH/files/profile_images', '/home/gestiontictaccom/public_html', '/tmp/phpLZ6qWT')
+18 SYSTEMPATH/CodeIgniter.php(934): App\Controllers\Team_members->save_profile_image('36')
+19 SYSTEMPATH/CodeIgniter.php(499): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Team_members))
+20 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+21 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+WARNING - 2026-01-22 01:25:49 --> [DEPRECATED] Return type of Google_Collection::key() should either be compatible with Iterator::key(): mixed, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php on line 32.
+ 1 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php')
+ 2 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php')
+ 3 APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php(18): Composer\Autoload\ClassLoader->loadClass('Google_Collection')
+ 4 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php')
+ 5 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php')
+ 6 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(128): Composer\Autoload\ClassLoader->loadClass('Google_Service_Drive_FileList')
+ 7 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(94): Google_Http_REST::decodeHttpResponse(Object(GuzzleHttp\Psr7\Response), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+ 8 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Task/Runner.php(176): Google_Http_REST::doExecute(Object(GuzzleHttp\Client), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+ 9 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(58): Google_Task_Runner->run()
+10 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Client.php(798): Google_Http_REST::execute(Object(GuzzleHttp\Client), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList', [])
+11 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Service/Resource.php(232): Google_Client->execute(Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+12 APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/Resource/Files.php(206): Google_Service_Resource->call('list', [...], 'Google_Service_Drive_FileList')
+13 APPPATH/Libraries/Google.php(83): Google_Service_Drive_Resource_Files->listFiles([...])
+14 APPPATH/Libraries/Google.php(158): App\Libraries\Google->_is_folder_exists(Object(Google_Service_Drive), 'profile_images')
+15 APPPATH/Libraries/Google.php(204): App\Libraries\Google->_create_folder('profile_images')
+16 APPPATH/Helpers/app_files_helper.php(294): App\Libraries\Google->upload_file('/tmp/phpLZ6qWT', '_file6971d0fc4fdf5-avatar.png', 'profile_images', '/home/gestiontictaccom/public_html')
+17 APPPATH/Controllers/Team_members.php(784): move_temp_file('avatar.png', 'FCPATH/files/profile_images', '/home/gestiontictaccom/public_html', '/tmp/phpLZ6qWT')
+18 SYSTEMPATH/CodeIgniter.php(934): App\Controllers\Team_members->save_profile_image('36')
+19 SYSTEMPATH/CodeIgniter.php(499): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Team_members))
+20 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+21 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+WARNING - 2026-01-22 01:25:49 --> [DEPRECATED] Return type of Google_Collection::valid() should either be compatible with Iterator::valid(): bool, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php on line 45.
+ 1 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php')
+ 2 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php')
+ 3 APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php(18): Composer\Autoload\ClassLoader->loadClass('Google_Collection')
+ 4 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php')
+ 5 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php')
+ 6 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(128): Composer\Autoload\ClassLoader->loadClass('Google_Service_Drive_FileList')
+ 7 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(94): Google_Http_REST::decodeHttpResponse(Object(GuzzleHttp\Psr7\Response), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+ 8 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Task/Runner.php(176): Google_Http_REST::doExecute(Object(GuzzleHttp\Client), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+ 9 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(58): Google_Task_Runner->run()
+10 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Client.php(798): Google_Http_REST::execute(Object(GuzzleHttp\Client), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList', [])
+11 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Service/Resource.php(232): Google_Client->execute(Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+12 APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/Resource/Files.php(206): Google_Service_Resource->call('list', [...], 'Google_Service_Drive_FileList')
+13 APPPATH/Libraries/Google.php(83): Google_Service_Drive_Resource_Files->listFiles([...])
+14 APPPATH/Libraries/Google.php(158): App\Libraries\Google->_is_folder_exists(Object(Google_Service_Drive), 'profile_images')
+15 APPPATH/Libraries/Google.php(204): App\Libraries\Google->_create_folder('profile_images')
+16 APPPATH/Helpers/app_files_helper.php(294): App\Libraries\Google->upload_file('/tmp/phpLZ6qWT', '_file6971d0fc4fdf5-avatar.png', 'profile_images', '/home/gestiontictaccom/public_html')
+17 APPPATH/Controllers/Team_members.php(784): move_temp_file('avatar.png', 'FCPATH/files/profile_images', '/home/gestiontictaccom/public_html', '/tmp/phpLZ6qWT')
+18 SYSTEMPATH/CodeIgniter.php(934): App\Controllers\Team_members->save_profile_image('36')
+19 SYSTEMPATH/CodeIgniter.php(499): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Team_members))
+20 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+21 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+WARNING - 2026-01-22 01:25:49 --> [DEPRECATED] Return type of Google_Collection::rewind() should either be compatible with Iterator::rewind(): void, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php on line 16.
+ 1 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php')
+ 2 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php')
+ 3 APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php(18): Composer\Autoload\ClassLoader->loadClass('Google_Collection')
+ 4 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php')
+ 5 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php')
+ 6 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(128): Composer\Autoload\ClassLoader->loadClass('Google_Service_Drive_FileList')
+ 7 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(94): Google_Http_REST::decodeHttpResponse(Object(GuzzleHttp\Psr7\Response), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+ 8 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Task/Runner.php(176): Google_Http_REST::doExecute(Object(GuzzleHttp\Client), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+ 9 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(58): Google_Task_Runner->run()
+10 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Client.php(798): Google_Http_REST::execute(Object(GuzzleHttp\Client), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList', [])
+11 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Service/Resource.php(232): Google_Client->execute(Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+12 APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/Resource/Files.php(206): Google_Service_Resource->call('list', [...], 'Google_Service_Drive_FileList')
+13 APPPATH/Libraries/Google.php(83): Google_Service_Drive_Resource_Files->listFiles([...])
+14 APPPATH/Libraries/Google.php(158): App\Libraries\Google->_is_folder_exists(Object(Google_Service_Drive), 'profile_images')
+15 APPPATH/Libraries/Google.php(204): App\Libraries\Google->_create_folder('profile_images')
+16 APPPATH/Helpers/app_files_helper.php(294): App\Libraries\Google->upload_file('/tmp/phpLZ6qWT', '_file6971d0fc4fdf5-avatar.png', 'profile_images', '/home/gestiontictaccom/public_html')
+17 APPPATH/Controllers/Team_members.php(784): move_temp_file('avatar.png', 'FCPATH/files/profile_images', '/home/gestiontictaccom/public_html', '/tmp/phpLZ6qWT')
+18 SYSTEMPATH/CodeIgniter.php(934): App\Controllers\Team_members->save_profile_image('36')
+19 SYSTEMPATH/CodeIgniter.php(499): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Team_members))
+20 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+21 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+WARNING - 2026-01-22 01:25:49 --> [DEPRECATED] Return type of Google_Collection::count() should either be compatible with Countable::count(): int, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php on line 51.
+ 1 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php')
+ 2 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Collection.php')
+ 3 APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php(18): Composer\Autoload\ClassLoader->loadClass('Google_Collection')
+ 4 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(444): include('APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php')
+ 5 APPPATH/ThirdParty/Google/google-api-php-client/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/FileList.php')
+ 6 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(128): Composer\Autoload\ClassLoader->loadClass('Google_Service_Drive_FileList')
+ 7 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(94): Google_Http_REST::decodeHttpResponse(Object(GuzzleHttp\Psr7\Response), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+ 8 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Task/Runner.php(176): Google_Http_REST::doExecute(Object(GuzzleHttp\Client), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+ 9 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Http/REST.php(58): Google_Task_Runner->run()
+10 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Client.php(798): Google_Http_REST::execute(Object(GuzzleHttp\Client), Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList', [])
+11 APPPATH/ThirdParty/Google/google-api-php-client/src/Google/Service/Resource.php(232): Google_Client->execute(Object(GuzzleHttp\Psr7\Request), 'Google_Service_Drive_FileList')
+12 APPPATH/ThirdParty/Google/google-api-php-client/vendor/google/apiclient-services/src/Google/Service/Drive/Resource/Files.php(206): Google_Service_Resource->call('list', [...], 'Google_Service_Drive_FileList')
+13 APPPATH/Libraries/Google.php(83): Google_Service_Drive_Resource_Files->listFiles([...])
+14 APPPATH/Libraries/Google.php(158): App\Libraries\Google->_is_folder_exists(Object(Google_Service_Drive), 'profile_images')
+15 APPPATH/Libraries/Google.php(204): App\Libraries\Google->_create_folder('profile_images')
+16 APPPATH/Helpers/app_files_helper.php(294): App\Libraries\Google->upload_file('/tmp/phpLZ6qWT', '_file6971d0fc4fdf5-avatar.png', 'profile_images', '/home/gestiontictaccom/public_html')
+17 APPPATH/Controllers/Team_members.php(784): move_temp_file('avatar.png', 'FCPATH/files/profile_images', '/home/gestiontictaccom/public_html', '/tmp/phpLZ6qWT')
+18 SYSTEMPATH/CodeIgniter.php(934): App\Controllers\Team_members->save_profile_image('36')
+19 SYSTEMPATH/CodeIgniter.php(499): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Team_members))
+20 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+21 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+ERROR - 2026-01-22 01:36:27 --> Email: Unable to send email using SMTP. Your server might not be configured to send mail using this method.
+ERROR - 2026-01-22 01:36:27 --> 220 smtp.gmail.com ESMTP ffacd0b85a97d-4356996cf58sm43470107f8f.22 - gsmtp
+
+hello: 250-smtp.gmail.com at your service, [2a12:d280:100:67::]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+starttls: 220 2.0.0 Ready to start TLS
+
+hello: 250-smtp.gmail.com at your service, [2a12:d280:100:67::]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+Failed to authenticate password. Error: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials ffacd0b85a97d-4356996cf58sm43470107f8f.22 - gsmtp
+
+ERROR - 2026-01-22 01:36:27 --> Email: Unable to send email using SMTP. Your server might not be configured to send mail using this method.
+ERROR - 2026-01-22 01:36:27 --> Failed to authenticate password. Error: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials ffacd0b85a97d-4356996cf58sm43470107f8f.22 - gsmtp
+
+ERROR - 2026-01-22 01:36:31 --> Email: Unable to send email using SMTP. Your server might not be configured to send mail using this method.
+ERROR - 2026-01-22 01:36:31 --> 220 smtp.gmail.com ESMTP 5b1f17b1804b1-48042c3dbd8sm43893515e9.10 - gsmtp
+
+hello: 250-smtp.gmail.com at your service, [2a12:d280:100:67::]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+starttls: 220 2.0.0 Ready to start TLS
+
+hello: 250-smtp.gmail.com at your service, [2a12:d280:100:67::]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+Failed to authenticate password. Error: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 5b1f17b1804b1-48042c3dbd8sm43893515e9.10 - gsmtp
+
+ERROR - 2026-01-22 01:36:31 --> Email: Unable to send email using SMTP. Your server might not be configured to send mail using this method.
+ERROR - 2026-01-22 01:36:31 --> Failed to authenticate password. Error: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 5b1f17b1804b1-48042c3dbd8sm43893515e9.10 - gsmtp
+
+ERROR - 2026-01-22 01:36:42 --> Email: Unable to send email using SMTP. Your server might not be configured to send mail using this method.
+ERROR - 2026-01-22 01:36:42 --> 220 smtp.gmail.com ESMTP 5b1f17b1804b1-4804704b89bsm44744685e9.9 - gsmtp
+
+hello: 250-smtp.gmail.com at your service, [2a12:d280:100:67::]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+starttls: 220 2.0.0 Ready to start TLS
+
+hello: 250-smtp.gmail.com at your service, [2a12:d280:100:67::]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+Failed to authenticate password. Error: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 5b1f17b1804b1-4804704b89bsm44744685e9.9 - gsmtp
+
+ERROR - 2026-01-22 01:36:46 --> Email: Unable to send email using SMTP. Your server might not be configured to send mail using this method.
+ERROR - 2026-01-22 01:36:46 --> 220 smtp.gmail.com ESMTP 5b1f17b1804b1-480424c4b8bsm45893725e9.6 - gsmtp
+
+hello: 250-smtp.gmail.com at your service, [2a12:d280:100:67::]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+starttls: 220 2.0.0 Ready to start TLS
+
+hello: 250-smtp.gmail.com at your service, [2a12:d280:100:67::]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+Failed to authenticate password. Error: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 5b1f17b1804b1-480424c4b8bsm45893725e9.6 - gsmtp
+
+ERROR - 2026-01-22 01:36:49 --> Email: Unable to send email using SMTP. Your server might not be configured to send mail using this method.
+ERROR - 2026-01-22 01:36:49 --> 220 smtp.gmail.com ESMTP 5b1f17b1804b1-4804703b90bsm55841985e9.6 - gsmtp
+
+hello: 250-smtp.gmail.com at your service, [2a12:d280:100:67::]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+starttls: 220 2.0.0 Ready to start TLS
+
+hello: 250-smtp.gmail.com at your service, [2a12:d280:100:67::]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+Failed to authenticate password. Error: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 5b1f17b1804b1-4804703b90bsm55841985e9.6 - gsmtp
+
+ERROR - 2026-01-22 01:36:49 --> Email: Unable to send email using SMTP. Your server might not be configured to send mail using this method.
+ERROR - 2026-01-22 01:36:49 --> Failed to authenticate password. Error: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 5b1f17b1804b1-4804703b90bsm55841985e9.6 - gsmtp
+
+ERROR - 2026-01-22 01:36:49 --> Email: Unable to send email using SMTP. Your server might not be configured to send mail using this method.
+ERROR - 2026-01-22 01:36:49 --> Failed to authenticate password. Error: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 5b1f17b1804b1-4804703b90bsm55841985e9.6 - gsmtp
+
+ERROR - 2026-01-22 01:36:52 --> Email: Unable to send email using SMTP. Your server might not be configured to send mail using this method.
+ERROR - 2026-01-22 01:36:52 --> 220 smtp.gmail.com ESMTP 5b1f17b1804b1-480470bfe88sm43991595e9.11 - gsmtp
+
+hello: 250-smtp.gmail.com at your service, [2a12:d280:100:67::]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+starttls: 220 2.0.0 Ready to start TLS
+
+hello: 250-smtp.gmail.com at your service, [2a12:d280:100:67::]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+Failed to authenticate password. Error: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 5b1f17b1804b1-480470bfe88sm43991595e9.11 - gsmtp
+
+ERROR - 2026-01-22 01:36:53 --> Email: Unable to send email using SMTP. Your server might not be configured to send mail using this method.
+ERROR - 2026-01-22 01:36:53 --> Failed to authenticate password. Error: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 5b1f17b1804b1-480470bfe88sm43991595e9.11 - gsmtp
+
+ERROR - 2026-01-22 01:36:53 --> Email: Unable to send email using SMTP. Your server might not be configured to send mail using this method.
+ERROR - 2026-01-22 01:36:53 --> Failed to authenticate password. Error: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 5b1f17b1804b1-480470bfe88sm43991595e9.11 - gsmtp
+
+ERROR - 2026-01-22 01:36:56 --> Email: Unable to send email using SMTP. Your server might not be configured to send mail using this method.
+ERROR - 2026-01-22 01:36:56 --> 220 smtp.gmail.com ESMTP ffacd0b85a97d-43595e0a705sm14883782f8f.14 - gsmtp
+
+hello: 250-smtp.gmail.com at your service, [2a12:d280:100:67::]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+starttls: 220 2.0.0 Ready to start TLS
+
+hello: 250-smtp.gmail.com at your service, [2a12:d280:100:67::]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+Failed to authenticate password. Error: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials ffacd0b85a97d-43595e0a705sm14883782f8f.14 - gsmtp
+
+ERROR - 2026-01-22 01:36:56 --> Email: Unable to send email using SMTP. Your server might not be configured to send mail using this method.
+ERROR - 2026-01-22 01:36:56 --> Failed to authenticate password. Error: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials ffacd0b85a97d-43595e0a705sm14883782f8f.14 - gsmtp
+
+ERROR - 2026-01-22 01:37:00 --> Email: Unable to send email using SMTP. Your server might not be configured to send mail using this method.
+ERROR - 2026-01-22 01:37:00 --> 220 smtp.gmail.com ESMTP ffacd0b85a97d-4356997eb2asm43119245f8f.37 - gsmtp
+
+hello: 250-smtp.gmail.com at your service, [2a12:d280:100:67::]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+starttls: 220 2.0.0 Ready to start TLS
+
+hello: 250-smtp.gmail.com at your service, [2a12:d280:100:67::]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+Failed to authenticate password. Error: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials ffacd0b85a97d-4356997eb2asm43119245f8f.37 - gsmtp
+
+ERROR - 2026-01-22 01:37:00 --> Email: Unable to send email using SMTP. Your server might not be configured to send mail using this method.
+ERROR - 2026-01-22 01:37:00 --> Failed to authenticate password. Error: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials ffacd0b85a97d-4356997eb2asm43119245f8f.37 - gsmtp
+
+CRITICAL - 2026-01-22 03:17:33 --> The action you requested is not allowed.
+in SYSTEMPATH/Security/Security.php on line 306.
+ 1 SYSTEMPATH/Security/Security.php(306): CodeIgniter\Security\Exceptions\SecurityException::forDisallowedAction()
+ 2 SYSTEMPATH/Filters/CSRF.php(55): CodeIgniter\Security\Security->verify(Object(CodeIgniter\HTTP\IncomingRequest))
+ 3 SYSTEMPATH/Filters/Filters.php(173): CodeIgniter\Filters\CSRF->before(Object(CodeIgniter\HTTP\IncomingRequest), null)
+ 4 SYSTEMPATH/CodeIgniter.php(473): CodeIgniter\Filters\Filters->run('leads/modal_form', 'before')
+ 5 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 6 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+CRITICAL - 2026-01-22 03:28:28 --> The action you requested is not allowed.
+in SYSTEMPATH/Security/Security.php on line 306.
+ 1 SYSTEMPATH/Security/Security.php(306): CodeIgniter\Security\Exceptions\SecurityException::forDisallowedAction()
+ 2 SYSTEMPATH/Filters/CSRF.php(55): CodeIgniter\Security\Security->verify(Object(CodeIgniter\HTTP\IncomingRequest))
+ 3 SYSTEMPATH/Filters/Filters.php(173): CodeIgniter\Filters\CSRF->before(Object(CodeIgniter\HTTP\IncomingRequest), null)
+ 4 SYSTEMPATH/CodeIgniter.php(473): CodeIgniter\Filters\Filters->run('projects/show_my_open_timers/', 'before')
+ 5 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 6 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+CRITICAL - 2026-01-22 03:28:28 --> The action you requested is not allowed.
+in SYSTEMPATH/Security/Security.php on line 306.
+ 1 SYSTEMPATH/Security/Security.php(306): CodeIgniter\Security\Exceptions\SecurityException::forDisallowedAction()
+ 2 SYSTEMPATH/Filters/CSRF.php(55): CodeIgniter\Security\Security->verify(Object(CodeIgniter\HTTP\IncomingRequest))
+ 3 SYSTEMPATH/Filters/Filters.php(173): CodeIgniter\Filters\CSRF->before(Object(CodeIgniter\HTTP\IncomingRequest), null)
+ 4 SYSTEMPATH/CodeIgniter.php(473): CodeIgniter\Filters\Filters->run('projects/show_my_open_timers/', 'before')
+ 5 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 6 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+CRITICAL - 2026-01-22 05:55:47 --> The action you requested is not allowed.
+in SYSTEMPATH/Security/Security.php on line 306.
+ 1 SYSTEMPATH/Security/Security.php(306): CodeIgniter\Security\Exceptions\SecurityException::forDisallowedAction()
+ 2 SYSTEMPATH/Filters/CSRF.php(55): CodeIgniter\Security\Security->verify(Object(CodeIgniter\HTTP\IncomingRequest))
+ 3 SYSTEMPATH/Filters/Filters.php(173): CodeIgniter\Filters\CSRF->before(Object(CodeIgniter\HTTP\IncomingRequest), null)
+ 4 SYSTEMPATH/CodeIgniter.php(473): CodeIgniter\Filters\Filters->run('projects/show_my_open_timers/', 'before')
+ 5 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 6 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+CRITICAL - 2026-01-22 05:55:47 --> The action you requested is not allowed.
+in SYSTEMPATH/Security/Security.php on line 306.
+ 1 SYSTEMPATH/Security/Security.php(306): CodeIgniter\Security\Exceptions\SecurityException::forDisallowedAction()
+ 2 SYSTEMPATH/Filters/CSRF.php(55): CodeIgniter\Security\Security->verify(Object(CodeIgniter\HTTP\IncomingRequest))
+ 3 SYSTEMPATH/Filters/Filters.php(173): CodeIgniter\Filters\CSRF->before(Object(CodeIgniter\HTTP\IncomingRequest), null)
+ 4 SYSTEMPATH/CodeIgniter.php(473): CodeIgniter\Filters\Filters->run('projects/show_my_open_timers/', 'before')
+ 5 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 6 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+ERROR - 2026-01-22 06:02:25 --> Email: Unable to send email using SMTP. Your server might not be configured to send mail using this method.
+ERROR - 2026-01-22 06:02:25 --> 220 smtp.gmail.com ESMTP 5b1f17b1804b1-480470401cbsm65428565e9.4 - gsmtp
+
+hello: 250-smtp.gmail.com at your service, [2a12:d280:100:67::]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+starttls: 220 2.0.0 Ready to start TLS
+
+hello: 250-smtp.gmail.com at your service, [2a12:d280:100:67::]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+
+Failed to authenticate password. Error: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 5b1f17b1804b1-480470401cbsm65428565e9.4 - gsmtp
+
+CRITICAL - 2026-01-22 06:11:19 --> The action you requested is not allowed.
+in SYSTEMPATH/Security/Security.php on line 306.
+ 1 SYSTEMPATH/Security/Security.php(306): CodeIgniter\Security\Exceptions\SecurityException::forDisallowedAction()
+ 2 SYSTEMPATH/Filters/CSRF.php(55): CodeIgniter\Security\Security->verify(Object(CodeIgniter\HTTP\IncomingRequest))
+ 3 SYSTEMPATH/Filters/Filters.php(173): CodeIgniter\Filters\CSRF->before(Object(CodeIgniter\HTTP\IncomingRequest), null)
+ 4 SYSTEMPATH/CodeIgniter.php(473): CodeIgniter\Filters\Filters->run('clients/list_data', 'before')
+ 5 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 6 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+CRITICAL - 2026-01-22 06:11:24 --> The action you requested is not allowed.
+in SYSTEMPATH/Security/Security.php on line 306.
+ 1 SYSTEMPATH/Security/Security.php(306): CodeIgniter\Security\Exceptions\SecurityException::forDisallowedAction()
+ 2 SYSTEMPATH/Filters/CSRF.php(55): CodeIgniter\Security\Security->verify(Object(CodeIgniter\HTTP\IncomingRequest))
+ 3 SYSTEMPATH/Filters/Filters.php(173): CodeIgniter\Filters\CSRF->before(Object(CodeIgniter\HTTP\IncomingRequest), null)
+ 4 SYSTEMPATH/CodeIgniter.php(473): CodeIgniter\Filters\Filters->run('clients/list_data', 'before')
+ 5 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 6 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+CRITICAL - 2026-01-22 06:32:58 --> The action you requested is not allowed.
+in SYSTEMPATH/Security/Security.php on line 306.
+ 1 SYSTEMPATH/Security/Security.php(306): CodeIgniter\Security\Exceptions\SecurityException::forDisallowedAction()
+ 2 SYSTEMPATH/Filters/CSRF.php(55): CodeIgniter\Security\Security->verify(Object(CodeIgniter\HTTP\IncomingRequest))
+ 3 SYSTEMPATH/Filters/Filters.php(173): CodeIgniter\Filters\CSRF->before(Object(CodeIgniter\HTTP\IncomingRequest), null)
+ 4 SYSTEMPATH/CodeIgniter.php(473): CodeIgniter\Filters\Filters->run('clients/list_data', 'before')
+ 5 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 6 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+CRITICAL - 2026-01-22 08:17:55 --> The action you requested is not allowed.
+in SYSTEMPATH/Security/Security.php on line 306.
+ 1 SYSTEMPATH/Security/Security.php(306): CodeIgniter\Security\Exceptions\SecurityException::forDisallowedAction()
+ 2 SYSTEMPATH/Filters/CSRF.php(55): CodeIgniter\Security\Security->verify(Object(CodeIgniter\HTTP\IncomingRequest))
+ 3 SYSTEMPATH/Filters/Filters.php(173): CodeIgniter\Filters\CSRF->before(Object(CodeIgniter\HTTP\IncomingRequest), null)
+ 4 SYSTEMPATH/CodeIgniter.php(473): CodeIgniter\Filters\Filters->run('projects/my_tasks_list_data', 'before')
+ 5 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 6 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+CRITICAL - 2026-01-22 09:05:38 --> The action you requested is not allowed.
+in SYSTEMPATH/Security/Security.php on line 306.
+ 1 SYSTEMPATH/Security/Security.php(306): CodeIgniter\Security\Exceptions\SecurityException::forDisallowedAction()
+ 2 SYSTEMPATH/Filters/CSRF.php(55): CodeIgniter\Security\Security->verify(Object(CodeIgniter\HTTP\IncomingRequest))
+ 3 SYSTEMPATH/Filters/Filters.php(173): CodeIgniter\Filters\CSRF->before(Object(CodeIgniter\HTTP\IncomingRequest), null)
+ 4 SYSTEMPATH/CodeIgniter.php(473): CodeIgniter\Filters\Filters->run('projects/my_tasks_list_data', 'before')
+ 5 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 6 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+CRITICAL - 2026-01-22 09:19:46 --> The action you requested is not allowed.
+in SYSTEMPATH/Security/Security.php on line 306.
+ 1 SYSTEMPATH/Security/Security.php(306): CodeIgniter\Security\Exceptions\SecurityException::forDisallowedAction()
+ 2 SYSTEMPATH/Filters/CSRF.php(55): CodeIgniter\Security\Security->verify(Object(CodeIgniter\HTTP\IncomingRequest))
+ 3 SYSTEMPATH/Filters/Filters.php(173): CodeIgniter\Filters\CSRF->before(Object(CodeIgniter\HTTP\IncomingRequest), null)
+ 4 SYSTEMPATH/CodeIgniter.php(473): CodeIgniter\Filters\Filters->run('projects/my_tasks_list_data', 'before')
+ 5 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 6 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+CRITICAL - 2026-01-22 09:36:20 --> The action you requested is not allowed.
+in SYSTEMPATH/Security/Security.php on line 306.
+ 1 SYSTEMPATH/Security/Security.php(306): CodeIgniter\Security\Exceptions\SecurityException::forDisallowedAction()
+ 2 SYSTEMPATH/Filters/CSRF.php(55): CodeIgniter\Security\Security->verify(Object(CodeIgniter\HTTP\IncomingRequest))
+ 3 SYSTEMPATH/Filters/Filters.php(173): CodeIgniter\Filters\CSRF->before(Object(CodeIgniter\HTTP\IncomingRequest), null)
+ 4 SYSTEMPATH/CodeIgniter.php(473): CodeIgniter\Filters\Filters->run('projects/task_view', 'before')
+ 5 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 6 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+CRITICAL - 2026-01-22 09:46:56 --> The action you requested is not allowed.
+in SYSTEMPATH/Security/Security.php on line 306.
+ 1 SYSTEMPATH/Security/Security.php(306): CodeIgniter\Security\Exceptions\SecurityException::forDisallowedAction()
+ 2 SYSTEMPATH/Filters/CSRF.php(55): CodeIgniter\Security\Security->verify(Object(CodeIgniter\HTTP\IncomingRequest))
+ 3 SYSTEMPATH/Filters/Filters.php(173): CodeIgniter\Filters\CSRF->before(Object(CodeIgniter\HTTP\IncomingRequest), null)
+ 4 SYSTEMPATH/CodeIgniter.php(473): CodeIgniter\Filters\Filters->run('projects/my_tasks_list_data', 'before')
+ 5 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 6 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+WARNING - 2026-01-22 10:55:07 --> [DEPRECATED] hex2bin(): Passing null to parameter #1 ($string) of type string is deprecated in APPPATH/Helpers/general_helper.php on line 438.
+ 1 APPPATH/Helpers/general_helper.php(438): hex2bin(null)
+ 2 APPPATH/Controllers/Events.php(33): decode_id(null, 'event_id')
+ 3 SYSTEMPATH/CodeIgniter.php(934): App\Controllers\Events->modal_form()
+ 4 SYSTEMPATH/CodeIgniter.php(499): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Events))
+ 5 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 6 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+CRITICAL - 2026-01-22 11:32:04 --> The action you requested is not allowed.
+in SYSTEMPATH/Security/Security.php on line 306.
+ 1 SYSTEMPATH/Security/Security.php(306): CodeIgniter\Security\Exceptions\SecurityException::forDisallowedAction()
+ 2 SYSTEMPATH/Filters/CSRF.php(55): CodeIgniter\Security\Security->verify(Object(CodeIgniter\HTTP\IncomingRequest))
+ 3 SYSTEMPATH/Filters/Filters.php(173): CodeIgniter\Filters\CSRF->before(Object(CodeIgniter\HTTP\IncomingRequest), null)
+ 4 SYSTEMPATH/CodeIgniter.php(473): CodeIgniter\Filters\Filters->run('projects/show_my_open_timers/', 'before')
+ 5 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 6 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()
+CRITICAL - 2026-01-22 11:32:04 --> The action you requested is not allowed.
+in SYSTEMPATH/Security/Security.php on line 306.
+ 1 SYSTEMPATH/Security/Security.php(306): CodeIgniter\Security\Exceptions\SecurityException::forDisallowedAction()
+ 2 SYSTEMPATH/Filters/CSRF.php(55): CodeIgniter\Security\Security->verify(Object(CodeIgniter\HTTP\IncomingRequest))
+ 3 SYSTEMPATH/Filters/Filters.php(173): CodeIgniter\Filters\CSRF->before(Object(CodeIgniter\HTTP\IncomingRequest), null)
+ 4 SYSTEMPATH/CodeIgniter.php(473): CodeIgniter\Filters\Filters->run('projects/show_my_open_timers/', 'before')
+ 5 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 6 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()

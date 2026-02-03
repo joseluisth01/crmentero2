@@ -1,0 +1,16 @@
+[03-Feb-2026 11:48:59 Europe/Madrid] PHP Fatal error:  Uncaught Error: Undefined constant "CURLINFO_URL" in /home/gestiontictaccom/public_html/api/debugitems.php:138
+Stack trace:
+#0 {main}
+  thrown in /home/gestiontictaccom/public_html/api/debugitems.php on line 138
+[03-Feb-2026 11:49:00 Europe/Madrid] PHP Fatal error:  Uncaught Error: Undefined constant "CURLINFO_URL" in /home/gestiontictaccom/public_html/api/debugitems.php:138
+Stack trace:
+#0 {main}
+  thrown in /home/gestiontictaccom/public_html/api/debugitems.php on line 138
+[03-Feb-2026 11:49:08 Europe/Madrid] PHP Fatal error:  Uncaught Error: Undefined constant "CURLINFO_URL" in /home/gestiontictaccom/public_html/api/debugitems.php:138
+Stack trace:
+#0 {main}
+  thrown in /home/gestiontictaccom/public_html/api/debugitems.php on line 138
+[03-Feb-2026 11:49:09 Europe/Madrid] PHP Fatal error:  Uncaught Error: Undefined constant "CURLINFO_URL" in /home/gestiontictaccom/public_html/api/debugitems.php:138
+Stack trace:
+#0 {main}
+  thrown in /home/gestiontictaccom/public_html/api/debugitems.php on line 138

@@ -1,0 +1,33 @@
+ERROR - 2026-01-28 15:19:29 --> mysqli_sql_exception: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'as comment_created_at
+        FROM crm_pin_comments
+        
+        WHERE cr...' at line 1 in /home/gestiontictaccom/public_html/system/Database/MySQLi/Connection.php:327
+Stack trace:
+#0 /home/gestiontictaccom/public_html/system/Database/MySQLi/Connection.php(327): mysqli->query('SELECT crm_pin_...', 0)
+#1 /home/gestiontictaccom/public_html/system/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT crm_pin_...')
+#2 /home/gestiontictaccom/public_html/system/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT crm_pin_...')
+#3 /home/gestiontictaccom/public_html/app/Models/Pin_comments_model.php(57): CodeIgniter\Database\BaseConnection->query('SELECT crm_pin_...')
+#4 /home/gestiontictaccom/public_html/app/Controllers/Tasks.php(1811): App\Models\Pin_comments_model->get_details(Array)
+#5 /home/gestiontictaccom/public_html/system/CodeIgniter.php(933): App\Controllers\Tasks->view()
+#6 /home/gestiontictaccom/public_html/system/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Tasks))
+#7 /home/gestiontictaccom/public_html/system/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#8 /home/gestiontictaccom/public_html/system/Boot.php(363): CodeIgniter\CodeIgniter->run()
+#9 /home/gestiontictaccom/public_html/system/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#10 /home/gestiontictaccom/public_html/index.php(75): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#11 {main}
+CRITICAL - 2026-01-28 15:19:29 --> Error: Call to a member function getResult() on bool
+[Method: GET, Route: tasks/view]
+in APPPATH/Controllers/Tasks.php on line 1811.
+ 1 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\Tasks->view()
+ 2 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Tasks))
+ 3 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 4 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 5 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 6 FCPATH/index.php(75): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ERROR - 2026-01-28 23:08:02 --> Harmful injection detected by _get_clean_value where the key:  and value: Artículo de blog "cómo ocultar un pinganillo antes de un examen"
+Function: _get_clean_value File: /home/gestiontictaccom/public_html/app/Models/Crud_model.php Line: 580 
+Function: _get_clean_value File: /home/gestiontictaccom/public_html/app/Models/Crud_model.php Line: 580 
+Function: _get_clean_value File: /home/gestiontictaccom/public_html/app/Models/Crud_model.php Line: 580 
+Function: _get_clean_value File: /home/gestiontictaccom/public_html/app/Models/Crud_model.php Line: 580 
+Function: _get_clean_value File: /home/gestiontictaccom/public_html/app/Models/Notifications_model.php Line: 50 
+

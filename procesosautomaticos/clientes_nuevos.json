@@ -1,0 +1,30 @@
+[
+    {
+        "id": "208",
+        "nombre": "CLIENTE NUEVO SL",
+        "fecha_creacion": "2026-01-30 09:28:07",
+        "email": "jjlltthh99@gmail.com",
+        "fecha_deteccion": "2026-01-30 09:42:01"
+    },
+    {
+        "id": "207",
+        "nombre": "PRUEBA SL",
+        "fecha_creacion": "2026-01-30 09:18:13",
+        "email": "pepeluth@gmail.com",
+        "fecha_deteccion": "2026-01-30 09:42:01"
+    },
+    {
+        "id": "209",
+        "nombre": "NANO SL",
+        "fecha_creacion": "2026-01-30 09:45:41",
+        "email": "",
+        "fecha_deteccion": "2026-01-30 09:46:02"
+    },
+    {
+        "id": "210",
+        "nombre": "CLIENTE ULT",
+        "fecha_creacion": "2026-01-30 09:52:06",
+        "email": "lospitoflauticos@gmail.com",
+        "fecha_deteccion": "2026-01-30 09:53:02"
+    }
+]

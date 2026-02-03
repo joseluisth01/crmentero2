@@ -1,0 +1,5002 @@
+[
+    {
+        "id": "6981da1d73906",
+        "fecha": "2026-02-03 12:21:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d9e275e41",
+        "fecha": "2026-02-03 12:20:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d9a58a9a3",
+        "fecha": "2026-02-03 12:19:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d96a2e85a",
+        "fecha": "2026-02-03 12:18:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d92dd415b",
+        "fecha": "2026-02-03 12:17:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d8f17ce65",
+        "fecha": "2026-02-03 12:16:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d8b62d9ed",
+        "fecha": "2026-02-03 12:15:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d87a293a7",
+        "fecha": "2026-02-03 12:14:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d83dc5313",
+        "fecha": "2026-02-03 12:13:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d8017880d",
+        "fecha": "2026-02-03 12:12:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d7c5d7bb9",
+        "fecha": "2026-02-03 12:11:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d78a04e74",
+        "fecha": "2026-02-03 12:10:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d74e16072",
+        "fecha": "2026-02-03 12:09:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d711ac4a7",
+        "fecha": "2026-02-03 12:08:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d6d55a072",
+        "fecha": "2026-02-03 12:07:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d69a163ce",
+        "fecha": "2026-02-03 12:06:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d65e15087",
+        "fecha": "2026-02-03 12:05:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d6222a0e3",
+        "fecha": "2026-02-03 12:04:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d5e5bb755",
+        "fecha": "2026-02-03 12:03:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d5aa46731",
+        "fecha": "2026-02-03 12:02:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d56dd569e",
+        "fecha": "2026-02-03 12:01:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d5328e908",
+        "fecha": "2026-02-03 12:00:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d4f61541a",
+        "fecha": "2026-02-03 11:59:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d4b9ab46e",
+        "fecha": "2026-02-03 11:58:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d47d5b5ad",
+        "fecha": "2026-02-03 11:57:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d4418a9a7",
+        "fecha": "2026-02-03 11:56:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d40677623",
+        "fecha": "2026-02-03 11:55:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d3c98ce48",
+        "fecha": "2026-02-03 11:54:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d38e46ea8",
+        "fecha": "2026-02-03 11:53:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d351c276e",
+        "fecha": "2026-02-03 11:52:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d315d60a5",
+        "fecha": "2026-02-03 11:51:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d2da62ed2",
+        "fecha": "2026-02-03 11:50:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d29d60b14",
+        "fecha": "2026-02-03 11:49:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d26213179",
+        "fecha": "2026-02-03 11:48:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d225ab55b",
+        "fecha": "2026-02-03 11:47:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d1ea733ab",
+        "fecha": "2026-02-03 11:46:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d1ae5ecd4",
+        "fecha": "2026-02-03 11:45:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d17164a1a",
+        "fecha": "2026-02-03 11:44:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d13612a40",
+        "fecha": "2026-02-03 11:43:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d0f9ab863",
+        "fecha": "2026-02-03 11:42:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d0be5cfa6",
+        "fecha": "2026-02-03 11:41:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d08289cab",
+        "fecha": "2026-02-03 11:40:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d04659b6f",
+        "fecha": "2026-02-03 11:39:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981d00a129c5",
+        "fecha": "2026-02-03 11:38:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981cfcda85e1",
+        "fecha": "2026-02-03 11:37:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981cf91eedac",
+        "fecha": "2026-02-03 11:36:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981cf568dfef",
+        "fecha": "2026-02-03 11:35:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981cf1997f30",
+        "fecha": "2026-02-03 11:34:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ceddefc44",
+        "fecha": "2026-02-03 11:33:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981cea18c938",
+        "fecha": "2026-02-03 11:32:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ce65a88a9",
+        "fecha": "2026-02-03 11:31:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ce2b07b1d",
+        "fecha": "2026-02-03 11:30:03",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981cdeda3525",
+        "fecha": "2026-02-03 11:29:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981cdb24b7e6",
+        "fecha": "2026-02-03 11:28:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981cd75ebdec",
+        "fecha": "2026-02-03 11:27:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981cd398cc3b",
+        "fecha": "2026-02-03 11:26:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ccfe482cc",
+        "fecha": "2026-02-03 11:25:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ccc18c979",
+        "fecha": "2026-02-03 11:24:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981cc863055a",
+        "fecha": "2026-02-03 11:23:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981cc49bc579",
+        "fecha": "2026-02-03 11:22:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981cc0d74021",
+        "fecha": "2026-02-03 11:21:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981cbd27551e",
+        "fecha": "2026-02-03 11:20:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981cb958e0af",
+        "fecha": "2026-02-03 11:19:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981cb5a2ca9a",
+        "fecha": "2026-02-03 11:18:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981cb1dbcc71",
+        "fecha": "2026-02-03 11:17:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981cae176b00",
+        "fecha": "2026-02-03 11:16:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981caa6304d2",
+        "fecha": "2026-02-03 11:15:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ca6a4ae0b",
+        "fecha": "2026-02-03 11:14:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ca2e5cbaa",
+        "fecha": "2026-02-03 11:13:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c9f1ee161",
+        "fecha": "2026-02-03 11:12:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c9b5efb40",
+        "fecha": "2026-02-03 11:11:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c97abd2c5",
+        "fecha": "2026-02-03 11:10:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c93dbd414",
+        "fecha": "2026-02-03 11:09:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c9015dea3",
+        "fecha": "2026-02-03 11:08:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c8c62dcd9",
+        "fecha": "2026-02-03 11:07:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c889a5010",
+        "fecha": "2026-02-03 11:06:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c84e178f3",
+        "fecha": "2026-02-03 11:05:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c81211a5b",
+        "fecha": "2026-02-03 11:04:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c7d5c1596",
+        "fecha": "2026-02-03 11:03:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c7996238f",
+        "fecha": "2026-02-03 11:02:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c75e1a2ec",
+        "fecha": "2026-02-03 11:01:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c722c8b3c",
+        "fecha": "2026-02-03 11:00:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c6e5af77f",
+        "fecha": "2026-02-03 10:59:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c6a95a415",
+        "fecha": "2026-02-03 10:58:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c66e00819",
+        "fecha": "2026-02-03 10:57:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c631be50d",
+        "fecha": "2026-02-03 10:56:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c5f6bf7fa",
+        "fecha": "2026-02-03 10:55:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c5b9c80d3",
+        "fecha": "2026-02-03 10:54:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c57d73387",
+        "fecha": "2026-02-03 10:53:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c54210860",
+        "fecha": "2026-02-03 10:52:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c505a7a1c",
+        "fecha": "2026-02-03 10:51:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c4ca5a8d6",
+        "fecha": "2026-02-03 10:50:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c48e49446",
+        "fecha": "2026-02-03 10:49:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c451f3bd3",
+        "fecha": "2026-02-03 10:48:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c415a2d1c",
+        "fecha": "2026-02-03 10:47:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c3d9efa05",
+        "fecha": "2026-02-03 10:46:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c39ea315c",
+        "fecha": "2026-02-03 10:45:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c361a35fa",
+        "fecha": "2026-02-03 10:44:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c326474b1",
+        "fecha": "2026-02-03 10:43:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c2e9f3751",
+        "fecha": "2026-02-03 10:42:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c2add42eb",
+        "fecha": "2026-02-03 10:41:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c272912d0",
+        "fecha": "2026-02-03 10:40:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c2358ed7c",
+        "fecha": "2026-02-03 10:39:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c1fa2ad62",
+        "fecha": "2026-02-03 10:38:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c1bdd553c",
+        "fecha": "2026-02-03 10:37:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c18175b34",
+        "fecha": "2026-02-03 10:36:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c146a2be8",
+        "fecha": "2026-02-03 10:35:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c1099227d",
+        "fecha": "2026-02-03 10:34:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c0ce61578",
+        "fecha": "2026-02-03 10:33:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c091dc89b",
+        "fecha": "2026-02-03 10:32:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c0557c3ed",
+        "fecha": "2026-02-03 10:31:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981c01a36133",
+        "fecha": "2026-02-03 10:30:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981bfde1a340",
+        "fecha": "2026-02-03 10:29:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981bfa1c266c",
+        "fecha": "2026-02-03 10:28:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981bf6576583",
+        "fecha": "2026-02-03 10:27:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981bf2a1433c",
+        "fecha": "2026-02-03 10:26:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981beee37544",
+        "fecha": "2026-02-03 10:25:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981beb211fd7",
+        "fecha": "2026-02-03 10:24:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981be75c0d69",
+        "fecha": "2026-02-03 10:23:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981be39622c0",
+        "fecha": "2026-02-03 10:22:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981bdfe140c7",
+        "fecha": "2026-02-03 10:21:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981bdc2a8e51",
+        "fecha": "2026-02-03 10:20:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981bd8590234",
+        "fecha": "2026-02-03 10:19:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981bd4a46952",
+        "fecha": "2026-02-03 10:18:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981bd0dda1f3",
+        "fecha": "2026-02-03 10:17:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981bcd18c114",
+        "fecha": "2026-02-03 10:16:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981bc9691a7b",
+        "fecha": "2026-02-03 10:15:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981bc598be98",
+        "fecha": "2026-02-03 10:14:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981bc1e49e96",
+        "fecha": "2026-02-03 10:13:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981bbe1dff9f",
+        "fecha": "2026-02-03 10:12:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981bba5961b3",
+        "fecha": "2026-02-03 10:11:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981bb6a91db0",
+        "fecha": "2026-02-03 10:10:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981bb2d9428b",
+        "fecha": "2026-02-03 10:09:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981baf2455d2",
+        "fecha": "2026-02-03 10:08:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981bab5ede7d",
+        "fecha": "2026-02-03 10:07:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ba79a653b",
+        "fecha": "2026-02-03 10:06:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ba3eaf61e",
+        "fecha": "2026-02-03 10:05:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ba01a515a",
+        "fecha": "2026-02-03 10:04:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b9c65cf05",
+        "fecha": "2026-02-03 10:03:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b989dff43",
+        "fecha": "2026-02-03 10:02:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b94d7d8ca",
+        "fecha": "2026-02-03 10:01:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b912beb15",
+        "fecha": "2026-02-03 10:00:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b8d58a74a",
+        "fecha": "2026-02-03 09:59:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b89a2af8b",
+        "fecha": "2026-02-03 09:58:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b85dbc719",
+        "fecha": "2026-02-03 09:57:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b82175c61",
+        "fecha": "2026-02-03 09:56:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b7e61e85e",
+        "fecha": "2026-02-03 09:55:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b7a9ee12d",
+        "fecha": "2026-02-03 09:54:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b76d8eb3a",
+        "fecha": "2026-02-03 09:53:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b73230ae2",
+        "fecha": "2026-02-03 09:52:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b6f5ec91b",
+        "fecha": "2026-02-03 09:51:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b6ba8df0e",
+        "fecha": "2026-02-03 09:50:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b67da9877",
+        "fecha": "2026-02-03 09:49:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b64229f1f",
+        "fecha": "2026-02-03 09:48:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b605d84ef",
+        "fecha": "2026-02-03 09:47:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b5c993893",
+        "fecha": "2026-02-03 09:46:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b58ea80bb",
+        "fecha": "2026-02-03 09:45:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b5518f32a",
+        "fecha": "2026-02-03 09:44:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b5162c957",
+        "fecha": "2026-02-03 09:43:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b4d9ed9fe",
+        "fecha": "2026-02-03 09:42:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b49dd5cf8",
+        "fecha": "2026-02-03 09:41:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b4628c857",
+        "fecha": "2026-02-03 09:40:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b4258a92d",
+        "fecha": "2026-02-03 09:39:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b3ea2916e",
+        "fecha": "2026-02-03 09:38:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b3adef1a7",
+        "fecha": "2026-02-03 09:37:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b3717e721",
+        "fecha": "2026-02-03 09:36:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b33745373",
+        "fecha": "2026-02-03 09:35:03",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b2f9d5351",
+        "fecha": "2026-02-03 09:34:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b2bd746db",
+        "fecha": "2026-02-03 09:33:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b282418db",
+        "fecha": "2026-02-03 09:32:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b245d4bd2",
+        "fecha": "2026-02-03 09:31:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b20adc645",
+        "fecha": "2026-02-03 09:30:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b1ce00a48",
+        "fecha": "2026-02-03 09:29:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b191a3487",
+        "fecha": "2026-02-03 09:28:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b156424de",
+        "fecha": "2026-02-03 09:27:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b11a33d97",
+        "fecha": "2026-02-03 09:26:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b0de30b2a",
+        "fecha": "2026-02-03 09:25:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b0a244c98",
+        "fecha": "2026-02-03 09:24:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b065dbce5",
+        "fecha": "2026-02-03 09:23:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981b0298b6d9",
+        "fecha": "2026-02-03 09:22:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981afedc2d64",
+        "fecha": "2026-02-03 09:21:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981afb27c5e3",
+        "fecha": "2026-02-03 09:20:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981af758b0e0",
+        "fecha": "2026-02-03 09:19:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981af3a34dda",
+        "fecha": "2026-02-03 09:18:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981aefdd95dd",
+        "fecha": "2026-02-03 09:17:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981aec18cb0c",
+        "fecha": "2026-02-03 09:16:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ae86a55f9",
+        "fecha": "2026-02-03 09:15:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ae49a33e9",
+        "fecha": "2026-02-03 09:14:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ae0e4ddac",
+        "fecha": "2026-02-03 09:13:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981add1ed289",
+        "fecha": "2026-02-03 09:12:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ad95a4cc7",
+        "fecha": "2026-02-03 09:11:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ad5a5f55e",
+        "fecha": "2026-02-03 09:10:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ad1e4ad42",
+        "fecha": "2026-02-03 09:09:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ace1d5b8e",
+        "fecha": "2026-02-03 09:08:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981aca578838",
+        "fecha": "2026-02-03 09:07:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ac6a32500",
+        "fecha": "2026-02-03 09:06:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ac2e4188b",
+        "fecha": "2026-02-03 09:05:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981abf229192",
+        "fecha": "2026-02-03 09:04:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981abb5d3c20",
+        "fecha": "2026-02-03 09:03:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ab798cdca",
+        "fecha": "2026-02-03 09:02:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ab3e30e3c",
+        "fecha": "2026-02-03 09:01:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981ab01e2495",
+        "fecha": "2026-02-03 09:00:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981aac5a8734",
+        "fecha": "2026-02-03 08:59:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981aa8a4bd18",
+        "fecha": "2026-02-03 08:58:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981aa4e10e1a",
+        "fecha": "2026-02-03 08:57:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981aa11a615d",
+        "fecha": "2026-02-03 08:56:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a9d6d902c",
+        "fecha": "2026-02-03 08:55:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a999dd3a9",
+        "fecha": "2026-02-03 08:54:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a95d8a7a9",
+        "fecha": "2026-02-03 08:53:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a9223299a",
+        "fecha": "2026-02-03 08:52:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a8e5d4293",
+        "fecha": "2026-02-03 08:51:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a8aac096b",
+        "fecha": "2026-02-03 08:50:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a86dd8ff7",
+        "fecha": "2026-02-03 08:49:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a83194879",
+        "fecha": "2026-02-03 08:48:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a7f645386",
+        "fecha": "2026-02-03 08:47:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a7b9d3dc7",
+        "fecha": "2026-02-03 08:46:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a77e8f164",
+        "fecha": "2026-02-03 08:45:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a74175066",
+        "fecha": "2026-02-03 08:44:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a70629d86",
+        "fecha": "2026-02-03 08:43:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a6c9bf0b3",
+        "fecha": "2026-02-03 08:42:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a68d8f58c",
+        "fecha": "2026-02-03 08:41:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a652aa838",
+        "fecha": "2026-02-03 08:40:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a61594190",
+        "fecha": "2026-02-03 08:39:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a5da32aea",
+        "fecha": "2026-02-03 08:38:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a59dd79dc",
+        "fecha": "2026-02-03 08:37:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a561bb605",
+        "fecha": "2026-02-03 08:36:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a526769e2",
+        "fecha": "2026-02-03 08:35:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a4e97a651",
+        "fecha": "2026-02-03 08:34:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a4ae2de41",
+        "fecha": "2026-02-03 08:33:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a471d4b62",
+        "fecha": "2026-02-03 08:32:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a4357850a",
+        "fecha": "2026-02-03 08:31:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a3fa9457d",
+        "fecha": "2026-02-03 08:30:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a3bd8c169",
+        "fecha": "2026-02-03 08:29:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a3824bfab",
+        "fecha": "2026-02-03 08:28:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a346114ac",
+        "fecha": "2026-02-03 08:27:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a3098bfa8",
+        "fecha": "2026-02-03 08:26:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a2ce29aaf",
+        "fecha": "2026-02-03 08:25:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a29231f4c",
+        "fecha": "2026-02-03 08:24:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a25610e1c",
+        "fecha": "2026-02-03 08:23:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a219a9e6c",
+        "fecha": "2026-02-03 08:22:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a1dd5bd23",
+        "fecha": "2026-02-03 08:21:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a1a261240",
+        "fecha": "2026-02-03 08:20:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a1657bad8",
+        "fecha": "2026-02-03 08:19:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a12a2c076",
+        "fecha": "2026-02-03 08:18:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a0edd4936",
+        "fecha": "2026-02-03 08:17:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a0b17374a",
+        "fecha": "2026-02-03 08:16:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a076a92c5",
+        "fecha": "2026-02-03 08:15:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981a0398ae76",
+        "fecha": "2026-02-03 08:14:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819ffe007a4",
+        "fecha": "2026-02-03 08:13:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819fc1a571f",
+        "fecha": "2026-02-03 08:12:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819f8563a2e",
+        "fecha": "2026-02-03 08:11:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819f4a73c83",
+        "fecha": "2026-02-03 08:10:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819f0d72cbe",
+        "fecha": "2026-02-03 08:09:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819ed22b69c",
+        "fecha": "2026-02-03 08:08:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819e95bfa33",
+        "fecha": "2026-02-03 08:07:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819e59a51cd",
+        "fecha": "2026-02-03 08:06:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819e1e61eb8",
+        "fecha": "2026-02-03 08:05:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819de173bf6",
+        "fecha": "2026-02-03 08:04:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819da619bc7",
+        "fecha": "2026-02-03 08:03:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819d69aecc5",
+        "fecha": "2026-02-03 08:02:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819d2e5c928",
+        "fecha": "2026-02-03 08:01:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819cf31c7ae",
+        "fecha": "2026-02-03 08:00:03",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819cb5a2b86",
+        "fecha": "2026-02-03 07:59:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819c7a5b0b0",
+        "fecha": "2026-02-03 07:58:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819c3ddc452",
+        "fecha": "2026-02-03 07:57:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819c0194dfe",
+        "fecha": "2026-02-03 07:56:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819bc67afb5",
+        "fecha": "2026-02-03 07:55:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819b89a4ca6",
+        "fecha": "2026-02-03 07:54:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819b4e5d50e",
+        "fecha": "2026-02-03 07:53:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819b1210e6d",
+        "fecha": "2026-02-03 07:52:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819ad5a4a17",
+        "fecha": "2026-02-03 07:51:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819a9a6529c",
+        "fecha": "2026-02-03 07:50:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819a5d7934b",
+        "fecha": "2026-02-03 07:49:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819a22408a9",
+        "fecha": "2026-02-03 07:48:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698199e5d71e1",
+        "fecha": "2026-02-03 07:47:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698199a98e75a",
+        "fecha": "2026-02-03 07:46:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981996e47b47",
+        "fecha": "2026-02-03 07:45:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819931738f4",
+        "fecha": "2026-02-03 07:44:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698198f641d06",
+        "fecha": "2026-02-03 07:43:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698198b9d5da1",
+        "fecha": "2026-02-03 07:42:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981987d73004",
+        "fecha": "2026-02-03 07:41:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819842306a0",
+        "fecha": "2026-02-03 07:40:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981980629732",
+        "fecha": "2026-02-03 07:39:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698197c9eee2c",
+        "fecha": "2026-02-03 07:38:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981978da46e0",
+        "fecha": "2026-02-03 07:37:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698197515bf12",
+        "fecha": "2026-02-03 07:36:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698197165ca43",
+        "fecha": "2026-02-03 07:35:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698196d972c41",
+        "fecha": "2026-02-03 07:34:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981969e1cfd4",
+        "fecha": "2026-02-03 07:33:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819661c08b8",
+        "fecha": "2026-02-03 07:32:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981962573eef",
+        "fecha": "2026-02-03 07:31:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698195eaa7e4a",
+        "fecha": "2026-02-03 07:30:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698195ad72b09",
+        "fecha": "2026-02-03 07:29:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981957232ee8",
+        "fecha": "2026-02-03 07:28:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819535bb8fa",
+        "fecha": "2026-02-03 07:27:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698194f965307",
+        "fecha": "2026-02-03 07:26:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698194be63133",
+        "fecha": "2026-02-03 07:25:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698194818adc2",
+        "fecha": "2026-02-03 07:24:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981944629b41",
+        "fecha": "2026-02-03 07:23:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819409d7536",
+        "fecha": "2026-02-03 07:22:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698193cda338f",
+        "fecha": "2026-02-03 07:21:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819392aa747",
+        "fecha": "2026-02-03 07:20:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819355bc55e",
+        "fecha": "2026-02-03 07:19:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698193195b867",
+        "fecha": "2026-02-03 07:18:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698192ddee225",
+        "fecha": "2026-02-03 07:17:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698192a1a6d66",
+        "fecha": "2026-02-03 07:16:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698192668f7d0",
+        "fecha": "2026-02-03 07:15:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69819229a4751",
+        "fecha": "2026-02-03 07:14:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698191ed5a42c",
+        "fecha": "2026-02-03 07:13:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698191b200b62",
+        "fecha": "2026-02-03 07:12:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981917592304",
+        "fecha": "2026-02-03 07:11:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981913a4a12d",
+        "fecha": "2026-02-03 07:10:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698190fe295fc",
+        "fecha": "2026-02-03 07:09:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698190c1bb3df",
+        "fecha": "2026-02-03 07:08:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981908564773",
+        "fecha": "2026-02-03 07:07:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981904a11803",
+        "fecha": "2026-02-03 07:06:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981900e95613",
+        "fecha": "2026-02-03 07:05:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818fd1afaac",
+        "fecha": "2026-02-03 07:04:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818f955be24",
+        "fecha": "2026-02-03 07:03:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818f5a12164",
+        "fecha": "2026-02-03 07:02:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818f1da4758",
+        "fecha": "2026-02-03 07:01:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818ee303a94",
+        "fecha": "2026-02-03 07:00:03",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818ea5bd122",
+        "fecha": "2026-02-03 06:59:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818e6973c44",
+        "fecha": "2026-02-03 06:58:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818e2e16894",
+        "fecha": "2026-02-03 06:57:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818df1d723d",
+        "fecha": "2026-02-03 06:56:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818db691206",
+        "fecha": "2026-02-03 06:55:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818d79a4a22",
+        "fecha": "2026-02-03 06:54:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818d3d58d6f",
+        "fecha": "2026-02-03 06:53:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818d02129e7",
+        "fecha": "2026-02-03 06:52:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818cc5bb142",
+        "fecha": "2026-02-03 06:51:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818c8a616a3",
+        "fecha": "2026-02-03 06:50:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818c4e4196b",
+        "fecha": "2026-02-03 06:49:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818c1212600",
+        "fecha": "2026-02-03 06:48:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818bd5a590e",
+        "fecha": "2026-02-03 06:47:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818b9a4d414",
+        "fecha": "2026-02-03 06:46:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818b5e2e1f5",
+        "fecha": "2026-02-03 06:45:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818b215bf9b",
+        "fecha": "2026-02-03 06:44:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818ae611bb3",
+        "fecha": "2026-02-03 06:43:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818aa9a7aef",
+        "fecha": "2026-02-03 06:42:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818a6d91839",
+        "fecha": "2026-02-03 06:41:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818a32529ca",
+        "fecha": "2026-02-03 06:40:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698189f561c54",
+        "fecha": "2026-02-03 06:39:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698189ba14706",
+        "fecha": "2026-02-03 06:38:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981897dd45da",
+        "fecha": "2026-02-03 06:37:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981894178dd2",
+        "fecha": "2026-02-03 06:36:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981890630989",
+        "fecha": "2026-02-03 06:35:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698188ca2c6a5",
+        "fecha": "2026-02-03 06:34:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981888ded4f1",
+        "fecha": "2026-02-03 06:33:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818851a8030",
+        "fecha": "2026-02-03 06:32:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698188164a1c7",
+        "fecha": "2026-02-03 06:31:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698187da4b2b3",
+        "fecha": "2026-02-03 06:30:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981879d779e0",
+        "fecha": "2026-02-03 06:29:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698187622adf6",
+        "fecha": "2026-02-03 06:28:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818725c788d",
+        "fecha": "2026-02-03 06:27:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698186e974d01",
+        "fecha": "2026-02-03 06:26:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698186ae173b0",
+        "fecha": "2026-02-03 06:25:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981867249578",
+        "fecha": "2026-02-03 06:24:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818635d5f77",
+        "fecha": "2026-02-03 06:23:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698185f989c02",
+        "fecha": "2026-02-03 06:22:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698185be5af22",
+        "fecha": "2026-02-03 06:21:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981858247520",
+        "fecha": "2026-02-03 06:20:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698185457278f",
+        "fecha": "2026-02-03 06:19:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981850a28f9c",
+        "fecha": "2026-02-03 06:18:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698184cdbf268",
+        "fecha": "2026-02-03 06:17:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818491c05f5",
+        "fecha": "2026-02-03 06:16:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698184567544e",
+        "fecha": "2026-02-03 06:15:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981841976178",
+        "fecha": "2026-02-03 06:14:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698183de4da39",
+        "fecha": "2026-02-03 06:13:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698183a1d6334",
+        "fecha": "2026-02-03 06:12:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698183658f2c6",
+        "fecha": "2026-02-03 06:11:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981832a48542",
+        "fecha": "2026-02-03 06:10:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698182ee431db",
+        "fecha": "2026-02-03 06:09:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698182b1d7ed0",
+        "fecha": "2026-02-03 06:08:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981827593572",
+        "fecha": "2026-02-03 06:07:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981823a41156",
+        "fecha": "2026-02-03 06:06:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698181fe1ac96",
+        "fecha": "2026-02-03 06:05:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698181c249ad7",
+        "fecha": "2026-02-03 06:04:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69818185f21f6",
+        "fecha": "2026-02-03 06:03:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698181498e3fe",
+        "fecha": "2026-02-03 06:02:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981810ddb7c8",
+        "fecha": "2026-02-03 06:01:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698180d29725d",
+        "fecha": "2026-02-03 06:00:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698180955f54d",
+        "fecha": "2026-02-03 05:59:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981805a14a3c",
+        "fecha": "2026-02-03 05:58:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981801dbcf70",
+        "fecha": "2026-02-03 05:57:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817fe1dcde9",
+        "fecha": "2026-02-03 05:56:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817fa672dee",
+        "fecha": "2026-02-03 05:55:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817f698c985",
+        "fecha": "2026-02-03 05:54:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817f2e2aec0",
+        "fecha": "2026-02-03 05:53:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817ef1d4213",
+        "fecha": "2026-02-03 05:52:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817eb57c850",
+        "fecha": "2026-02-03 05:51:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817e7a751bb",
+        "fecha": "2026-02-03 05:50:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817e3dd9792",
+        "fecha": "2026-02-03 05:49:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817e01ec90b",
+        "fecha": "2026-02-03 05:48:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817dc57a91a",
+        "fecha": "2026-02-03 05:47:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817d898b26e",
+        "fecha": "2026-02-03 05:46:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817d4e483ad",
+        "fecha": "2026-02-03 05:45:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817d1166727",
+        "fecha": "2026-02-03 05:44:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817cd5ef7a3",
+        "fecha": "2026-02-03 05:43:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817c99a4e58",
+        "fecha": "2026-02-03 05:42:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817c5e6255e",
+        "fecha": "2026-02-03 05:41:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817c226062c",
+        "fecha": "2026-02-03 05:40:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817be55c114",
+        "fecha": "2026-02-03 05:39:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817baa4d561",
+        "fecha": "2026-02-03 05:38:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817b6e02f80",
+        "fecha": "2026-02-03 05:37:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817b3191f93",
+        "fecha": "2026-02-03 05:36:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817af690dab",
+        "fecha": "2026-02-03 05:35:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817ab9abfcd",
+        "fecha": "2026-02-03 05:34:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817a7d73b17",
+        "fecha": "2026-02-03 05:33:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817a4212485",
+        "fecha": "2026-02-03 05:32:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817a05bee2d",
+        "fecha": "2026-02-03 05:31:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698179ca781f7",
+        "fecha": "2026-02-03 05:30:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981798dd470a",
+        "fecha": "2026-02-03 05:29:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817951f0c2e",
+        "fecha": "2026-02-03 05:28:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698179158c158",
+        "fecha": "2026-02-03 05:27:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698178d98e271",
+        "fecha": "2026-02-03 05:26:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981789e77125",
+        "fecha": "2026-02-03 05:25:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981786193ef0",
+        "fecha": "2026-02-03 05:24:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817825ef094",
+        "fecha": "2026-02-03 05:23:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698177e98ac0a",
+        "fecha": "2026-02-03 05:22:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698177adc4ac8",
+        "fecha": "2026-02-03 05:21:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981777278d1d",
+        "fecha": "2026-02-03 05:20:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698177355b2ec",
+        "fecha": "2026-02-03 05:19:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698176fa29c12",
+        "fecha": "2026-02-03 05:18:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698176bdc72b4",
+        "fecha": "2026-02-03 05:17:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981768177546",
+        "fecha": "2026-02-03 05:16:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698176462e530",
+        "fecha": "2026-02-03 05:15:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981760a443df",
+        "fecha": "2026-02-03 05:14:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698175cdd6ed1",
+        "fecha": "2026-02-03 05:13:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698175917636e",
+        "fecha": "2026-02-03 05:12:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698175562b9a8",
+        "fecha": "2026-02-03 05:11:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981751ad7574",
+        "fecha": "2026-02-03 05:10:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698174dddffe9",
+        "fecha": "2026-02-03 05:09:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698174a18de2e",
+        "fecha": "2026-02-03 05:08:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698174664e6b6",
+        "fecha": "2026-02-03 05:07:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817429eda05",
+        "fecha": "2026-02-03 05:06:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698173eddb043",
+        "fecha": "2026-02-03 05:05:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698173b2280c5",
+        "fecha": "2026-02-03 05:04:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817375a6053",
+        "fecha": "2026-02-03 05:03:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698173395bb50",
+        "fecha": "2026-02-03 05:02:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698172fe4b8c2",
+        "fecha": "2026-02-03 05:01:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698172c28b18c",
+        "fecha": "2026-02-03 05:00:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698172855da00",
+        "fecha": "2026-02-03 04:59:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981724a12481",
+        "fecha": "2026-02-03 04:58:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981720da40e0",
+        "fecha": "2026-02-03 04:57:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698171d248944",
+        "fecha": "2026-02-03 04:56:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698171965fce6",
+        "fecha": "2026-02-03 04:55:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69817159622d9",
+        "fecha": "2026-02-03 04:54:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981711e19ed8",
+        "fecha": "2026-02-03 04:53:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698170e1c2cdc",
+        "fecha": "2026-02-03 04:52:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698170a57c2d7",
+        "fecha": "2026-02-03 04:51:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981706a728de",
+        "fecha": "2026-02-03 04:50:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981702d8b37d",
+        "fecha": "2026-02-03 04:49:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816ff249528",
+        "fecha": "2026-02-03 04:48:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816fb610790",
+        "fecha": "2026-02-03 04:47:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816f7990a6a",
+        "fecha": "2026-02-03 04:46:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816f3e48e3a",
+        "fecha": "2026-02-03 04:45:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816f025b78e",
+        "fecha": "2026-02-03 04:44:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816ec5eceb8",
+        "fecha": "2026-02-03 04:43:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816e89a6a8d",
+        "fecha": "2026-02-03 04:42:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816e4da5fe5",
+        "fecha": "2026-02-03 04:41:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816e1262487",
+        "fecha": "2026-02-03 04:40:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816dd572850",
+        "fecha": "2026-02-03 04:39:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816d9a12d81",
+        "fecha": "2026-02-03 04:38:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816d5dbcedb",
+        "fecha": "2026-02-03 04:37:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816d2172ad3",
+        "fecha": "2026-02-03 04:36:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816ce69002d",
+        "fecha": "2026-02-03 04:35:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816ca991293",
+        "fecha": "2026-02-03 04:34:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816c6e2afa3",
+        "fecha": "2026-02-03 04:33:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816c31da000",
+        "fecha": "2026-02-03 04:32:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816bf57bac5",
+        "fecha": "2026-02-03 04:31:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816bbaaa1e9",
+        "fecha": "2026-02-03 04:30:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816b7da2eaf",
+        "fecha": "2026-02-03 04:29:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816b424bf64",
+        "fecha": "2026-02-03 04:28:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816b05e18b2",
+        "fecha": "2026-02-03 04:27:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816ac96471c",
+        "fecha": "2026-02-03 04:26:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816a8e18b8f",
+        "fecha": "2026-02-03 04:25:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816a52302ac",
+        "fecha": "2026-02-03 04:24:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816a15d7d06",
+        "fecha": "2026-02-03 04:23:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698169d960163",
+        "fecha": "2026-02-03 04:22:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981699e11399",
+        "fecha": "2026-02-03 04:21:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816961f301c",
+        "fecha": "2026-02-03 04:20:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981692629d21",
+        "fecha": "2026-02-03 04:19:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698168e9ed31d",
+        "fecha": "2026-02-03 04:18:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698168ad93cf7",
+        "fecha": "2026-02-03 04:17:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698168715a9c7",
+        "fecha": "2026-02-03 04:16:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981683651dba",
+        "fecha": "2026-02-03 04:15:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698167f9740ec",
+        "fecha": "2026-02-03 04:14:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698167be19de7",
+        "fecha": "2026-02-03 04:13:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816781d536f",
+        "fecha": "2026-02-03 04:12:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981674579391",
+        "fecha": "2026-02-03 04:11:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981670aa4ce2",
+        "fecha": "2026-02-03 04:10:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698166cd8da74",
+        "fecha": "2026-02-03 04:09:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698166922c56a",
+        "fecha": "2026-02-03 04:08:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816655d6726",
+        "fecha": "2026-02-03 04:07:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "69816619f03b1",
+        "fecha": "2026-02-03 04:06:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698165dec3b7a",
+        "fecha": "2026-02-03 04:05:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "698165a1be44a",
+        "fecha": "2026-02-03 04:04:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981656572f66",
+        "fecha": "2026-02-03 04:03:01",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    },
+    {
+        "id": "6981652a12218",
+        "fecha": "2026-02-03 04:02:02",
+        "tipo": "sistema",
+        "cliente_id": 0,
+        "cliente_nombre": "Sistema",
+        "email": "",
+        "estado": "ejecutado",
+        "mensaje": "Sin clientes en ultimos 10 min"
+    }
+]

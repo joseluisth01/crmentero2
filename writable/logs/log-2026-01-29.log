@@ -1,0 +1,67 @@
+ERROR - 2026-01-29 08:12:32 --> mysqli_sql_exception: Commands out of sync; you can't run this command now in /home/gestiontictaccom/public_html/system/Database/MySQLi/Connection.php:327
+Stack trace:
+#0 /home/gestiontictaccom/public_html/system/Database/MySQLi/Connection.php(327): mysqli->query('UPDATE `crm_ci_...', 0)
+#1 /home/gestiontictaccom/public_html/system/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('UPDATE `crm_ci_...')
+#2 /home/gestiontictaccom/public_html/system/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('UPDATE `crm_ci_...')
+#3 /home/gestiontictaccom/public_html/system/Database/BaseBuilder.php(2521): CodeIgniter\Database\BaseConnection->query('UPDATE `crm_ci_...', Array, false)
+#4 /home/gestiontictaccom/public_html/system/Session/Handlers/DatabaseHandler.php(223): CodeIgniter\Database\BaseBuilder->update(Array)
+#5 [internal function]: CodeIgniter\Session\Handlers\DatabaseHandler->write('d2d590af7c89772...', '__ci_last_regen...')
+#6 [internal function]: session_write_close()
+#7 {main}
+ERROR - 2026-01-29 08:12:32 --> mysqli_sql_exception: Commands out of sync; you can't run this command now in /home/gestiontictaccom/public_html/system/Database/MySQLi/Connection.php:327
+Stack trace:
+#0 /home/gestiontictaccom/public_html/system/Database/MySQLi/Connection.php(327): mysqli->query('SELECT RELEASE_...', 0)
+#1 /home/gestiontictaccom/public_html/system/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT RELEASE_...')
+#2 /home/gestiontictaccom/public_html/system/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT RELEASE_...')
+#3 /home/gestiontictaccom/public_html/system/Session/Handlers/Database/MySQLiHandler.php(49): CodeIgniter\Database\BaseConnection->query('SELECT RELEASE_...')
+#4 /home/gestiontictaccom/public_html/system/Session/Handlers/DatabaseHandler.php(245): CodeIgniter\Session\Handlers\Database\MySQLiHandler->releaseLock()
+#5 [internal function]: CodeIgniter\Session\Handlers\DatabaseHandler->close()
+#6 [internal function]: session_write_close()
+#7 {main}
+ERROR - 2026-01-29 08:45:02 --> mysqli_sql_exception: Commands out of sync; you can't run this command now in /home/gestiontictaccom/public_html/system/Database/MySQLi/Connection.php:327
+Stack trace:
+#0 /home/gestiontictaccom/public_html/system/Database/MySQLi/Connection.php(327): mysqli->query('INSERT INTO `cr...', 0)
+#1 /home/gestiontictaccom/public_html/system/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO `cr...')
+#2 /home/gestiontictaccom/public_html/system/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO `cr...')
+#3 /home/gestiontictaccom/public_html/system/Database/BaseBuilder.php(2345): CodeIgniter\Database\BaseConnection->query('INSERT INTO `cr...', Array, false)
+#4 /home/gestiontictaccom/public_html/system/Session/Handlers/DatabaseHandler.php(201): CodeIgniter\Database\BaseBuilder->insert(Array)
+#5 [internal function]: CodeIgniter\Session\Handlers\DatabaseHandler->write('1e137f747bf12c4...', '__ci_last_regen...')
+#6 [internal function]: session_write_close()
+#7 {main}
+ERROR - 2026-01-29 08:45:02 --> mysqli_sql_exception: Commands out of sync; you can't run this command now in /home/gestiontictaccom/public_html/system/Database/MySQLi/Connection.php:327
+Stack trace:
+#0 /home/gestiontictaccom/public_html/system/Database/MySQLi/Connection.php(327): mysqli->query('SELECT RELEASE_...', 0)
+#1 /home/gestiontictaccom/public_html/system/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT RELEASE_...')
+#2 /home/gestiontictaccom/public_html/system/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT RELEASE_...')
+#3 /home/gestiontictaccom/public_html/system/Session/Handlers/Database/MySQLiHandler.php(49): CodeIgniter\Database\BaseConnection->query('SELECT RELEASE_...')
+#4 /home/gestiontictaccom/public_html/system/Session/Handlers/DatabaseHandler.php(245): CodeIgniter\Session\Handlers\Database\MySQLiHandler->releaseLock()
+#5 [internal function]: CodeIgniter\Session\Handlers\DatabaseHandler->close()
+#6 [internal function]: session_write_close()
+#7 {main}
+ERROR - 2026-01-29 10:55:00 --> mysqli_sql_exception: Commands out of sync; you can't run this command now in /home/gestiontictaccom/public_html/system/Database/MySQLi/Connection.php:327
+Stack trace:
+#0 /home/gestiontictaccom/public_html/system/Database/MySQLi/Connection.php(327): mysqli->query('UPDATE `crm_ci_...', 0)
+#1 /home/gestiontictaccom/public_html/system/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('UPDATE `crm_ci_...')
+#2 /home/gestiontictaccom/public_html/system/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('UPDATE `crm_ci_...')
+#3 /home/gestiontictaccom/public_html/system/Database/BaseBuilder.php(2521): CodeIgniter\Database\BaseConnection->query('UPDATE `crm_ci_...', Array, false)
+#4 /home/gestiontictaccom/public_html/system/Session/Handlers/DatabaseHandler.php(223): CodeIgniter\Database\BaseBuilder->update(Array)
+#5 [internal function]: CodeIgniter\Session\Handlers\DatabaseHandler->write('ad9d0dacf34d59d...', '__ci_last_regen...')
+#6 [internal function]: session_write_close()
+#7 {main}
+ERROR - 2026-01-29 10:55:00 --> mysqli_sql_exception: Commands out of sync; you can't run this command now in /home/gestiontictaccom/public_html/system/Database/MySQLi/Connection.php:327
+Stack trace:
+#0 /home/gestiontictaccom/public_html/system/Database/MySQLi/Connection.php(327): mysqli->query('SELECT RELEASE_...', 0)
+#1 /home/gestiontictaccom/public_html/system/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT RELEASE_...')
+#2 /home/gestiontictaccom/public_html/system/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT RELEASE_...')
+#3 /home/gestiontictaccom/public_html/system/Session/Handlers/Database/MySQLiHandler.php(49): CodeIgniter\Database\BaseConnection->query('SELECT RELEASE_...')
+#4 /home/gestiontictaccom/public_html/system/Session/Handlers/DatabaseHandler.php(245): CodeIgniter\Session\Handlers\Database\MySQLiHandler->releaseLock()
+#5 [internal function]: CodeIgniter\Session\Handlers\DatabaseHandler->close()
+#6 [internal function]: session_write_close()
+#7 {main}
+ERROR - 2026-01-29 23:55:02 --> Harmful injection detected by _get_clean_value where the key:  and value: Artículo de blog "cómo ocultar un pinganillo antes de un examen"
+Function: _get_clean_value File: /home/gestiontictaccom/public_html/app/Models/Crud_model.php Line: 580 
+Function: _get_clean_value File: /home/gestiontictaccom/public_html/app/Models/Crud_model.php Line: 580 
+Function: _get_clean_value File: /home/gestiontictaccom/public_html/app/Models/Crud_model.php Line: 580 
+Function: _get_clean_value File: /home/gestiontictaccom/public_html/app/Models/Crud_model.php Line: 580 
+Function: _get_clean_value File: /home/gestiontictaccom/public_html/app/Models/Notifications_model.php Line: 50 
+

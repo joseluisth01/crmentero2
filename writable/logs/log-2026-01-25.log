@@ -1,0 +1,52 @@
+ERROR - 2026-01-25 18:45:16 --> Error connecting to the database: mysqli_sql_exception: No such file or directory in /home/gestiontictaccom/public_html/system/Database/MySQLi/Connection.php:174
+Stack trace:
+#0 /home/gestiontictaccom/public_html/system/Database/MySQLi/Connection.php(174): mysqli->real_connect('localhost', 'gestiontictacco...', '.[J.1SGH^t_*j)2...', 'gestiontictacco...', 3306, '', 0)
+#1 /home/gestiontictaccom/public_html/system/Database/BaseConnection.php(391): CodeIgniter\Database\MySQLi\Connection->connect(false)
+#2 /home/gestiontictaccom/public_html/system/Database/BaseConnection.php(573): CodeIgniter\Database\BaseConnection->initialize()
+#3 /home/gestiontictaccom/public_html/app/Models/Crud_model.php(27): CodeIgniter\Database\BaseConnection->query('SET sql_mode = ...')
+#4 /home/gestiontictaccom/public_html/app/Models/Settings_model.php(11): App\Models\Crud_model->__construct('settings')
+#5 /home/gestiontictaccom/public_html/system/Config/Factories.php(129): App\Models\Settings_model->__construct(NULL)
+#6 /home/gestiontictaccom/public_html/system/Config/Factories.php(86): CodeIgniter\Config\Factories::__callStatic('models', Array)
+#7 /home/gestiontictaccom/public_html/system/Common.php(829): CodeIgniter\Config\Factories::models('App\\Models\\Sett...', Array, NULL)
+#8 /home/gestiontictaccom/public_html/app/Controllers/App_Controller.php(97): model('App\\Models\\Sett...')
+#9 /home/gestiontictaccom/public_html/app/Controllers/Security_Controller.php(17): App\Controllers\App_Controller->__construct()
+#10 /home/gestiontictaccom/public_html/app/Controllers/Messages.php(8): App\Controllers\Security_Controller->__construct()
+#11 /home/gestiontictaccom/public_html/system/CodeIgniter.php(906): App\Controllers\Messages->__construct()
+#12 /home/gestiontictaccom/public_html/system/CodeIgniter.php(490): CodeIgniter\CodeIgniter->createController()
+#13 /home/gestiontictaccom/public_html/system/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#14 /home/gestiontictaccom/public_html/index.php(80): CodeIgniter\CodeIgniter->run()
+#15 {main}
+
+Next CodeIgniter\Database\Exceptions\DatabaseException: No such file or directory in /home/gestiontictaccom/public_html/system/Database/MySQLi/Connection.php:218
+Stack trace:
+#0 /home/gestiontictaccom/public_html/system/Database/BaseConnection.php(391): CodeIgniter\Database\MySQLi\Connection->connect(false)
+#1 /home/gestiontictaccom/public_html/system/Database/BaseConnection.php(573): CodeIgniter\Database\BaseConnection->initialize()
+#2 /home/gestiontictaccom/public_html/app/Models/Crud_model.php(27): CodeIgniter\Database\BaseConnection->query('SET sql_mode = ...')
+#3 /home/gestiontictaccom/public_html/app/Models/Settings_model.php(11): App\Models\Crud_model->__construct('settings')
+#4 /home/gestiontictaccom/public_html/system/Config/Factories.php(129): App\Models\Settings_model->__construct(NULL)
+#5 /home/gestiontictaccom/public_html/system/Config/Factories.php(86): CodeIgniter\Config\Factories::__callStatic('models', Array)
+#6 /home/gestiontictaccom/public_html/system/Common.php(829): CodeIgniter\Config\Factories::models('App\\Models\\Sett...', Array, NULL)
+#7 /home/gestiontictaccom/public_html/app/Controllers/App_Controller.php(97): model('App\\Models\\Sett...')
+#8 /home/gestiontictaccom/public_html/app/Controllers/Security_Controller.php(17): App\Controllers\App_Controller->__construct()
+#9 /home/gestiontictaccom/public_html/app/Controllers/Messages.php(8): App\Controllers\Security_Controller->__construct()
+#10 /home/gestiontictaccom/public_html/system/CodeIgniter.php(906): App\Controllers\Messages->__construct()
+#11 /home/gestiontictaccom/public_html/system/CodeIgniter.php(490): CodeIgniter\CodeIgniter->createController()
+#12 /home/gestiontictaccom/public_html/system/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#13 /home/gestiontictaccom/public_html/index.php(80): CodeIgniter\CodeIgniter->run()
+#14 {main}
+CRITICAL - 2026-01-25 18:45:16 --> Unable to connect to the database.
+Main connection [MySQLi]: No such file or directory
+in SYSTEMPATH/Database/BaseConnection.php on line 427.
+ 1 SYSTEMPATH/Database/BaseConnection.php(573): CodeIgniter\Database\BaseConnection->initialize()
+ 2 APPPATH/Models/Crud_model.php(27): CodeIgniter\Database\BaseConnection->query('SET sql_mode = \'\'')
+ 3 APPPATH/Models/Settings_model.php(11): App\Models\Crud_model->__construct('settings')
+ 4 SYSTEMPATH/Config/Factories.php(129): App\Models\Settings_model->__construct(null)
+ 5 SYSTEMPATH/Config/Factories.php(86): CodeIgniter\Config\Factories::__callStatic('models', [...])
+ 6 SYSTEMPATH/Common.php(829): CodeIgniter\Config\Factories::models('App\\Models\\Settings_model', [...], null)
+ 7 APPPATH/Controllers/App_Controller.php(97): model('App\\Models\\Settings_model')
+ 8 APPPATH/Controllers/Security_Controller.php(17): App\Controllers\App_Controller->__construct()
+ 9 APPPATH/Controllers/Messages.php(8): App\Controllers\Security_Controller->__construct()
+10 SYSTEMPATH/CodeIgniter.php(906): App\Controllers\Messages->__construct()
+11 SYSTEMPATH/CodeIgniter.php(490): CodeIgniter\CodeIgniter->createController()
+12 SYSTEMPATH/CodeIgniter.php(368): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+13 FCPATH/index.php(80): CodeIgniter\CodeIgniter->run()

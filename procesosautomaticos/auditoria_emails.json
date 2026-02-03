@@ -1,0 +1,34 @@
+[
+    {
+        "fecha": "2026-01-30 09:53:02",
+        "cliente_id": "210",
+        "cliente_nombre": "CLIENTE ULT",
+        "email": "lospitoflauticos@gmail.com",
+        "estado": "enviado",
+        "mensaje": "Email enviado correctamente"
+    },
+    {
+        "fecha": "2026-01-30 09:46:02",
+        "cliente_id": "209",
+        "cliente_nombre": "NANO SL",
+        "email": "",
+        "estado": "sin_contacto",
+        "mensaje": "Cliente sin contacto"
+    },
+    {
+        "fecha": "2026-01-30 09:42:02",
+        "cliente_id": "207",
+        "cliente_nombre": "PRUEBA SL",
+        "email": "pepeluth@gmail.com",
+        "estado": "enviado",
+        "mensaje": "Email enviado correctamente"
+    },
+    {
+        "fecha": "2026-01-30 09:42:01",
+        "cliente_id": "208",
+        "cliente_nombre": "CLIENTE NUEVO SL",
+        "email": "jjlltthh99@gmail.com",
+        "estado": "enviado",
+        "mensaje": "Email enviado correctamente"
+    }
+]

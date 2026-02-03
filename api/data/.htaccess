@@ -1,0 +1,8 @@
+# Proteger archivos JSON
+<Files "*.json">
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+# Permitir solo acceso desde PHP
+Options -Indexes
