@@ -191,8 +191,8 @@ function getArticulosCRM() {
     }
 
     $sql = "SELECT i.id, i.title, i.description, i.unit_type, i.rate, ic.title AS category_title
-            FROM items i
-            LEFT JOIN item_categories ic ON ic.id = i.category_id
+            FROM crm_items i
+            LEFT JOIN crm_item_categories ic ON ic.id = i.category_id
             WHERE i.deleted = 0
             ORDER BY i.title ASC";
 
