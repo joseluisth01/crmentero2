@@ -2069,6 +2069,7 @@ if (!function_exists('prepare_proposal_view')) {
             $parser_data["PROPOSAL_DATE"] = format_to_date($proposal_info->proposal_date, false);
             $parser_data["PROPOSAL_EXPIRY_DATE"] = format_to_date($proposal_info->valid_until, false);
             $parser_data["PROPOSAL_ITEMS"] = view("proposals/proposal_parts/proposal_items_table", $proposal_data);
+            $parser_data["PROPOSAL_ITEMS_BLOCKS"] = view("proposals/proposal_parts/proposal_items_blocks", $proposal_data);
             $parser_data["PROPOSAL_SUBTOTAL"] = to_currency($proposal_total_summary->proposal_subtotal, $proposal_total_summary->currency_symbol);
             $parser_data["PROPOSAL_DISCOUNT"] = to_currency($proposal_total_summary->discount_total, $proposal_total_summary->currency_symbol);
             $parser_data["PROPOSAL_TOTAL_AFTER_DISCOUNT"] = to_currency($proposal_total_summary->proposal_subtotal - $proposal_total_summary->discount_total, $proposal_total_summary->currency_symbol);
@@ -2149,6 +2150,7 @@ if (!function_exists('get_available_proposal_variables')) {
                 "PROPOSAL_DATE",
                 "PROPOSAL_EXPIRY_DATE",
                 "PROPOSAL_ITEMS",
+                "PROPOSAL_ITEMS_BLOCKS",
                 "PROPOSAL_NOTE",
                 "PROPOSAL_SUBTOTAL",
                 "PROPOSAL_DISCOUNT",
