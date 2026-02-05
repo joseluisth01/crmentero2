@@ -245,7 +245,7 @@ include '../includes/header.php';
             <div class="stat-number">
                 <?php 
                 echo count(array_filter($presupuestos, function($p) {
-                    return !empty($p['crm_estimate_id']);
+                    return !empty($p['crm_proposal_id']);
                 }));
                 ?>
             </div>
@@ -303,9 +303,9 @@ include '../includes/header.php';
                                 
                                 <br>
                                 
-                                <?php if (!empty($presupuesto['crm_estimate_id'])): ?>
-                                    <span class="badge badge-crm-sync" title="Sincronizado con CRM - ID: <?php echo $presupuesto['crm_estimate_id']; ?>">
-                                        🔗 CRM #<?php echo $presupuesto['crm_estimate_id']; ?>
+                                <?php if (!empty($presupuesto['crm_proposal_id'])): ?>
+                                    <span class="badge badge-crm-sync" title="Sincronizado con CRM - ID: <?php echo $presupuesto['crm_proposal_id']; ?>">
+                                        🔗 CRM #<?php echo $presupuesto['crm_proposal_id']; ?>
                                     </span>
                                 <?php elseif (empty($presupuesto['cliente_id'])): ?>
                                     <span class="badge badge-crm-no-sync" title="No sincronizado: falta cliente del CRM">

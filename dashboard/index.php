@@ -196,7 +196,7 @@ $pageTitle = 'Dashboard';
 <body>
     <div class="header">
         <div class="logo">
-            <?php if (defined('LOGO_BLANCO') && file_exists($_SERVER['DOCUMENT_ROOT'] . '/api/assets/img/logoblanco.png')): ?>
+            <?php if (defined('LOGO_BLANCO') && file_exists($_SERVER['DOCUMENT_ROOT'] . '/dashboard/assets/img/logoblanco.png')): ?>
                 <img src="<?php echo LOGO_BLANCO; ?>" alt="<?php echo COMPANY_NAME; ?>">
             <?php else: ?>
                 <span class="logo-text">t/ctac</span>
@@ -260,7 +260,7 @@ $pageTitle = 'Dashboard';
 
     <div class="footer">
         <div class="footer-logo">
-            <?php if (defined('LOGO_COLOR') && file_exists($_SERVER['DOCUMENT_ROOT'] . '/api/assets/img/logocolor.png')): ?>
+            <?php if (defined('LOGO_COLOR') && file_exists($_SERVER['DOCUMENT_ROOT'] . '/dashboard/assets/img/logocolor.png')): ?>
                 <img src="<?php echo LOGO_COLOR; ?>" alt="<?php echo COMPANY_NAME; ?>">
             <?php else: ?>
                 <span class="footer-logo-text">t/ctac</span>

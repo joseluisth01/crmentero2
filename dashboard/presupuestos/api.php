@@ -63,27 +63,37 @@ function crearPropuestaEnCRM($presupuesto) {
     }
 
     $client_id = intval($presupuesto['cliente_id']);
-    $estimate_date = $presupuesto['fecha_propuesta'] ?? date('Y-m-d');
+    $proposal_date = $presupuesto['fecha_propuesta'] ?? date('Y-m-d');
     $valid_until = $presupuesto['valido_hasta'] ?? date('Y-m-d', strtotime('+30 days'));
     $note = $mysqli->real_escape_string($presupuesto['notas'] ?? '');
     
-    $sql = "INSERT INTO crm_estimates 
-            (client_id, estimate_request_id, estimate_date, valid_until, note, 
+    // Generar public_key único (10 caracteres alfanuméricos)
+    $public_key = substr(md5(uniqid(rand(), true)), 0, 10);
+    
+    // Generar contenido HTML simple para la propuesta
+    $content = '<meta charset="UTF-8"><p><strong>Presupuesto: ' . htmlspecialchars($presupuesto['id'] ?? '') . '</strong></p>';
+    $content .= '<p>' . nl2br(htmlspecialchars($note)) . '</p>';
+    $content = $mysqli->real_escape_string($content);
+    
+    // CONSULTA SQL EXACTA QUE FUNCIONA PARA PROPUESTAS (probada en phpMyAdmin)
+    $sql = "INSERT INTO crm_proposals 
+            (client_id, proposal_date, valid_until, note, 
              status, tax_id, tax_id2, 
              discount_type, discount_amount, discount_amount_type,
-             project_id, accepted_by, meta_data, created_by, signature, public_key, company_id, deleted) 
+             content, public_key, accepted_by, created_by, total_views, meta_data, company_id, project_id, deleted) 
             VALUES 
-            ($client_id, 0, '$estimate_date', '$valid_until', '$note',
+            ($client_id, '$proposal_date', '$valid_until', '$note',
              'draft', 1, 0,
              'before_tax', 0, 'percentage',
-             0, 0, '', 1, '', '', 0, 0)";
+             '$content', '$public_key', 0, 1, 0, '', 0, 0, 0)";
     
     if (!$mysqli->query($sql)) {
-        return ['success' => false, 'message' => 'Error al insertar estimate: ' . $mysqli->error];
+        return ['success' => false, 'message' => 'Error al insertar proposal: ' . $mysqli->error];
     }
     
-    $estimate_id = $mysqli->insert_id;
+    $proposal_id = $mysqli->insert_id;
     
+    // Insertar items en crm_proposal_items
     if (isset($presupuesto['items']) && is_array($presupuesto['items'])) {
         $sort = 0;
         foreach ($presupuesto['items'] as $item) {
@@ -94,13 +104,14 @@ function crearPropuestaEnCRM($presupuesto) {
             $rate = floatval($item['precio'] ?? 0);
             $item_total = $quantity * $rate;
             
-            $sqlItem = "INSERT INTO crm_estimate_items 
-                        (estimate_id, title, description, quantity, unit_type, rate, total, sort, item_id, deleted) 
+            // CONSULTA SQL EXACTA QUE FUNCIONA PARA ITEMS (probada en phpMyAdmin)
+            $sqlItem = "INSERT INTO crm_proposal_items 
+                        (proposal_id, title, description, quantity, unit_type, rate, total, sort, item_id, deleted) 
                         VALUES 
-                        ($estimate_id, '$title', '$description', $quantity, '$unit_type', $rate, $item_total, $sort, 0, 0)";
+                        ($proposal_id, '$title', '$description', $quantity, '$unit_type', $rate, $item_total, $sort, 0, 0)";
             
             if (!$mysqli->query($sqlItem)) {
-                error_log("Error al insertar item de estimate: " . $mysqli->error);
+                error_log("Error al insertar item de proposal: " . $mysqli->error);
             }
             $sort++;
         }
@@ -108,8 +119,8 @@ function crearPropuestaEnCRM($presupuesto) {
     
     return [
         'success' => true,
-        'estimate_id' => $estimate_id,
-        'message' => 'Propuesta creada en CRM con ID: ' . $estimate_id
+        'proposal_id' => $proposal_id,
+        'message' => 'Propuesta creada en CRM con ID: ' . $proposal_id
     ];
 }
 
@@ -117,7 +128,7 @@ function crearPropuestaEnCRM($presupuesto) {
  * Actualizar propuesta en el CRM
  */
 function actualizarPropuestaEnCRM($presupuesto) {
-    if (empty($presupuesto['crm_estimate_id'])) {
+    if (empty($presupuesto['crm_proposal_id'])) {
         return crearPropuestaEnCRM($presupuesto);
     }
 
@@ -130,25 +141,34 @@ function actualizarPropuestaEnCRM($presupuesto) {
         return ['success' => false, 'message' => 'Error de conexión a BBDD'];
     }
 
-    $estimate_id = intval($presupuesto['crm_estimate_id']);
+    $proposal_id = intval($presupuesto['crm_proposal_id']);
     $client_id = intval($presupuesto['cliente_id']);
-    $estimate_date = $presupuesto['fecha_propuesta'] ?? date('Y-m-d');
+    $proposal_date = $presupuesto['fecha_propuesta'] ?? date('Y-m-d');
     $valid_until = $presupuesto['valido_hasta'] ?? date('Y-m-d', strtotime('+30 days'));
     $note = $mysqli->real_escape_string($presupuesto['notas'] ?? '');
     
-    $sql = "UPDATE crm_estimates SET
+    // Actualizar content
+    $content = '<meta charset="UTF-8"><p><strong>Presupuesto: ' . htmlspecialchars($presupuesto['id'] ?? '') . '</strong></p>';
+    $content .= '<p>' . nl2br(htmlspecialchars($note)) . '</p>';
+    $content = $mysqli->real_escape_string($content);
+    
+    // Actualizar proposal
+    $sql = "UPDATE crm_proposals SET
             client_id = $client_id,
-            estimate_date = '$estimate_date',
+            proposal_date = '$proposal_date',
             valid_until = '$valid_until',
-            note = '$note'
-            WHERE id = $estimate_id";
+            note = '$note',
+            content = '$content'
+            WHERE id = $proposal_id";
     
     if (!$mysqli->query($sql)) {
-        return ['success' => false, 'message' => 'Error al actualizar estimate: ' . $mysqli->error];
+        return ['success' => false, 'message' => 'Error al actualizar proposal: ' . $mysqli->error];
     }
     
-    $mysqli->query("DELETE FROM crm_estimate_items WHERE estimate_id = $estimate_id");
+    // Eliminar items antiguos
+    $mysqli->query("DELETE FROM crm_proposal_items WHERE proposal_id = $proposal_id");
     
+    // Insertar items actualizados
     if (isset($presupuesto['items']) && is_array($presupuesto['items'])) {
         $sort = 0;
         foreach ($presupuesto['items'] as $item) {
@@ -159,10 +179,10 @@ function actualizarPropuestaEnCRM($presupuesto) {
             $rate = floatval($item['precio'] ?? 0);
             $item_total = $quantity * $rate;
             
-            $sqlItem = "INSERT INTO crm_estimate_items 
-                        (estimate_id, title, description, quantity, unit_type, rate, total, sort, item_id, deleted) 
+            $sqlItem = "INSERT INTO crm_proposal_items 
+                        (proposal_id, title, description, quantity, unit_type, rate, total, sort, item_id, deleted) 
                         VALUES 
-                        ($estimate_id, '$title', '$description', $quantity, '$unit_type', $rate, $item_total, $sort, 0, 0)";
+                        ($proposal_id, '$title', '$description', $quantity, '$unit_type', $rate, $item_total, $sort, 0, 0)";
             
             $mysqli->query($sqlItem);
             $sort++;
@@ -171,7 +191,7 @@ function actualizarPropuestaEnCRM($presupuesto) {
     
     return [
         'success' => true,
-        'estimate_id' => $estimate_id,
+        'proposal_id' => $proposal_id,
         'message' => 'Propuesta actualizada en CRM'
     ];
 }
@@ -239,7 +259,7 @@ function guardarPresupuesto() {
     foreach ($presupuestos as $key => $p) {
         if ($p['id'] === $id) {
             $presupuesto['fecha_creacion'] = $p['fecha_creacion'] ?? date('Y-m-d H:i:s');
-            $presupuesto['crm_estimate_id'] = $p['crm_estimate_id'] ?? null;
+            $presupuesto['crm_proposal_id'] = $p['crm_proposal_id'] ?? null;
             $presupuestos[$key] = $presupuesto;
             $encontrado = true;
             $esActualizacion = true;
@@ -258,17 +278,17 @@ function guardarPresupuesto() {
     
     // Solo sincronizar si hay un cliente_id válido
     if (!empty($presupuesto['cliente_id']) && $presupuesto['cliente_id'] !== '') {
-        if ($esActualizacion && !empty($presupuesto['crm_estimate_id'])) {
+        if ($esActualizacion && !empty($presupuesto['crm_proposal_id'])) {
             $crmResult = actualizarPropuestaEnCRM($presupuesto);
         } else {
             $crmResult = crearPropuestaEnCRM($presupuesto);
         }
 
         // Si se creó correctamente, guardar el ID del CRM
-        if ($crmResult['success'] && isset($crmResult['estimate_id'])) {
+        if ($crmResult['success'] && isset($crmResult['proposal_id'])) {
             foreach ($presupuestos as $key => $p) {
                 if ($p['id'] === $id) {
-                    $presupuestos[$key]['crm_estimate_id'] = $crmResult['estimate_id'];
+                    $presupuestos[$key]['crm_proposal_id'] = $crmResult['proposal_id'];
                     break;
                 }
             }
@@ -281,7 +301,7 @@ function guardarPresupuesto() {
     // Log de auditoría
     $auditMessage = 'Presupuesto ' . ($esActualizacion ? 'actualizado' : 'guardado') . ': ' . $id;
     if ($crmResult['success']) {
-        $auditMessage .= ' | Sincronizado con CRM (ID: ' . $crmResult['estimate_id'] . ')';
+        $auditMessage .= ' | Sincronizado con CRM (ID: ' . $crmResult['proposal_id'] . ')';
     } elseif (!empty($presupuesto['cliente_id'])) {
         $auditMessage .= ' | Error sincronización CRM: ' . $crmResult['message'];
     }

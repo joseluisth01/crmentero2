@@ -1,6 +1,6 @@
 <?php
 /**
- * Sincronizar presupuestos existentes con el CRM
+ * Sincronizar presupuestos existentes con el CRM como PROPUESTAS
  * Ejecutar una sola vez: https://gestion-tictac-comunicacion.es/api/presupuestos/sync_old.php
  */
 
@@ -10,7 +10,7 @@ set_time_limit(300);
 
 require_once '../config.php';
 
-echo "<h1>🔄 Sincronización de Presupuestos con CRM</h1>";
+echo "<h1>🔄 Sincronización de Presupuestos con CRM (PROPUESTAS)</h1>";
 echo "<style>body{font-family:Arial;padding:20px;} .success{color:green;} .error{color:red;} .info{color:blue;} pre{background:#f5f5f5;padding:15px;border-radius:5px;overflow:auto;}</style>";
 
 $presupuestosFile = DATA_PATH . '/presupuestos.json';
@@ -45,8 +45,8 @@ foreach ($presupuestos as $key => $presupuesto) {
     echo "<hr><h3>Procesando: $id</h3>";
     
     // Ya está sincronizado?
-    if (!empty($presupuesto['crm_estimate_id'])) {
-        echo "<p class='info'>⚠️ Ya está sincronizado (CRM ID: " . $presupuesto['crm_estimate_id'] . ")</p>";
+    if (!empty($presupuesto['crm_proposal_id'])) {
+        echo "<p class='info'>⚠️ Ya está sincronizado (CRM Proposal ID: " . $presupuesto['crm_proposal_id'] . ")</p>";
         $yaSincronizados++;
         continue;
     }
@@ -62,31 +62,38 @@ foreach ($presupuestos as $key => $presupuesto) {
     echo "<p class='info'>Cliente ID: $clientId</p>";
     
     // Preparar datos
-    $estimateDate = $presupuesto['fecha_propuesta'] ?? date('Y-m-d');
+    $proposalDate = $presupuesto['fecha_propuesta'] ?? date('Y-m-d');
     $validUntil = $presupuesto['valido_hasta'] ?? date('Y-m-d', strtotime('+30 days'));
     $note = $mysqli->real_escape_string($presupuesto['notas'] ?? '');
     
-    // CONSULTA SQL EXACTA QUE FUNCIONA (probada)
-    $sql = "INSERT INTO crm_estimates 
-            (client_id, estimate_request_id, estimate_date, valid_until, note, 
+    // Generar public_key único (10 caracteres)
+    $publicKey = substr(md5(uniqid(rand(), true)), 0, 10);
+    
+    // Generar contenido HTML simple para la propuesta
+    $content = '<meta charset="UTF-8"><p><strong>Presupuesto: ' . htmlspecialchars($id) . '</strong></p>';
+    $content .= '<p>' . nl2br(htmlspecialchars($note)) . '</p>';
+    $content = $mysqli->real_escape_string($content);
+    
+    // CONSULTA SQL EXACTA QUE FUNCIONA PARA PROPUESTAS
+    $sql = "INSERT INTO crm_proposals 
+            (client_id, proposal_date, valid_until, note, 
              status, tax_id, tax_id2, 
              discount_type, discount_amount, discount_amount_type,
-             project_id, accepted_by, meta_data, created_by, signature, public_key, company_id, deleted) 
+             content, public_key, accepted_by, created_by, total_views, meta_data, company_id, project_id, deleted) 
             VALUES 
-            ($clientId, 0, '$estimateDate', '$validUntil', '$note',
+            ($clientId, '$proposalDate', '$validUntil', '$note',
              'draft', 1, 0,
              'before_tax', 0, 'percentage',
-             0, 0, '', 1, '', '', 0, 0)";
+             '$content', '$publicKey', 0, 1, 0, '', 0, 0, 0)";
     
     if (!$mysqli->query($sql)) {
         echo "<p class='error'>❌ Error al insertar: " . $mysqli->error . "</p>";
-        echo "<p class='error'>SQL: " . htmlspecialchars($sql) . "</p>";
         $errores++;
         continue;
     }
     
-    $estimateId = $mysqli->insert_id;
-    echo "<p class='success'>✅ Estimate creado con ID: $estimateId</p>";
+    $proposalId = $mysqli->insert_id;
+    echo "<p class='success'>✅ Propuesta creada con ID: $proposalId</p>";
     
     // Insertar items
     if (isset($presupuesto['items']) && is_array($presupuesto['items'])) {
@@ -101,11 +108,11 @@ foreach ($presupuestos as $key => $presupuesto) {
             $rate = floatval($item['precio'] ?? 0);
             $itemTotal = $quantity * $rate;
 
-            // CONSULTA SQL EXACTA QUE FUNCIONA (probada)
-            $itemSql = "INSERT INTO crm_estimate_items 
-                        (estimate_id, title, description, quantity, unit_type, rate, total, sort, item_id, deleted) 
+            // CONSULTA SQL EXACTA QUE FUNCIONA PARA ITEMS DE PROPUESTAS
+            $itemSql = "INSERT INTO crm_proposal_items 
+                        (proposal_id, title, description, quantity, unit_type, rate, total, sort, item_id, deleted) 
                         VALUES 
-                        ($estimateId, '$title', '$description', $quantity, '$unitType', $rate, $itemTotal, $sort, 0, 0)";
+                        ($proposalId, '$title', '$description', $quantity, '$unitType', $rate, $itemTotal, $sort, 0, 0)";
 
             if ($mysqli->query($itemSql)) {
                 $itemsInsertados++;
@@ -118,8 +125,8 @@ foreach ($presupuestos as $key => $presupuesto) {
         echo "<p class='info'>Items insertados: $itemsInsertados</p>";
     }
     
-    // Actualizar el JSON con el crm_estimate_id
-    $presupuestos[$key]['crm_estimate_id'] = $estimateId;
+    // Actualizar el JSON con el crm_proposal_id
+    $presupuestos[$key]['crm_proposal_id'] = $proposalId;
     $sincronizados++;
 }
 
@@ -134,6 +141,6 @@ echo "<p class='success'>✅ Sincronizados: $sincronizados</p>";
 echo "<p class='info'>⚠️ Ya estaban sincronizados: $yaSincronizados</p>";
 echo "<p class='error'>❌ Errores: $errores</p>";
 
-echo "<hr><p><strong>Proceso completado</strong>. Ahora puedes verificar en el CRM.</p>";
+echo "<hr><p><strong>Proceso completado</strong>. Verifica en el CRM en la sección de <strong>PROPUESTAS</strong>.</p>";
 echo "<p><a href='index.php'>← Volver a Presupuestos</a></p>";
 ?>

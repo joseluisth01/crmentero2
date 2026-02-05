@@ -81,7 +81,7 @@ _verificarSesionCRM();
 // ============================================
 // CONFIGURACIÓN DEL CRM
 // ============================================
-define('CRM_URL', 'https://gestion-tictac-comunicacion.es/index.php/api');
+define('CRM_URL', 'https://gestion-tictac-comunicacion.es/index.php/dashboard');
 define('API_TOKEN', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJ1c2VyIjoicHJvZHVjY2lvbkB0aWN0YWMtY29tdW5pY2FjaW9uLmVzIiwibmFtZSI6IlByb2R1Y2Npb24iLCJBUElfVElNRSI6MTc2OTUwMjU3MX0.4RoKiYv6z8sBE5MdchSE8iQ7wJnXGOIAlW52Mjn5oZvdRJsAWG3l-VmVIMlj3DawwtDl21e26_twU77usBjuGw');
 
 // ============================================
@@ -93,7 +93,7 @@ define('INCLUDES_PATH', BASE_PATH . '/includes');
 define('ASSETS_PATH', BASE_PATH . '/assets');
 
 // URLs para navegación
-define('BASE_URL', 'https://gestion-tictac-comunicacion.es/api');
+define('BASE_URL', 'https://gestion-tictac-comunicacion.es/dashboard');
 define('CLIENTES_URL', BASE_URL . '/clientes');
 define('AUDITORIA_URL', BASE_URL . '/auditoria');
 define('PRESUPUESTOS_URL', BASE_URL . '/presupuestos');
