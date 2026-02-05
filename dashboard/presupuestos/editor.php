@@ -26,14 +26,8 @@ if ($editId) {
     }
 }
 
-// Obtener lista de clientes del CRM
-$clientes = array();
-for ($id = 1; $id <= 200; $id++) {
-    $cliente = callCrmApi('clients/' . $id);
-    if ($cliente && (!isset($cliente['deleted']) || $cliente['deleted'] == 0)) {
-        $clientes[] = $cliente;
-    }
-}
+// Obtener lista de clientes del CRM (consulta directa a BBDD)
+$clientes = getClientesCRM();
 
 // Obtener artículos/servicios del catálogo (consulta directa a BBDD)
 $articulos = getArticulosCRM();

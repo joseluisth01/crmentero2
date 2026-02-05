@@ -176,6 +176,40 @@ function callCrmApi($endpoint, $method = 'GET', $data = null) {
 }
 
 /**
+ * Obtener clientes directamente de la BBDD del CRM.
+ * Consulta directa en vez de 200 llamadas API individuales.
+ */
+function getClientesCRM() {
+    $mysqli = conexionBBDD();
+    if (!$mysqli) {
+        return array();
+    }
+
+    $sql = "SELECT c.id, c.company_name, c.email, c.phone, c.address, c.city,
+                   c.zip, c.country, c.vat_number, c.website,
+                   GROUP_CONCAT(cg.title SEPARATOR ', ') AS client_groups
+            FROM crm_clients c
+            LEFT JOIN crm_client_group_members cgm ON cgm.client_id = c.id
+            LEFT JOIN crm_client_groups cg ON cg.id = cgm.group_id
+            WHERE c.deleted = 0
+            GROUP BY c.id
+            ORDER BY c.company_name ASC";
+
+    $result = $mysqli->query($sql);
+    if (!$result) {
+        return array();
+    }
+
+    $clientes = array();
+    while ($row = $result->fetch_assoc()) {
+        $clientes[] = $row;
+    }
+    $result->free();
+
+    return $clientes;
+}
+
+/**
  * Obtener artículos del catálogo directamente de la BBDD del CRM.
  * 
  * El plugin RestApi NO expone un endpoint /api/items.
