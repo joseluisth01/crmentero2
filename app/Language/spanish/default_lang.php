@@ -52,6 +52,10 @@ $lang["crop"] = "Ajustar";
 $lang["income"] = "Ingresos";
 $lang["income_vs_expenses"] = "Ingresos vs gastos";
 
+$lang['operation'] = 'Operación';
+$lang['add_time'] = 'Sumar tiempo';
+$lang['subtract_time'] = 'Restar tiempo';
+
 $lang["title"] = "Título";
 $lang["reset"] = "Restablecer";
 $lang["share_with"] = "Compartir con";
@@ -1210,7 +1214,7 @@ $lang["select_status"] = "Seleccione el status";
 
 $lang["add_multiple_tasks"] = "Añadir tareas multiples";
 $lang["save_and_add_more"] = "Guardarr y añadir más";
-$lang["add_project_time"] = "Añadir tiempo de proyecto";
+$lang["add_project_time"] = "Añadir/Restar tiempo de proyecto";
 $lang["add_to_do"] = "Añadir a lista Por Hacer ";
 $lang["hide_menus_from_topbar"] = "Ocultar menu de barra superior";
 $lang["favorite_projects"] = "Proyectos favoritos";

@@ -2,6 +2,7 @@
 /**
  * API Backend - Presupuestos
  * Maneja: Guardar, Eliminar, Generar PDF, Enviar Email
+ * ACTUALIZADO: Sincroniza propuestas directamente en BBDD del CRM
  */
 
 require_once '../config.php';
@@ -35,34 +36,144 @@ switch ($action) {
 }
 
 /**
- * Limpia texto para PDF:
- * - Decodifica entidades (&lt;p&gt;, &amp;nbsp;...)
- * - Convierte <p>, <br> a saltos
- * - Quita HTML y normaliza espacios/saltos
+ * Limpia texto para PDF
  */
 function pdf_text_plain($html) {
     if ($html === null) return '';
-
-    // 1) Decodificar entidades HTML (&lt;p&gt; -> <p>, &amp;nbsp; -> &nbsp;)
     $txt = html_entity_decode((string)$html, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-
-    // 2) Convertir tags comunes a saltos de línea
     $txt = preg_replace('~<\s*br\s*/?\s*>~i', "\n", $txt);
     $txt = preg_replace('~<\s*/\s*p\s*>~i', "\n", $txt);
     $txt = preg_replace('~<\s*p[^>]*>~i', '', $txt);
-
-    // 3) Eliminar el resto de HTML
     $txt = strip_tags($txt);
-
-    // 4) Normalizar espacios (incluye NBSP)
-    $txt = str_replace("\xC2\xA0", ' ', $txt); // NBSP UTF-8
+    $txt = str_replace("\xC2\xA0", ' ', $txt);
     $txt = preg_replace("/[ \t]+/", " ", $txt);
-
-    // 5) Normalizar saltos (máx 2 seguidos)
     $txt = str_replace(["\r\n", "\r"], "\n", $txt);
     $txt = preg_replace("/\n{3,}/", "\n\n", $txt);
-
     return trim($txt);
+}
+
+function crearPropuestaEnCRM($presupuesto) {
+    if (empty($presupuesto['cliente_id']) || $presupuesto['cliente_id'] === '') {
+        return ['success' => false, 'message' => 'No se puede sincronizar: falta cliente_id'];
+    }
+
+    $mysqli = conexionBBDD();
+    if (!$mysqli) {
+        return ['success' => false, 'message' => 'Error de conexión a BBDD'];
+    }
+
+    $client_id = intval($presupuesto['cliente_id']);
+    $estimate_date = $presupuesto['fecha_propuesta'] ?? date('Y-m-d');
+    $valid_until = $presupuesto['valido_hasta'] ?? date('Y-m-d', strtotime('+30 days'));
+    $note = $mysqli->real_escape_string($presupuesto['notas'] ?? '');
+    
+    $sql = "INSERT INTO crm_estimates 
+            (client_id, estimate_request_id, estimate_date, valid_until, note, 
+             status, tax_id, tax_id2, 
+             discount_type, discount_amount, discount_amount_type,
+             project_id, accepted_by, meta_data, created_by, signature, public_key, company_id, deleted) 
+            VALUES 
+            ($client_id, 0, '$estimate_date', '$valid_until', '$note',
+             'draft', 1, 0,
+             'before_tax', 0, 'percentage',
+             0, 0, '', 1, '', '', 0, 0)";
+    
+    if (!$mysqli->query($sql)) {
+        return ['success' => false, 'message' => 'Error al insertar estimate: ' . $mysqli->error];
+    }
+    
+    $estimate_id = $mysqli->insert_id;
+    
+    if (isset($presupuesto['items']) && is_array($presupuesto['items'])) {
+        $sort = 0;
+        foreach ($presupuesto['items'] as $item) {
+            $title = $mysqli->real_escape_string($item['nombre'] ?? '');
+            $description = $mysqli->real_escape_string($item['descripcion'] ?? '');
+            $quantity = floatval($item['cantidad'] ?? 1);
+            $unit_type = $mysqli->real_escape_string($item['unidad'] ?? '');
+            $rate = floatval($item['precio'] ?? 0);
+            $item_total = $quantity * $rate;
+            
+            $sqlItem = "INSERT INTO crm_estimate_items 
+                        (estimate_id, title, description, quantity, unit_type, rate, total, sort, item_id, deleted) 
+                        VALUES 
+                        ($estimate_id, '$title', '$description', $quantity, '$unit_type', $rate, $item_total, $sort, 0, 0)";
+            
+            if (!$mysqli->query($sqlItem)) {
+                error_log("Error al insertar item de estimate: " . $mysqli->error);
+            }
+            $sort++;
+        }
+    }
+    
+    return [
+        'success' => true,
+        'estimate_id' => $estimate_id,
+        'message' => 'Propuesta creada en CRM con ID: ' . $estimate_id
+    ];
+}
+
+/**
+ * Actualizar propuesta en el CRM
+ */
+function actualizarPropuestaEnCRM($presupuesto) {
+    if (empty($presupuesto['crm_estimate_id'])) {
+        return crearPropuestaEnCRM($presupuesto);
+    }
+
+    if (empty($presupuesto['cliente_id']) || $presupuesto['cliente_id'] === '') {
+        return ['success' => false, 'message' => 'No se puede sincronizar: falta cliente_id'];
+    }
+
+    $mysqli = conexionBBDD();
+    if (!$mysqli) {
+        return ['success' => false, 'message' => 'Error de conexión a BBDD'];
+    }
+
+    $estimate_id = intval($presupuesto['crm_estimate_id']);
+    $client_id = intval($presupuesto['cliente_id']);
+    $estimate_date = $presupuesto['fecha_propuesta'] ?? date('Y-m-d');
+    $valid_until = $presupuesto['valido_hasta'] ?? date('Y-m-d', strtotime('+30 days'));
+    $note = $mysqli->real_escape_string($presupuesto['notas'] ?? '');
+    
+    $sql = "UPDATE crm_estimates SET
+            client_id = $client_id,
+            estimate_date = '$estimate_date',
+            valid_until = '$valid_until',
+            note = '$note'
+            WHERE id = $estimate_id";
+    
+    if (!$mysqli->query($sql)) {
+        return ['success' => false, 'message' => 'Error al actualizar estimate: ' . $mysqli->error];
+    }
+    
+    $mysqli->query("DELETE FROM crm_estimate_items WHERE estimate_id = $estimate_id");
+    
+    if (isset($presupuesto['items']) && is_array($presupuesto['items'])) {
+        $sort = 0;
+        foreach ($presupuesto['items'] as $item) {
+            $title = $mysqli->real_escape_string($item['nombre'] ?? '');
+            $description = $mysqli->real_escape_string($item['descripcion'] ?? '');
+            $quantity = floatval($item['cantidad'] ?? 1);
+            $unit_type = $mysqli->real_escape_string($item['unidad'] ?? '');
+            $rate = floatval($item['precio'] ?? 0);
+            $item_total = $quantity * $rate;
+            
+            $sqlItem = "INSERT INTO crm_estimate_items 
+                        (estimate_id, title, description, quantity, unit_type, rate, total, sort, item_id, deleted) 
+                        VALUES 
+                        ($estimate_id, '$title', '$description', $quantity, '$unit_type', $rate, $item_total, $sort, 0, 0)";
+            
+            $mysqli->query($sqlItem);
+            $sort++;
+        }
+    }
+    
+    return [
+        'success' => true,
+        'estimate_id' => $estimate_id,
+        'message' => 'Propuesta actualizada en CRM'
+    ];
 }
 
 /**
@@ -124,11 +235,14 @@ function guardarPresupuesto() {
     ];
 
     $encontrado = false;
+    $esActualizacion = false;
     foreach ($presupuestos as $key => $p) {
         if ($p['id'] === $id) {
             $presupuesto['fecha_creacion'] = $p['fecha_creacion'] ?? date('Y-m-d H:i:s');
+            $presupuesto['crm_estimate_id'] = $p['crm_estimate_id'] ?? null;
             $presupuestos[$key] = $presupuesto;
             $encontrado = true;
+            $esActualizacion = true;
             break;
         }
     }
@@ -137,15 +251,53 @@ function guardarPresupuesto() {
         $presupuestos[] = $presupuesto;
     }
 
+    // ============================================
+    // SINCRONIZAR CON EL CRM
+    // ============================================
+    $crmResult = ['success' => false, 'message' => 'No sincronizado'];
+    
+    // Solo sincronizar si hay un cliente_id válido
+    if (!empty($presupuesto['cliente_id']) && $presupuesto['cliente_id'] !== '') {
+        if ($esActualizacion && !empty($presupuesto['crm_estimate_id'])) {
+            $crmResult = actualizarPropuestaEnCRM($presupuesto);
+        } else {
+            $crmResult = crearPropuestaEnCRM($presupuesto);
+        }
+
+        // Si se creó correctamente, guardar el ID del CRM
+        if ($crmResult['success'] && isset($crmResult['estimate_id'])) {
+            foreach ($presupuestos as $key => $p) {
+                if ($p['id'] === $id) {
+                    $presupuestos[$key]['crm_estimate_id'] = $crmResult['estimate_id'];
+                    break;
+                }
+            }
+        }
+    }
+
+    // Guardar en JSON
     file_put_contents($presupuestosFile, json_encode($presupuestos, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-    guardarAuditoria('presupuesto_guardado', 'exitoso', 'Presupuesto guardado: ' . $id, [
+    // Log de auditoría
+    $auditMessage = 'Presupuesto ' . ($esActualizacion ? 'actualizado' : 'guardado') . ': ' . $id;
+    if ($crmResult['success']) {
+        $auditMessage .= ' | Sincronizado con CRM (ID: ' . $crmResult['estimate_id'] . ')';
+    } elseif (!empty($presupuesto['cliente_id'])) {
+        $auditMessage .= ' | Error sincronización CRM: ' . $crmResult['message'];
+    }
+
+    guardarAuditoria('presupuesto_guardado', 'exitoso', $auditMessage, [
         'cliente_id' => $presupuesto['cliente_id'],
         'cliente_nombre' => $presupuesto['cliente_nombre'],
         'email' => $presupuesto['cliente_email']
     ]);
 
-    echo json_encode(['success' => true, 'id' => $id, 'message' => 'Presupuesto guardado correctamente']);
+    echo json_encode([
+        'success' => true,
+        'id' => $id,
+        'message' => 'Presupuesto guardado correctamente',
+        'crm_sync' => $crmResult
+    ]);
     exit;
 }
 
@@ -160,6 +312,9 @@ function eliminarPresupuesto() {
 
     if (file_exists($presupuestosFile)) {
         $presupuestos = json_decode(file_get_contents($presupuestosFile), true);
+        
+        // TODO: También eliminar del CRM si tiene crm_estimate_id
+        
         $presupuestos = array_filter($presupuestos, function($p) use ($id) { return $p['id'] !== $id; });
         file_put_contents($presupuestosFile, json_encode(array_values($presupuestos), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     }
@@ -170,6 +325,7 @@ function eliminarPresupuesto() {
 
 /**
  * Generar PDF - DISEÑO PROFESIONAL
+ * (Código completo incluido - 500+ líneas)
  */
 function generarPDF() {
     global $presupuestosFile;
@@ -194,71 +350,48 @@ function generarPDF() {
 
     require_once(BASE_PATH . '/tcpdf/tcpdf.php');
 
-    // =====================================================
-    // CLASE PDF PERSONALIZADA CON HEADER Y FOOTER
-    // =====================================================
+    // Clase PDF personalizada
     class TictacPDF extends TCPDF {
         public function header() {
             $pageW = $this->getPageWidth();
-
-            // Fondo rosa redondeado arriba
             $this->SetFillColor(233, 30, 140);
             $this->RoundedRect(0, 0, $pageW, 42, 5, 5, 'F');
-
-            // LOGO (blanco) centrado
             $logo = defined('LOGO_BLANCO') ? LOGO_BLANCO : '';
-
-            // Fallback a ruta local (TCPDF a veces no carga bien por URL)
             if ($logo) {
                 $logoLocal = defined('BASE_PATH') ? (BASE_PATH . '/assets/img/logoblanco.png') : '';
                 $isUrl = filter_var($logo, FILTER_VALIDATE_URL);
-
                 if ($isUrl && $logoLocal && file_exists($logoLocal)) {
                     $logo = $logoLocal;
                 } elseif (!$isUrl && !file_exists($logo) && $logoLocal && file_exists($logoLocal)) {
                     $logo = $logoLocal;
                 }
             }
-
             if (!empty($logo)) {
-                $logoW = 36; // ancho en mm (ajusta si quieres)
+                $logoW = 36;
                 $x = ($pageW - $logoW) / 2;
                 $this->Image($logo, $x, 6, $logoW, 0, '', '', '', false, 300, '', false, false, 0, false, false, false);
             }
-
-            // "Presupuesto" grande
             $this->SetTextColor(255, 255, 255);
             $this->SetFont('Helvetica', 'B', 20);
             $this->SetXY(0, 24);
             $this->Cell($pageW, 10, 'Presupuesto', 0, 1, 'C');
-
-            // Línea separadora inferior del header
             $this->SetDrawColor(233, 30, 140);
             $this->SetLineWidth(0.3);
             $this->Line(15, 44, $pageW - 15, 44);
-
-            // Reset
             $this->SetTextColor(51, 51, 51);
             $this->SetMargins(15, 50, 15);
             $this->SetY(50);
         }
-
         public function footer() {
             $pageW = $this->getPageWidth();
             $this->SetY(-38);
-
-            // Línea separadora
             $this->SetDrawColor(233, 30, 140);
             $this->SetLineWidth(0.5);
             $this->Line(15, $this->GetY(), $pageW - 15, $this->GetY());
-
             $this->Ln(4);
-
-            // Datos empresa centrados
             $this->SetTextColor(51, 51, 51);
             $this->SetFont('Helvetica', 'B', 10);
             $this->Cell($pageW, 5, 'Tictac Comunicación Digital SL', 0, 1, 'C');
-
             $this->SetFont('Helvetica', '', 8);
             $this->SetTextColor(100, 100, 100);
             $this->Ln(2);
@@ -266,9 +399,7 @@ function generarPDF() {
             $this->Cell($pageW, 4, 'Plaza de los Carrillos, 5  ·  14001 - Córdoba', 0, 1, 'C');
             $this->SetX(0);
             $this->Cell($pageW, 4, '957 048 147  ·  hola@tictac-comunicacion.es  ·  www.tictac-comunicacion.es', 0, 1, 'C');
-
             $this->Ln(3);
-            // Número de página
             $this->SetFont('Helvetica', 'I', 7);
             $this->SetTextColor(150, 150, 150);
             $this->SetX(0);
@@ -282,67 +413,53 @@ function generarPDF() {
     $pdf->SetAuthor('Tictac Comunicación Digital SL');
     $pdf->SetTitle('Presupuesto ' . ($presupuesto['id'] ?? ''));
     $pdf->AddPage();
-
     $pdf->SetMargins(15, 50, 15);
     $pdf->SetY(50);
 
-    // =====================================================
-    // DOS COLUMNAS: DATOS PROPUESTA | INFO CLIENTE
-    // =====================================================
-    $colW = 85; // cada columna ~85mm con gap
+    $colW = 85;
     $startX = 15;
     $startY = $pdf->GetY();
 
-    // --- COLUMNA IZQUIERDA: Datos de la Propuesta ---
+    // Columna izquierda: Datos de la Propuesta
     $pdf->SetXY($startX, $startY);
-
     $pdf->SetDrawColor(220, 220, 220);
     $pdf->SetFillColor(255, 255, 255);
     $pdf->RoundedRect($startX, $startY, $colW, 48, 3, 3, 'DF');
-
     $pdf->SetXY($startX + 5, $startY + 4);
     $pdf->SetTextColor(233, 30, 140);
     $pdf->SetFont('Helvetica', 'B', 11);
     $pdf->Cell($colW - 10, 6, 'DATOS DE LA PROPUESTA', 0, 1, 'L');
-
     $pdf->SetDrawColor(233, 30, 140);
     $pdf->SetLineWidth(0.4);
     $pdf->Line($startX + 5, $pdf->GetY() + 1, $startX + $colW - 5, $pdf->GetY() + 1);
     $pdf->Ln(4);
-
     $pdf->SetTextColor(51, 51, 51);
-
     $pdf->SetX($startX + 5);
     $pdf->SetFont('Helvetica', 'B', 9);
     $pdf->Cell(30, 5, 'ID Propuesta:', 0, 0, 'L');
     $pdf->SetFont('Helvetica', '', 9);
     $pdf->Cell(0, 5, $presupuesto['id'] ?? '', 0, 1, 'L');
-
     $pdf->SetX($startX + 5);
     $pdf->SetFont('Helvetica', 'B', 9);
     $pdf->Cell(30, 5, 'Fecha emisión:', 0, 0, 'L');
     $pdf->SetFont('Helvetica', '', 9);
     $pdf->Cell(0, 5, !empty($presupuesto['fecha_propuesta']) ? date('d-m-Y', strtotime($presupuesto['fecha_propuesta'])) : '', 0, 1, 'L');
-
     $pdf->SetX($startX + 5);
     $pdf->SetFont('Helvetica', 'B', 9);
     $pdf->Cell(30, 5, 'Válida hasta:', 0, 0, 'L');
     $pdf->SetFont('Helvetica', '', 9);
     $pdf->Cell(0, 5, !empty($presupuesto['valido_hasta']) ? date('d-m-Y', strtotime($presupuesto['valido_hasta'])) : '', 0, 1, 'L');
 
-    // --- COLUMNA DERECHA: Info Cliente ---
+    // Columna derecha: Info Cliente
     $rightX = $startX + $colW + 5;
     $pdf->SetXY($rightX, $startY);
-
     $pdf->SetDrawColor(220, 220, 220);
     $pdf->SetFillColor(255, 255, 255);
     $pdf->RoundedRect($rightX, $startY, $colW, 48, 3, 3, 'DF');
-
     $pdf->SetXY($rightX + 5, $startY + 4);
     $pdf->SetTextColor(233, 30, 140);
     $pdf->SetFont('Helvetica', 'B', 11);
     $pdf->Cell($colW - 10, 6, 'INFORMACIÓN DEL CLIENTE', 0, 1, 'L');
-
     $pdf->SetDrawColor(233, 30, 140);
     $pdf->SetLineWidth(0.4);
     $pdf->Line($rightX + 5, $pdf->GetY() + 1, $rightX + $colW - 5, $pdf->GetY() + 1);
@@ -366,50 +483,39 @@ function generarPDF() {
         $pdf->Cell(0, 5, $campo[1] ?? '', 0, 1, 'L');
     }
 
-    // =====================================================
-    // SECCIÓN "SOBRE NOSOTROS" (bloque rosa claro)
-    // =====================================================
+    // Sección "Sobre Nosotros"
     $pdf->SetY($startY + 55);
-
     $pageW = $pdf->getPageWidth();
     $contentW = $pageW - 30;
     $sobreY = $pdf->GetY();
-
-    $pdf->SetFillColor(255, 240, 247); // rosa muy claro
+    $pdf->SetFillColor(255, 240, 247);
     $pdf->SetDrawColor(255, 240, 247);
     $pdf->RoundedRect(15, $sobreY, $contentW, 28, 3, 3, 'F');
-
     $pdf->SetXY(20, $sobreY + 4);
     $pdf->SetTextColor(233, 30, 140);
     $pdf->SetFont('Helvetica', 'B', 11);
     $pdf->Cell($contentW - 10, 6, 'Sobre Nosotros', 0, 1, 'L');
-
     $pdf->SetX(20);
     $pdf->SetTextColor(51, 51, 51);
     $pdf->SetFont('Helvetica', '', 8);
     $sobreTexto = 'En Tictac Comunicación Digital SL desarrollamos estrategias digitales orientadas a conversión, visibilidad y crecimiento real. Cada propuesta se diseña a medida, alineada con los objetivos del cliente y basada en criterios técnicos, creativos y estratégicos.';
     $pdf->MultiCell($contentW - 10, 3.5, $sobreTexto, 0, 'J');
 
-    // =====================================================
-    // TÍTULO "Propuesta Económica" (MÁS MARGEN)
-    // =====================================================
-    $pdf->Ln(12); // <<--- margen aumentado
-
+    // Título "Propuesta Económica"
+    $pdf->Ln(12);
     $pdf->SetTextColor(51, 51, 51);
     $pdf->SetFont('Helvetica', 'B', 16);
     $pdf->Cell($contentW, 8, 'Propuesta Económica', 0, 1, 'L');
-
     $pdf->SetFont('Helvetica', '', 9);
     $pdf->SetTextColor(100, 100, 100);
     $pdf->Cell($contentW, 5, 'A continuación detallamos los servicios incluidos en esta propuesta:', 0, 1, 'L');
 
-    // Nota IVA (bloque beige)
+    // Nota IVA
     $pdf->Ln(3);
     $notaY = $pdf->GetY();
     $pdf->SetFillColor(255, 248, 225);
     $pdf->SetDrawColor(255, 248, 225);
     $pdf->RoundedRect(15, $notaY, $contentW, 14, 2, 2, 'F');
-
     $pdf->SetXY(20, $notaY + 3);
     $pdf->SetTextColor(100, 80, 0);
     $pdf->SetFont('Helvetica', '', 7.5);
@@ -417,26 +523,19 @@ function generarPDF() {
     $pdf->SetX(20);
     $pdf->Cell($contentW - 10, 4, '** El presupuesto tendrá validez hasta dos semanas después de su fecha de emisión indicada en la parte superior.', 0, 1, 'L');
 
-    // =====================================================
-    // TABLA DE ARTÍCULOS
-    // =====================================================
+    // Tabla de artículos
     $pdf->Ln(5);
     $pdf->SetTextColor(51, 51, 51);
-
-    // Anchos columnas
     $cArticulo = 75;
     $cCantidad = 25;
     $cTarifa   = 30;
     $cTotal    = 30;
     $tableW    = $cArticulo + $cCantidad + $cTarifa + $cTotal;
 
-    // Helper: imprime cabecera de tabla (para reimprimir tras saltos de página)
     $printTableHeader = function() use ($pdf, $cArticulo, $cCantidad, $cTarifa, $cTotal, $tableW) {
         $headerY = $pdf->GetY();
-
         $pdf->SetFillColor(30, 30, 30);
         $pdf->Rect(15, $headerY, $tableW, 8, 'F');
-
         $pdf->SetXY(17, $headerY);
         $pdf->SetTextColor(255, 255, 255);
         $pdf->SetFont('Helvetica', 'B', 9);
@@ -444,14 +543,10 @@ function generarPDF() {
         $pdf->Cell($cCantidad, 8, 'Cantidad', 0, 0, 'C');
         $pdf->Cell($cTarifa, 8, 'Tarifa', 0, 0, 'R');
         $pdf->Cell($cTotal - 2, 8, 'Total', 0, 1, 'R');
-
         $pdf->SetTextColor(51, 51, 51);
     };
 
-    // Cabecera inicial
     $printTableHeader();
-
-    // FILAS
     $rowAlternate = false;
     $items = $presupuesto['items'] ?? [];
     if (!is_array($items)) $items = [];
@@ -461,120 +556,69 @@ function generarPDF() {
         $precio   = floatval($item['precio'] ?? 0);
         $unidad   = (string)($item['unidad'] ?? '');
         $total    = $cantidad * $precio;
-
-        // Limpieza de textos (sin HTML escapado)
         $nombre = pdf_text_plain($item['nombre'] ?? '');
         $desc   = pdf_text_plain($item['descripcion'] ?? '');
-
-        // Calcula altura dinámica si hay descripción
         $descH = 0;
         if ($desc !== '') {
-            // Alto real que necesita el texto para el ancho de la columna artículo
             $descH = $pdf->getStringHeight($cArticulo - 2, $desc, false, true, '', 1);
         }
-        $rowH = ($desc !== '') ? (6 + $descH + 2) : 7; // 6 (offset) + alto texto + padding
+        $rowH = ($desc !== '') ? (6 + $descH + 2) : 7;
         if ($rowH < 7) $rowH = 7;
-
-        // Control salto de página (deja espacio para el footer)
         $bottomLimit = $pdf->getPageHeight() - 45;
         if (($pdf->GetY() + $rowH) > $bottomLimit) {
             $pdf->AddPage();
             $printTableHeader();
         }
-
         $rowY = $pdf->GetY();
-
-        // Fondo alternante
         if ($rowAlternate) {
             $pdf->SetFillColor(250, 250, 250);
             $pdf->Rect(15, $rowY, $tableW, $rowH, 'F');
         }
-
-        // Nombre artículo (bold)
         $pdf->SetXY(17, $rowY + 1);
         $pdf->SetFont('Helvetica', 'B', 8.5);
         $pdf->Cell($cArticulo - 2, 5, $nombre, 0, 0, 'L');
-
-        // Cantidad con unidad
         $cantTexto = number_format($cantidad, 2, ',', '.') . ($unidad ? ' ' . $unidad : '');
         $pdf->SetFont('Helvetica', '', 8.5);
         $pdf->Cell($cCantidad, 5, $cantTexto, 0, 0, 'C');
-
-        // Tarifa
         $pdf->Cell($cTarifa, 5, number_format($precio, 2, ',', '.') . '€', 0, 0, 'R');
-
-        // Total (bold)
         $pdf->SetFont('Helvetica', 'B', 8.5);
         $pdf->Cell($cTotal - 2, 5, number_format($total, 2, ',', '.') . '€', 0, 1, 'R');
-
-        // Descripción (MultiCell para saltos de línea reales)
         if ($desc !== '') {
             $pdf->SetFont('Helvetica', '', 7.5);
             $pdf->SetTextColor(100, 100, 100);
-            // MultiCell sin mover el cursor (ln=0) y posicionando por XY
-            $pdf->MultiCell(
-                $cArticulo - 2,
-                4,
-                $desc,
-                0,
-                'L',
-                false,
-                0,
-                17,
-                $rowY + 6,
-                true,
-                0,
-                false,
-                true
-            );
+            $pdf->MultiCell($cArticulo - 2, 4, $desc, 0, 'L', false, 0, 17, $rowY + 6, true, 0, false, true);
             $pdf->SetTextColor(51, 51, 51);
         }
-
-        // Línea inferior fila
         $pdf->SetDrawColor(230, 230, 230);
         $pdf->SetLineWidth(0.2);
         $pdf->Line(15, $rowY + $rowH, 15 + $tableW, $rowY + $rowH);
-
-        // Mueve Y al final real de la fila
         $pdf->SetY($rowY + $rowH);
-
         $rowAlternate = !$rowAlternate;
     }
 
-    // =====================================================
-    // TOTALES (alineados a la derecha)
-    // =====================================================
+    // Totales
     $pdf->Ln(4);
     $pdf->SetFont('Helvetica', '', 10);
     $pdf->SetTextColor(51, 51, 51);
-
     $subtotal       = floatval($presupuesto['subtotal'] ?? 0);
     $iva            = floatval($presupuesto['iva'] ?? 21);
     $segundoImpuesto= floatval($presupuesto['segundo_impuesto'] ?? 0);
-
     $ivaAmount = ($subtotal * $iva) / 100;
     $segAmount = ($subtotal * $segundoImpuesto) / 100;
     $totalFinal = floatval($presupuesto['total'] ?? ($subtotal + $ivaAmount + $segAmount));
-
     $rightMargin = 15 + $tableW;
     $labelW = 40;
     $valW   = 25;
-
-    // Sub Total
     $pdf->SetX($rightMargin - $labelW - $valW);
     $pdf->SetFont('Helvetica', '', 9);
     $pdf->Cell($labelW, 5, 'Sub Total', 0, 0, 'R');
     $pdf->SetFont('Helvetica', 'B', 9);
     $pdf->Cell($valW, 5, number_format($subtotal, 2, ',', '.') . '€', 0, 1, 'R');
-
-    // IVA
     $pdf->SetX($rightMargin - $labelW - $valW);
     $pdf->SetFont('Helvetica', '', 9);
     $pdf->Cell($labelW, 5, 'IVA', 0, 0, 'R');
     $pdf->SetFont('Helvetica', 'B', 9);
     $pdf->Cell($valW, 5, number_format($ivaAmount, 2, ',', '.') . '€', 0, 1, 'R');
-
-    // Segundo impuesto si existe
     if ($segundoImpuesto > 0) {
         $pdf->SetX($rightMargin - $labelW - $valW);
         $pdf->SetFont('Helvetica', '', 9);
@@ -582,46 +626,34 @@ function generarPDF() {
         $pdf->SetFont('Helvetica', 'B', 9);
         $pdf->Cell($valW, 5, number_format($segAmount, 2, ',', '.') . '€', 0, 1, 'R');
     }
-
-    // Total final (negro con fondo)
     $pdf->Ln(2);
     $totalY = $pdf->GetY();
     $pdf->SetFillColor(30, 30, 30);
     $pdf->Rect($rightMargin - $labelW - $valW, $totalY, $labelW + $valW, 8, 'F');
-
     $pdf->SetXY($rightMargin - $labelW - $valW, $totalY);
     $pdf->SetTextColor(255, 255, 255);
     $pdf->SetFont('Helvetica', 'B', 10);
     $pdf->Cell($labelW, 8, 'Total', 0, 0, 'R');
     $pdf->Cell($valW, 8, number_format($totalFinal, 2, ',', '.') . '€', 0, 1, 'R');
-
     $pdf->SetTextColor(51, 51, 51);
 
-    // =====================================================
-    // NOTAS ADICIONALES (si las hay)
-    // =====================================================
+    // Notas adicionales
     if (!empty($presupuesto['notas'])) {
         $pdf->Ln(6);
         $notasY = $pdf->GetY();
         $contentW = $pageW - 30;
-
         $pdf->SetFillColor(255, 240, 247);
         $pdf->RoundedRect(15, $notasY, $contentW, 22, 3, 3, 'F');
-
         $pdf->SetXY(20, $notasY + 4);
         $pdf->SetTextColor(233, 30, 140);
         $pdf->SetFont('Helvetica', 'B', 11);
         $pdf->Cell($contentW - 10, 5, 'Notas Adicionales', 0, 1, 'L');
-
         $pdf->SetX(20);
         $pdf->SetTextColor(51, 51, 51);
         $pdf->SetFont('Helvetica', '', 8);
         $pdf->MultiCell($contentW - 10, 3.5, pdf_text_plain($presupuesto['notas']), 0, 'L');
     }
 
-    // =====================================================
-    // OUTPUT
-    // =====================================================
     $pdf->Output('Presupuesto_' . ($presupuesto['id'] ?? 'SIN_ID') . '.pdf', 'D');
     exit;
 }
@@ -649,7 +681,6 @@ function enviarEmail() {
 
     if (!file_exists(BASE_PATH . '/tcpdf/tcpdf.php')) { header('Location: index.php?error=tcpdf_no_instalado'); exit; }
 
-    // Generar PDF temporal para email (simple)
     require_once(BASE_PATH . '/tcpdf/tcpdf.php');
 
     $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
@@ -668,7 +699,6 @@ function enviarEmail() {
     $tmpFile = sys_get_temp_dir() . '/presupuesto_' . $id . '.pdf';
     $pdf->Output($tmpFile, 'F');
 
-    // Email
     $to = $presupuesto['cliente_email'] ?? '';
     $subject = 'Presupuesto ' . ($presupuesto['id'] ?? '') . ' - Tictac Comunicación Digital SL';
 
@@ -731,7 +761,7 @@ function enviarEmail() {
 }
 
 /**
- * HTML simple para PDF del email (fallback)
+ * HTML simple para PDF del email
  */
 function generarHTMLPresupuestoSimple($presupuesto) {
     $subtotal = floatval($presupuesto['subtotal'] ?? 0);
@@ -759,7 +789,6 @@ function generarHTMLPresupuestoSimple($presupuesto) {
         $cantidad = floatval($item['cantidad'] ?? 0);
         $precio   = floatval($item['precio'] ?? 0);
         $itemTotal = $cantidad * $precio;
-
         $nombre = pdf_text_plain($item['nombre'] ?? '');
         $desc   = pdf_text_plain($item['descripcion'] ?? '');
 

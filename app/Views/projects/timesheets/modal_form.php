@@ -50,36 +50,79 @@
         <?php } ?>
 
         <?php if ((get_setting("users_can_input_only_total_hours_instead_of_period") && (!$model_info->id || $model_info->hours)) || (!get_setting("users_can_input_only_total_hours_instead_of_period") && $model_info->hours)) { ?>
-            <div class="row">
-                <label for="date" class=" col-md-3 col-sm-3"><?php echo app_lang('date'); ?></label>
-                <div class="col-md-4 col-sm-4 form-group">
-                    <?php
-                    $in_time = is_date_exists($model_info->start_time) ? convert_date_utc_to_local($model_info->start_time) : "";
+            <div class="form-group">
+                <div class="row">
+                    <label for="date" class="col-md-3"><?php echo app_lang('date'); ?></label>
+                    <div class="col-md-9">
+                        <?php
+                        $in_time = is_date_exists($model_info->start_time) ? convert_date_utc_to_local($model_info->start_time) : "";
 
-                    echo form_input(array(
-                        "id" => "date",
-                        "name" => "date",
-                        "value" => $in_time ? date("Y-m-d", strtotime($in_time)) : "",
-                        "class" => "form-control",
-                        "placeholder" => app_lang('date'),
-                        "data-rule-required" => true,
-                        "data-msg-required" => app_lang("field_required"),
-                    ));
-                    ?>
+                        echo form_input(array(
+                            "id" => "date",
+                            "name" => "date",
+                            "value" => $in_time ? date("Y-m-d", strtotime($in_time)) : "",
+                            "class" => "form-control",
+                            "placeholder" => app_lang('date'),
+                            "data-rule-required" => true,
+                            "data-msg-required" => app_lang("field_required"),
+                        ));
+                        ?>
+                    </div>
                 </div>
-                <label for="hours" class=" col-md-2 col-sm-2"><?php echo app_lang('hours'); ?></label>
-                <div class=" col-md-3 col-sm-3 form-group">
-                    <?php
-                    echo form_input(array(
-                        "id" => "hours",
-                        "name" => "hours",
-                        "value" => $model_info->hours ? convert_hours_to_humanize_data($model_info->hours) : "",
-                        "class" => "form-control",
-                        "placeholder" => app_lang('timesheet_hour_input_help_message'),
-                        "data-rule-required" => true,
-                        "data-msg-required" => app_lang("field_required"),
-                    ));
-                    ?>
+            </div>
+
+            <div class="form-group">
+                <div class="row">
+                    <label for="operation_type" class="col-md-3"><?php echo app_lang('operation'); ?></label>
+                    <div class="col-md-9">
+                        <?php
+                        // Determinar el valor inicial basado en si hours es negativo
+                        $default_operation = "add";
+                        if ($model_info->hours && $model_info->hours < 0) {
+                            $default_operation = "subtract";
+                        }
+
+                        echo form_dropdown(
+                            "operation_type",
+                            array(
+                                "add" => app_lang("add_time"),
+                                "subtract" => app_lang("subtract_time")
+                            ),
+                            $default_operation,
+                            "class='form-control select2' id='operation_type'"
+                        );
+                        ?>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="row">
+                    <label for="hours" class="col-md-3"><?php echo app_lang('hours'); ?></label>
+                    <div class="col-md-9">
+                        <div class="input-group">
+                            <span class="input-group-text <?php echo ($model_info->hours && $model_info->hours < 0) ? 'text-danger' : 'text-success'; ?>" id="operation-indicator">
+                                <i data-feather="<?php echo ($model_info->hours && $model_info->hours < 0) ? 'minus' : 'plus'; ?>" class="icon-16"></i>
+                            </span>
+                            <?php
+                            // Mostrar siempre valor absoluto en el campo
+                            $hours_value = "";
+                            if ($model_info->hours) {
+                                $hours_value = convert_hours_to_humanize_data(abs($model_info->hours));
+                            }
+
+                            echo form_input(array(
+                                "id" => "hours",
+                                "name" => "hours",
+                                "value" => $hours_value,
+                                "class" => "form-control",
+                                "placeholder" => app_lang('timesheet_hour_input_help_message'),
+                                "data-rule-required" => true,
+                                "data-msg-required" => app_lang("field_required"),
+                            ));
+                            ?>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -222,6 +265,23 @@
                     $("#" + table).appTable({newData: result.data, dataId: result.id});
                 }
             }
+        });
+
+        // Cambiar icono dinámicamente según operación
+        $("#operation_type").on("change", function() {
+            var operation = $(this).val();
+            var $indicator = $("#operation-indicator");
+            var $icon = $indicator.find("i");
+            
+            if (operation === "subtract") {
+                $icon.attr("data-feather", "minus");
+                $indicator.removeClass("text-success").addClass("text-danger");
+            } else {
+                $icon.attr("data-feather", "plus");
+                $indicator.removeClass("text-danger").addClass("text-success");
+            }
+            
+            feather.replace();
         });
 
         $("#timelog-form .select2").select2();

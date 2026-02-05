@@ -1,6 +1,7 @@
 <?php
 /**
  * Presupuestos - Lista de presupuestos
+ * Actualizado con sincronización CRM
  */
 
 require_once '../config.php';
@@ -120,6 +121,7 @@ $additionalStyles = '
         border-radius: 15px;
         font-size: 12px;
         font-weight: 600;
+        margin: 2px;
     }
     
     .badge-enviado {
@@ -130,6 +132,16 @@ $additionalStyles = '
     .badge-borrador {
         background: #fff3cd;
         color: #856404;
+    }
+    
+    .badge-crm-sync {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .badge-crm-no-sync {
+        background: #f8d7da;
+        color: #721c24;
     }
     
     .actions {
@@ -233,6 +245,16 @@ include '../includes/header.php';
             <div class="stat-number">
                 <?php 
                 echo count(array_filter($presupuestos, function($p) {
+                    return !empty($p['crm_estimate_id']);
+                }));
+                ?>
+            </div>
+            <div class="stat-label">Sincronizados CRM</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">
+                <?php 
+                echo count(array_filter($presupuestos, function($p) {
                     return !isset($p['estado']) || $p['estado'] === 'borrador';
                 }));
                 ?>
@@ -277,6 +299,22 @@ include '../includes/header.php';
                                     <span class="badge badge-enviado">✓ Enviado</span>
                                 <?php else: ?>
                                     <span class="badge badge-borrador">⚠ Borrador</span>
+                                <?php endif; ?>
+                                
+                                <br>
+                                
+                                <?php if (!empty($presupuesto['crm_estimate_id'])): ?>
+                                    <span class="badge badge-crm-sync" title="Sincronizado con CRM - ID: <?php echo $presupuesto['crm_estimate_id']; ?>">
+                                        🔗 CRM #<?php echo $presupuesto['crm_estimate_id']; ?>
+                                    </span>
+                                <?php elseif (empty($presupuesto['cliente_id'])): ?>
+                                    <span class="badge badge-crm-no-sync" title="No sincronizado: falta cliente del CRM">
+                                        ⚠ Sin cliente CRM
+                                    </span>
+                                <?php else: ?>
+                                    <span class="badge badge-crm-no-sync" title="No sincronizado con CRM">
+                                        ✗ No sincronizado
+                                    </span>
                                 <?php endif; ?>
                             </td>
                             

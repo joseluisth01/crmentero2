@@ -1,7 +1,7 @@
 <?php
 /**
  * Editor de Presupuestos - Crear/Editar
- * VERSIÓN ACTUALIZADA: Buscador en selects cliente y artículo
+ * VERSIÓN ACTUALIZADA: Campos manuales para clientes y artículos
  */
 
 require_once '../config.php';
@@ -367,7 +367,7 @@ include '../includes/header.php';
 <div class="container">
     <div class="page-header">
         <h1><?php echo $editId ? '✏️ Editar Presupuesto' : '📝 Nuevo Presupuesto'; ?></h1>
-        <p>Selecciona servicios del catálogo o añade personalizados</p>
+        <p>Introduce los datos manualmente o selecciona del catálogo</p>
     </div>
     
     <form id="presupuestoForm" class="editor-container">
@@ -392,16 +392,16 @@ include '../includes/header.php';
             </div>
         </div>
         
-        <!-- DATOS DEL CLIENTE (con buscador) -->
+        <!-- DATOS DEL CLIENTE (editable manualmente o desde CRM) -->
         <div class="form-section">
             <h3>👤 Información del Cliente</h3>
             
             <div class="form-row">
                 <div class="form-group" style="grid-column: 1 / -1;">
-                    <label>Seleccionar Cliente del CRM *</label>
+                    <label>Seleccionar Cliente del CRM (opcional)</label>
                     <!-- Hidden select real para el form -->
-                    <select name="cliente_id" id="clienteSelect" style="display:none;" required>
-                        <option value="">-- Seleccionar cliente --</option>
+                    <select name="cliente_id" id="clienteSelect" style="display:none;">
+                        <option value="">-- Opcional: buscar en CRM --</option>
                         <?php foreach ($clientes as $cliente): ?>
                             <option value="<?php echo $cliente['id']; ?>" 
                                     data-nombre="<?php echo htmlspecialchars($cliente['company_name'] ?? ''); ?>"
@@ -420,7 +420,7 @@ include '../includes/header.php';
                     <!-- Searchable select visible -->
                     <div class="searchable-select-wrapper" id="clienteSearchWrapper">
                         <div class="ss-main" id="clienteSSmain">
-                            <span class="ss-selected-text ss-placeholder" id="clienteSStext">-- Buscar cliente --</span>
+                            <span class="ss-selected-text ss-placeholder" id="clienteSStext">-- Opcional: buscar cliente del CRM --</span>
                             <div class="ss-arrow"></div>
                         </div>
                         <div class="ss-dropdown" id="clienteSS-dropdown">
@@ -428,23 +428,27 @@ include '../includes/header.php';
                             <div class="ss-options" id="clienteSSoptions"></div>
                         </div>
                     </div>
+                    <small style="color: #666; margin-top: 5px; display: block;">Puedes buscar un cliente del CRM o introducir los datos manualmente abajo</small>
                 </div>
             </div>
             
             <div class="form-row">
                 <div class="form-group">
                     <label>Nombre/Empresa *</label>
-                    <input type="text" name="cliente_nombre" id="clienteNombre" required readonly
+                    <input type="text" name="cliente_nombre" id="clienteNombre" required
+                           placeholder="Introduce el nombre del cliente"
                            value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_nombre'] ?? '') : ''; ?>">
                 </div>
                 <div class="form-group">
                     <label>Email *</label>
                     <input type="email" name="cliente_email" id="clienteEmail" required
+                           placeholder="email@ejemplo.com"
                            value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_email'] ?? '') : ''; ?>">
                 </div>
                 <div class="form-group">
                     <label>Teléfono</label>
                     <input type="text" name="cliente_telefono" id="clienteTelefono"
+                           placeholder="Teléfono del cliente"
                            value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_telefono'] ?? '') : ''; ?>">
                 </div>
             </div>
@@ -453,6 +457,7 @@ include '../includes/header.php';
                 <div class="form-group" style="grid-column: 1 / -1;">
                     <label>Dirección</label>
                     <input type="text" name="cliente_direccion" id="clienteDireccion"
+                           placeholder="Dirección completa"
                            value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_direccion'] ?? '') : ''; ?>">
                 </div>
             </div>
@@ -461,21 +466,25 @@ include '../includes/header.php';
                 <div class="form-group">
                     <label>Ciudad</label>
                     <input type="text" name="cliente_ciudad" id="clienteCiudad"
+                           placeholder="Ciudad"
                            value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_ciudad'] ?? '') : ''; ?>">
                 </div>
                 <div class="form-group">
                     <label>Código Postal</label>
                     <input type="text" name="cliente_cp" id="clienteCp"
+                           placeholder="CP"
                            value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_cp'] ?? '') : ''; ?>">
                 </div>
                 <div class="form-group">
                     <label>País</label>
                     <input type="text" name="cliente_pais" id="clientePais"
+                           placeholder="País"
                            value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_pais'] ?? '') : ''; ?>">
                 </div>
                 <div class="form-group">
                     <label>CIF/NIF</label>
                     <input type="text" name="cliente_cif" id="clienteCif"
+                           placeholder="CIF/NIF"
                            value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_cif'] ?? '') : ''; ?>">
                 </div>
             </div>
@@ -492,37 +501,34 @@ include '../includes/header.php';
                 ?>
                     <div class="item-row" data-item-index="<?php echo $index; ?>">
                         <div class="form-group">
-                            <label>Artículo/Servicio del Catálogo</label>
+                            <label>Artículo/Servicio</label>
                             <!-- Hidden select real -->
                             <select class="articulo-select" data-index="<?php echo $index; ?>" style="display:none;">
-                                <option value="">-- Seleccionar --</option>
+                                <option value="">-- Opcional: seleccionar del catálogo --</option>
                                 <?php foreach ($articulos as $art): ?>
                                     <option value="<?php echo htmlspecialchars(json_encode($art)); ?>"
                                             <?php echo ($item && ($item['nombre'] ?? '') == ($art['title'] ?? '')) ? 'selected' : ''; ?>>
                                         <?php echo htmlspecialchars($art['title'] ?? ''); ?>
                                     </option>
                                 <?php endforeach; ?>
-                                <option value="custom">✏️ Personalizado</option>
                             </select>
                             <!-- Searchable select visible -->
                             <div class="searchable-select-wrapper" id="artSSWrapper_<?php echo $index; ?>">
                                 <div class="ss-main" id="artSSmain_<?php echo $index; ?>">
-                                    <span class="ss-selected-text <?php echo ($item && !empty($item['nombre'])) ? '' : 'ss-placeholder'; ?>" id="artSStext_<?php echo $index; ?>">
-                                        <?php echo ($item && !empty($item['nombre'])) ? htmlspecialchars($item['nombre']) : '-- Buscar artículo --'; ?>
-                                    </span>
+                                    <span class="ss-selected-text ss-placeholder" id="artSStext_<?php echo $index; ?>">-- Opcional: buscar en catálogo --</span>
                                     <div class="ss-arrow"></div>
                                 </div>
                                 <div class="ss-dropdown" id="artSS-dropdown_<?php echo $index; ?>">
-                                    <div class="ss-search"><input type="text" id="artSSsearch_<?php echo $index; ?>" placeholder="Buscar artículo o servicio..." autocomplete="off"></div>
+                                    <div class="ss-search"><input type="text" id="artSSsearch_<?php echo $index; ?>" placeholder="Buscar artículo..." autocomplete="off"></div>
                                     <div class="ss-options" id="artSSoptions_<?php echo $index; ?>"></div>
                                 </div>
                             </div>
                             <input type="text" name="items[<?php echo $index; ?>][nombre]" 
                                    placeholder="Nombre del servicio" required class="item-nombre" 
-                                   style="display: <?php echo ($item && !empty($item['nombre'])) ? 'none' : 'none'; ?>; margin-top: 10px;"
+                                   style="margin-top: 10px;"
                                    value="<?php echo $item ? htmlspecialchars($item['nombre'] ?? '') : ''; ?>">
                             <textarea name="items[<?php echo $index; ?>][descripcion]" 
-                                      placeholder="Descripción" class="item-descripcion" 
+                                      placeholder="Descripción del servicio" class="item-descripcion" 
                                       style="margin-top: 10px; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; min-height: 60px;"><?php echo $item ? htmlspecialchars($item['descripcion'] ?? '') : ''; ?></textarea>
                         </div>
                         
@@ -725,7 +731,8 @@ function initSearchableSelect(config) {
 
     // Close on outside click
     document.addEventListener("click", (e) => {
-        if (!document.getElementById(config.mainId.replace("main","Wrapper") || config.mainId)?.closest(".searchable-select-wrapper")?.contains(e.target)) {
+        const wrapper = document.getElementById(config.mainId.replace("main","Wrapper") || config.mainId);
+        if (wrapper && !wrapper.contains(e.target)) {
             close();
         }
     });
@@ -750,13 +757,32 @@ const clienteSS = initSearchableSelect({
     onSelect: (cliente) => {
         document.getElementById("clienteSelect").value = cliente.id;
         document.getElementById("clienteNombre").value = cliente.company_name || "";
-        document.getElementById("clienteEmail").value = cliente.email || "";
         document.getElementById("clienteTelefono").value = cliente.phone || "";
         document.getElementById("clienteDireccion").value = cliente.address || "";
         document.getElementById("clienteCiudad").value = cliente.city || "";
         document.getElementById("clienteCp").value = cliente.zip || "";
         document.getElementById("clientePais").value = cliente.country || "";
         document.getElementById("clienteCif").value = cliente.vat_number || "";
+        
+        // Obtener email del contacto principal
+        fetch("get_contacto.php?client_id=" + cliente.id)
+            .then(response => response.json())
+            .then(contactos => {
+                if (contactos && contactos.length > 0) {
+                    // Buscar contacto principal
+                    const contactoPrincipal = contactos.find(c => c.is_primary_contact === "1");
+                    const email = contactoPrincipal ? contactoPrincipal.email : (contactos[0].email || cliente.email || "");
+                    document.getElementById("clienteEmail").value = email;
+                } else {
+                    // Fallback al email del cliente si no hay contactos
+                    document.getElementById("clienteEmail").value = cliente.email || "";
+                }
+            })
+            .catch(error => {
+                console.error("Error obteniendo contacto:", error);
+                // Fallback al email del cliente
+                document.getElementById("clienteEmail").value = cliente.email || "";
+            });
     }
 });
 
@@ -782,8 +808,8 @@ function initArticuloSS(index) {
     const optionsId = "artSSoptions_" + index;
     const textId = "artSStext_" + index;
 
-    // Add "Personalizado" at the end
-    const items = articulosData.concat([{ _custom: true, title: "✏️ Personalizado", rate: null, description: "", unit_type: "" }]);
+    // Solo artículos del catálogo (sin opción "Personalizado")
+    const items = articulosData;
 
     articulosSS[index] = initSearchableSelect({
         mainId: mainId,
@@ -792,9 +818,9 @@ function initArticuloSS(index) {
         optionsId: optionsId,
         textId: textId,
         items: items,
-        getLabel: (a) => a._custom ? "✏️ Personalizado" : (a.title || ""),
-        getSub: (a) => a._custom ? "Introducir datos manualmente" : ((a.category_title || "") + (a.unit_type ? " · " + a.unit_type : "")),
-        getPrice: (a) => a._custom ? "" : (a.rate != null ? parseFloat(a.rate).toFixed(2) + " €" : ""),
+        getLabel: (a) => a.title || "",
+        getSub: (a) => (a.category_title || "") + (a.unit_type ? " · " + a.unit_type : ""),
+        getPrice: (a) => a.rate != null ? parseFloat(a.rate).toFixed(2) + " €" : "",
         onSelect: (articulo) => {
             const row = document.querySelector(`[data-item-index="${index}"]`);
             if (!row) return;
@@ -803,21 +829,12 @@ function initArticuloSS(index) {
             const precioInput = row.querySelector(".item-precio");
             const unidadInput = row.querySelector(".item-unidad");
 
-            if (articulo._custom) {
-                nombreInput.style.display = "block";
-                nombreInput.required = true;
-                nombreInput.value = "";
-                descripcionInput.value = "";
-                precioInput.value = "";
-                unidadInput.value = "";
-            } else {
-                nombreInput.style.display = "none";
-                nombreInput.required = false;
-                nombreInput.value = articulo.title || "";
-                descripcionInput.value = articulo.description || "";
-                precioInput.value = parseFloat(articulo.rate || 0).toFixed(2);
-                unidadInput.value = articulo.unit_type || "";
-            }
+            // Rellenar campos con datos del artículo seleccionado
+            nombreInput.value = articulo.title || "";
+            descripcionInput.value = articulo.description || "";
+            precioInput.value = parseFloat(articulo.rate || 0).toFixed(2);
+            unidadInput.value = articulo.unit_type || "";
+            
             calculateTotals();
         }
     });
@@ -841,22 +858,22 @@ function addItem() {
     newItem.setAttribute("data-item-index", idx);
     newItem.innerHTML = `
         <div class="form-group">
-            <label>Artículo/Servicio del Catálogo</label>
+            <label>Artículo/Servicio</label>
             <select class="articulo-select" data-index="${idx}" style="display:none;">
-                <option value="">-- Seleccionar --</option>
+                <option value="">-- Opcional: seleccionar del catálogo --</option>
             </select>
             <div class="searchable-select-wrapper" id="artSSWrapper_${idx}">
                 <div class="ss-main" id="artSSmain_${idx}">
-                    <span class="ss-selected-text ss-placeholder" id="artSStext_${idx}">-- Buscar artículo --</span>
+                    <span class="ss-selected-text ss-placeholder" id="artSStext_${idx}">-- Opcional: buscar en catálogo --</span>
                     <div class="ss-arrow"></div>
                 </div>
                 <div class="ss-dropdown" id="artSS-dropdown_${idx}">
-                    <div class="ss-search"><input type="text" id="artSSsearch_${idx}" placeholder="Buscar artículo o servicio..." autocomplete="off"></div>
+                    <div class="ss-search"><input type="text" id="artSSsearch_${idx}" placeholder="Buscar artículo..." autocomplete="off"></div>
                     <div class="ss-options" id="artSSoptions_${idx}"></div>
                 </div>
             </div>
-            <input type="text" name="items[${idx}][nombre]" placeholder="Nombre del servicio" required class="item-nombre" style="display:none; margin-top:10px;">
-            <textarea name="items[${idx}][descripcion]" placeholder="Descripción" class="item-descripcion" style="margin-top:10px; padding:10px; border:2px solid #e0e0e0; border-radius:8px; font-size:14px; min-height:60px;"></textarea>
+            <input type="text" name="items[${idx}][nombre]" placeholder="Nombre del servicio" required class="item-nombre" style="margin-top:10px;">
+            <textarea name="items[${idx}][descripcion]" placeholder="Descripción del servicio" class="item-descripcion" style="margin-top:10px; padding:10px; border:2px solid #e0e0e0; border-radius:8px; font-size:14px; min-height:60px;"></textarea>
         </div>
         <div class="form-group">
             <label>Cantidad</label>
@@ -949,12 +966,6 @@ calculateTotals();
 document.getElementById("presupuestoForm").addEventListener("submit", function(e) {
     e.preventDefault();
     
-    // Validate cliente
-    if (!document.getElementById("clienteSelect").value) {
-        alert("Por favor, selecciona un cliente");
-        return;
-    }
-
     const formData = new FormData(this);
     const action = e.submitter.value;
     formData.append("action", action);
