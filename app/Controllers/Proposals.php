@@ -2,14 +2,17 @@
 
 namespace App\Controllers;
 
-class Proposals extends Security_Controller {
+class Proposals extends Security_Controller
+{
 
-    function __construct() {
+    function __construct()
+    {
         parent::__construct();
         $this->init_permission_checker("proposal");
     }
 
-    private function validate_proposal_access($proposal_id = 0, $check_client = false) {
+    private function validate_proposal_access($proposal_id = 0, $check_client = false)
+    {
         if (!$this->permission_manager->can_manage_proposals($proposal_id, $check_client)) {
             app_redirect("forbidden");
         }
@@ -17,7 +20,8 @@ class Proposals extends Security_Controller {
 
     /* load proposal list view */
 
-    function index($proposal_id = 0) {
+    function index($proposal_id = 0)
+    {
         validate_numeric_value($proposal_id);
         $this->check_module_availability("module_proposal");
         $view_data["custom_field_headers"] = $this->Custom_fields_model->get_custom_field_headers_for_table("proposals", $this->login_user->is_admin, $this->login_user->user_type);
@@ -48,7 +52,8 @@ class Proposals extends Security_Controller {
 
     /* load new proposal modal */
 
-    function modal_form() {
+    function modal_form()
+    {
         $this->validate_submitted_data(array(
             "id" => "numeric",
             "client_id" => "numeric"
@@ -95,7 +100,8 @@ class Proposals extends Security_Controller {
         return $this->template->view('proposals/modal_form', $view_data);
     }
 
-    private function get_proposal_clients_and_leads_dropdown() {
+    private function get_proposal_clients_and_leads_dropdown()
+    {
         $clients_dropdown = array("" => "-");
         $clients = $this->Clients_model->get_all_where(array("deleted" => 0), 0, 0, "is_lead")->getResult();
 
@@ -107,7 +113,8 @@ class Proposals extends Security_Controller {
         return $clients_dropdown;
     }
 
-    function save_view() {
+    function save_view()
+    {
         $this->validate_submitted_data(array(
             "id" => "required|numeric"
         ));
@@ -127,7 +134,8 @@ class Proposals extends Security_Controller {
 
     /* add, edit or clone an proposal */
 
-    function save() {
+    function save()
+    {
         $this->validate_submitted_data(array(
             "id" => "numeric",
             "proposal_client_id" => "required|numeric",
@@ -209,7 +217,8 @@ class Proposals extends Security_Controller {
     }
 
     //update proposal status
-    function update_proposal_status($proposal_id, $status) {
+    function update_proposal_status($proposal_id, $status)
+    {
         if ($proposal_id && $status) {
             validate_numeric_value($proposal_id);
             $proposal_info = $this->Proposals_model->get_one($proposal_id);
@@ -246,7 +255,8 @@ class Proposals extends Security_Controller {
 
     /* delete or undo an proposal */
 
-    function delete() {
+    function delete()
+    {
         $this->validate_submitted_data(array(
             "id" => "required|numeric"
         ));
@@ -271,7 +281,8 @@ class Proposals extends Security_Controller {
 
     /* list of proposals, prepared for datatable  */
 
-    function list_data($is_mobile = 0) {
+    function list_data($is_mobile = 0)
+    {
         validate_numeric_value($is_mobile);
         if (!$this->permission_manager->can_view_proposals()) {
             app_redirect("forbidden");
@@ -306,7 +317,8 @@ class Proposals extends Security_Controller {
 
     /* list of proposal of a specific client, prepared for datatable  */
 
-    function proposal_list_data_of_client($client_id) {
+    function proposal_list_data_of_client($client_id)
+    {
         validate_numeric_value($client_id);
         $this->access_only_allowed_members_or_client_contact($client_id);
 
@@ -329,7 +341,8 @@ class Proposals extends Security_Controller {
 
     /* return a row of proposal list table */
 
-    private function _row_data($id) {
+    private function _row_data($id)
+    {
         $custom_fields = $this->Custom_fields_model->get_available_fields_for_table("proposals", $this->login_user->is_admin, $this->login_user->user_type);
 
         $options = array("id" => $id, "custom_fields" => $custom_fields);
@@ -339,7 +352,8 @@ class Proposals extends Security_Controller {
 
     /* prepare a row of proposal list table */
 
-    private function _make_row($data, $custom_fields, $is_mobile = 0) {
+    private function _make_row($data, $custom_fields, $is_mobile = 0)
+    {
         $proposal_url = "";
         $can_manage_proposals = $this->permission_manager->can_manage_proposals($data->id);
         if ($this->login_user->user_type == "staff" && $can_manage_proposals) {
@@ -453,7 +467,8 @@ class Proposals extends Security_Controller {
     }
 
     //prepare proposal status label 
-    private function _get_proposal_status_label($proposal_info, $return_html = true, $extra_classes = "") {
+    private function _get_proposal_status_label($proposal_info, $return_html = true, $extra_classes = "")
+    {
         $proposal_status_class = "bg-secondary";
 
         //don't show sent status to client, change the status to 'new' from 'sent'
@@ -488,7 +503,8 @@ class Proposals extends Security_Controller {
 
     /* load proposal details view */
 
-    function view($proposal_id = 0) {
+    function view($proposal_id = 0)
+    {
         validate_numeric_value($proposal_id);
         $this->validate_proposal_access($proposal_id);
 
@@ -546,7 +562,8 @@ class Proposals extends Security_Controller {
 
     /* proposal total section */
 
-    private function _get_proposal_total_view($proposal_id = 0) {
+    private function _get_proposal_total_view($proposal_id = 0)
+    {
         $view_data["proposal_total_summary"] = $this->Proposals_model->get_proposal_total_summary($proposal_id);
         $view_data["proposal_id"] = $proposal_id;
         $view_data["is_proposal_editable"] = $this->_is_proposal_editable($proposal_id);
@@ -555,7 +572,8 @@ class Proposals extends Security_Controller {
 
     /* load discount modal */
 
-    function discount_modal_form() {
+    function discount_modal_form()
+    {
         $this->validate_submitted_data(array(
             "proposal_id" => "required|numeric"
         ));
@@ -573,7 +591,8 @@ class Proposals extends Security_Controller {
 
     /* save discount */
 
-    function save_discount() {
+    function save_discount()
+    {
         $this->validate_submitted_data(array(
             "proposal_id" => "required|numeric",
             "discount_type" => "required",
@@ -605,7 +624,8 @@ class Proposals extends Security_Controller {
 
     /* load item modal */
 
-    function item_modal_form() {
+    function item_modal_form()
+    {
         $this->validate_submitted_data(array(
             "id" => "numeric"
         ));
@@ -626,7 +646,8 @@ class Proposals extends Security_Controller {
 
     /* add or edit an proposal item */
 
-    function save_item() {
+    function save_item()
+    {
         $this->validate_submitted_data(array(
             "id" => "numeric",
             "proposal_id" => "required|numeric"
@@ -687,7 +708,8 @@ class Proposals extends Security_Controller {
 
     /* delete or undo an proposal item */
 
-    function delete_item() {
+    function delete_item()
+    {
         $this->validate_submitted_data(array(
             "id" => "required|numeric"
         ));
@@ -719,7 +741,8 @@ class Proposals extends Security_Controller {
 
     /* list of proposal items, prepared for datatable  */
 
-    function item_list_data($proposal_id = 0) {
+    function item_list_data($proposal_id = 0)
+    {
         validate_numeric_value($proposal_id);
         $this->validate_proposal_access($proposal_id);
 
@@ -733,7 +756,8 @@ class Proposals extends Security_Controller {
 
     /* prepare a row of proposal item list table */
 
-    private function _make_item_row($data) {
+    private function _make_item_row($data)
+    {
         $move_icon = "";
         $desc_style = "";
 
@@ -761,7 +785,8 @@ class Proposals extends Security_Controller {
 
     /* prepare suggestion of proposal item */
 
-    function get_proposal_item_suggestion() {
+    function get_proposal_item_suggestion()
+    {
         $key = $this->request->getPost("q");
         $suggestion = array();
 
@@ -776,7 +801,8 @@ class Proposals extends Security_Controller {
         echo json_encode($suggestion);
     }
 
-    function get_proposal_item_info_suggestion() {
+    function get_proposal_item_info_suggestion()
+    {
         $item_id = $this->request->getPost("item_id");
         validate_numeric_value($item_id);
 
@@ -790,7 +816,8 @@ class Proposals extends Security_Controller {
     }
 
     //view html is accessable to client only.
-    function preview($proposal_id = 0, $show_close_preview = false, $is_editor_preview = false) {
+    function preview($proposal_id = 0, $show_close_preview = false, $is_editor_preview = false)
+    {
         validate_numeric_value($proposal_id);
 
         $view_data = array();
@@ -841,7 +868,8 @@ class Proposals extends Security_Controller {
         }
     }
 
-    private function _check_proposal_access_permission($proposal_data) {
+    private function _check_proposal_access_permission($proposal_data)
+    {
         //check for valid proposal
         if (!$proposal_data) {
             show_404();
@@ -860,7 +888,8 @@ class Proposals extends Security_Controller {
         }
     }
 
-    function send_proposal_modal_form($proposal_id) {
+    function send_proposal_modal_form($proposal_id)
+    {
         validate_numeric_value($proposal_id);
         $this->validate_proposal_access($proposal_id);
 
@@ -906,7 +935,8 @@ class Proposals extends Security_Controller {
         }
     }
 
-    function get_send_proposal_template($proposal_id = 0, $contact_id = 0, $return_type = "", $proposal_info = "", $contact_info = "") {
+    function get_send_proposal_template($proposal_id = 0, $contact_id = 0, $return_type = "", $proposal_info = "", $contact_info = "")
+    {
         $this->validate_proposal_access($proposal_id);
 
         validate_numeric_value($proposal_id);
@@ -954,90 +984,110 @@ class Proposals extends Security_Controller {
         }
     }
 
-    function send_proposal() {
-        $this->validate_submitted_data(array(
-            "id" => "required|numeric"
-        ));
+    function send_proposal()
+{
+    $this->validate_submitted_data(array(
+        "id" => "required|numeric"
+    ));
 
-        $proposal_id = $this->request->getPost('id');
-        $this->validate_proposal_access($proposal_id);
+    $proposal_id = $this->request->getPost('id');
+    $this->validate_proposal_access($proposal_id);
 
-        $contact_id = $this->request->getPost('contact_id');
-        $cc = $this->request->getPost('proposal_cc');
+    $contact_id = $this->request->getPost('contact_id');
+    $cc = $this->request->getPost('proposal_cc');
 
-        $custom_bcc = $this->request->getPost('proposal_bcc');
-        $subject = $this->request->getPost('subject');
-        $message = decode_ajax_post_data($this->request->getPost('message'));
+    $custom_bcc = $this->request->getPost('proposal_bcc');
+    $subject = $this->request->getPost('subject');
+    $message = decode_ajax_post_data($this->request->getPost('message'));
 
-        $attach_pdf = $this->request->getPost('attach_pdf');
+    $attach_pdf = $this->request->getPost('attach_pdf');
 
-        $attachments = array();
-        if ($attach_pdf) {
+    $attachments = array();
+    if ($attach_pdf) {
+        $attachement_url = null; // ← AÑADIR ESTA LÍNEA
+        
+        // Intentar usar el PDF de Tictac
+        $tictac_pdf_url = 'https://gestion-tictac-comunicacion.es/dashboard/presupuestos/email_pdf.php?proposal_id=' . $proposal_id;
+
+        $context = stream_context_create([
+            'http' => ['timeout' => 10, 'ignore_errors' => true]
+        ]);
+
+        $pdf_content = @file_get_contents($tictac_pdf_url, false, $context);
+
+        // Si se obtuvo el PDF de Tictac, usarlo
+        if ($pdf_content && strlen($pdf_content) > 1000) {
+            $attachement_url = sys_get_temp_dir() . '/tictac_proposal_' . $proposal_id . '_' . time() . '.pdf';
+            file_put_contents($attachement_url, $pdf_content);
+        } else {
+            // Fallback: usar PDF del CRM
             $proposal_data = get_proposal_making_data($proposal_id);
             $proposal_data['proposal_preview'] = prepare_proposal_view($proposal_data);
-
             $attachement_url = prepare_proposal_pdf($proposal_data, "send_email");
+        }
 
-            $attachment_size = filesize($attachement_url);
-
-            if ($attachment_size / 1000000 > 10) {
+        // Verificar que se generó el PDF antes de añadirlo
+        if ($attachement_url && file_exists($attachement_url)) { // ← AÑADIR ESTA VALIDACIÓN
+            $attachment_size = filesize($attachement_url); // ← AÑADIR ESTA LÍNEA
+            
+            if ($attachment_size / 1000000 > 10) { // ← AÑADIR ESTA VALIDACIÓN
                 echo json_encode(array("success" => false, 'message' => app_lang("attachment_size_is_too_large")));
                 exit();
             }
-
+            
             //add proposal pdf
             array_unshift($attachments, array("file_path" => $attachement_url));
         }
-
-        $contact = $this->Users_model->get_one($contact_id);
-
-        $default_bcc = get_setting('send_proposal_bcc_to');
-        $bcc_emails = "";
-
-        if ($default_bcc && $custom_bcc) {
-            $bcc_emails = $default_bcc . "," . $custom_bcc;
-        } else if ($default_bcc) {
-            $bcc_emails = $default_bcc;
-        } else if ($custom_bcc) {
-            $bcc_emails = $custom_bcc;
-        }
-
-        //insert the data in the event tracker. 
-        $now = get_current_utc_time();
-        $event_tracker_data = array(
-            "context" => "proposal",
-            "context_id" => $proposal_id,
-            "event_type" => "proposal_email",
-            "random_id" => make_random_string(),
-            "created_at" => $now
-        );
-
-        $event_tracker_model = model("App\Models\Event_tracker_model");
-        $event_tracker_model->ci_save($event_tracker_data);
-
-        $src = get_uri('event_tracker/load/' . $event_tracker_data["random_id"]);
-        $message .= "<img src='$src' alt='.' />";
-
-        if (send_app_mail($contact->email, $subject, $message, array("attachments" => $attachments, "cc" => $cc, "bcc" => $bcc_emails))) {
-            // change email status
-            $status_data = array("status" => "sent", "last_email_sent_date" => get_my_local_time());
-            if ($this->Proposals_model->ci_save($status_data, $proposal_id)) {
-                echo json_encode(array('success' => true, 'message' => app_lang("proposal_sent_message"), "proposal_id" => $proposal_id));
-            }
-
-            if ($attach_pdf) {
-                // delete the temp proposal
-                if (file_exists($attachement_url)) {
-                    unlink($attachement_url);
-                }
-            }
-        } else {
-            echo json_encode(array('success' => false, 'message' => app_lang('error_occurred')));
-        }
     }
 
+    $contact = $this->Users_model->get_one($contact_id);
+
+    $default_bcc = get_setting('send_proposal_bcc_to');
+    $bcc_emails = "";
+
+    if ($default_bcc && $custom_bcc) {
+        $bcc_emails = $default_bcc . "," . $custom_bcc;
+    } else if ($default_bcc) {
+        $bcc_emails = $default_bcc;
+    } else if ($custom_bcc) {
+        $bcc_emails = $custom_bcc;
+    }
+
+    //insert the data in the event tracker. 
+    $now = get_current_utc_time();
+    $event_tracker_data = array(
+        "context" => "proposal",
+        "context_id" => $proposal_id,
+        "event_type" => "proposal_email",
+        "random_id" => make_random_string(),
+        "created_at" => $now
+    );
+
+    $event_tracker_model = model("App\Models\Event_tracker_model");
+    $event_tracker_model->ci_save($event_tracker_data);
+
+    $src = get_uri('event_tracker/load/' . $event_tracker_data["random_id"]);
+    $message .= "<img src='$src' alt='.' />";
+
+    if (send_app_mail($contact->email, $subject, $message, array("attachments" => $attachments, "cc" => $cc, "bcc" => $bcc_emails))) {
+        // change email status
+        $status_data = array("status" => "sent", "last_email_sent_date" => get_my_local_time());
+        if ($this->Proposals_model->ci_save($status_data, $proposal_id)) {
+            echo json_encode(array('success' => true, 'message' => app_lang("proposal_sent_message"), "proposal_id" => $proposal_id));
+        }
+
+        if ($attach_pdf && $attachement_url && file_exists($attachement_url)) { // ← MEJORAR ESTA VALIDACIÓN
+            // delete the temp proposal
+            unlink($attachement_url);
+        }
+    } else {
+        echo json_encode(array('success' => false, 'message' => app_lang('error_occurred')));
+    }
+}
+
     //update the sort value for proposal item
-    function update_item_sort_values($id = 0) {
+    function update_item_sort_values($id = 0)
+    {
         validate_numeric_value($id);
 
         $sort_values = $this->request->getPost("sort_values");
@@ -1062,14 +1112,16 @@ class Proposals extends Security_Controller {
         }
     }
 
-    function editor($proposal_id = 0) {
+    function editor($proposal_id = 0)
+    {
         validate_numeric_value($proposal_id);
         $view_data['proposal_info'] = $this->Proposals_model->get_details(array("id" => $proposal_id))->getRow();
         return $this->template->view("proposals/proposal_editor", $view_data);
     }
 
     //prevent editing of proposal after certain state
-    private function _is_proposal_editable($_proposal, $is_clone = 0) {
+    private function _is_proposal_editable($_proposal, $is_clone = 0)
+    {
         if (get_setting("enable_proposal_lock_state")) {
             $proposal_info = is_object($_proposal) ? $_proposal : $this->Proposals_model->get_one($_proposal);
             if (!$proposal_info->id || $is_clone) {
@@ -1084,7 +1136,8 @@ class Proposals extends Security_Controller {
         }
     }
 
-    function email_view_report($proposal_id) {
+    function email_view_report($proposal_id)
+    {
         validate_numeric_value($proposal_id);
 
         $this->validate_proposal_access($proposal_id);
@@ -1115,7 +1168,8 @@ class Proposals extends Security_Controller {
         return $this->template->view("proposals/email_view_report", $view_data);
     }
 
-    function download_pdf($proposal_id = 0, $mode = "download", $user_language = "") {
+    function download_pdf($proposal_id = 0, $mode = "download", $user_language = "")
+    {
         if (!$proposal_id) {
             show_404();
         }
@@ -1151,7 +1205,8 @@ class Proposals extends Security_Controller {
 
     /* load proposal comment modal */
 
-    function comment_modal_form() {
+    function comment_modal_form()
+    {
         $this->validate_submitted_data(array(
             "proposal_id" => "numeric|required"
         ));
@@ -1181,7 +1236,8 @@ class Proposals extends Security_Controller {
 
     /* save proposal comments */
 
-    function save_comment() {
+    function save_comment()
+    {
         $proposal_id = $this->request->getPost('proposal_id');
         $this->validate_proposal_access($proposal_id, true);
 
@@ -1221,7 +1277,8 @@ class Proposals extends Security_Controller {
 
     /* delete proposal comments */
 
-    function delete_comment($id = 0) {
+    function delete_comment($id = 0)
+    {
         if (!$id) {
             exit();
         }
@@ -1249,14 +1306,16 @@ class Proposals extends Security_Controller {
 
     /* download files by zip */
 
-    function download_comment_files($id) {
+    function download_comment_files($id)
+    {
         validate_numeric_value($id);
 
         $files = $this->Proposal_comments_model->get_one($id)->files;
         return $this->download_app_files(get_setting("timeline_file_path"), $files);
     }
 
-    function compact_view($proposal_id = 0) {
+    function compact_view($proposal_id = 0)
+    {
         validate_numeric_value($proposal_id);
 
         if ($this->login_user->user_type === "client") {

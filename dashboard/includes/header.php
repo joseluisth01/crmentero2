@@ -98,7 +98,7 @@
                 <?php if (defined('LOGO_BLANCO') && file_exists($_SERVER['DOCUMENT_ROOT'] . '/api/assets/img/logoblanco.png')): ?>
                     <img src="<?php echo LOGO_BLANCO; ?>" alt="<?php echo COMPANY_NAME; ?>">
                 <?php else: ?>
-                    <span class="logo-text">t/ctac</span>
+                    <span class="logo-text"><img src="https://tictac-comunicacion.es/wp-content/uploads/2025/12/LOGO-1.png" alt=""></span>
                 <?php endif; ?>
             </div>
             <?php if (isset($showBackButton) && $showBackButton): ?>

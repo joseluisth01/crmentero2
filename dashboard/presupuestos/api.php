@@ -328,14 +328,109 @@ function eliminarPresupuesto() {
     global $presupuestosFile;
 
     $id = $_GET['id'] ?? '';
-    if (empty($id)) { header('Location: index.php?error=id_invalido'); exit; }
+    if (empty($id)) { 
+        header('Location: index.php?error=id_invalido'); 
+        exit; 
+    }
 
     if (file_exists($presupuestosFile)) {
         $presupuestos = json_decode(file_get_contents($presupuestosFile), true);
         
-        // TODO: También eliminar del CRM si tiene crm_estimate_id
+        // Buscar el presupuesto para obtener el crm_proposal_id
+        $presupuesto_a_eliminar = null;
+        foreach ($presupuestos as $p) {
+            if ($p['id'] === $id) {
+                $presupuesto_a_eliminar = $p;
+                break;
+            }
+        }
         
-        $presupuestos = array_filter($presupuestos, function($p) use ($id) { return $p['id'] !== $id; });
+        // Si tiene crm_proposal_id, eliminarlo también del CRM
+        if ($presupuesto_a_eliminar && !empty($presupuesto_a_eliminar['crm_proposal_id'])) {
+            $proposal_id = intval($presupuesto_a_eliminar['crm_proposal_id']);
+            
+            $mysqli = conexionBBDD();
+            if ($mysqli) {
+                // Marcar como eliminado en el CRM (soft delete)
+                $sql = "UPDATE crm_proposals SET deleted = 1 WHERE id = ?";
+                $stmt = $mysqli->prepare($sql);
+                
+                if ($stmt) {
+                    $stmt->bind_param("i", $proposal_id);
+                    $stmt->execute();
+                    $stmt->close();
+                    
+                    // También marcar items como eliminados
+                    $sqlItems = "UPDATE crm_proposal_items SET deleted = 1 WHERE proposal_id = ?";
+                    $stmtItems = $mysqli->prepare($sqlItems);
+                    
+                    if ($stmtItems) {
+                        $stmtItems->bind_param("i", $proposal_id);
+                        $stmtItems->execute();
+                        $stmtItems->close();
+                    }
+                    
+                    $mysqli->close();
+                    
+                    // Log de auditoría
+                    guardarAuditoria(
+                        'propuesta_eliminada',
+                        'exitoso',
+                        'Presupuesto ' . $id . ' eliminado del dashboard y CRM (Proposal ID: ' . $proposal_id . ')',
+                        [
+                            'local_id' => $id,
+                            'crm_proposal_id' => $proposal_id,
+                            'cliente_id' => $presupuesto_a_eliminar['cliente_id'] ?? 0,
+                            'cliente_nombre' => $presupuesto_a_eliminar['cliente_nombre'] ?? '',
+                            'cliente_email' => $presupuesto_a_eliminar['cliente_email'] ?? '',
+                            'total' => $presupuesto_a_eliminar['total'] ?? 0
+                        ]
+                    );
+                } else {
+                    // Error en prepared statement
+                    guardarAuditoria(
+                        'propuesta_eliminada',
+                        'parcial',
+                        'Presupuesto ' . $id . ' eliminado del dashboard pero error en SQL del CRM',
+                        [
+                            'local_id' => $id,
+                            'crm_proposal_id' => $proposal_id,
+                            'error' => 'Error al preparar statement SQL'
+                        ]
+                    );
+                    $mysqli->close();
+                }
+            } else {
+                // Si no se puede conectar al CRM, registrar error pero continuar con eliminación local
+                guardarAuditoria(
+                    'propuesta_eliminada',
+                    'parcial',
+                    'Presupuesto ' . $id . ' eliminado del dashboard pero no se pudo sincronizar con CRM',
+                    [
+                        'local_id' => $id,
+                        'crm_proposal_id' => $proposal_id,
+                        'error' => 'No se pudo conectar a la base de datos del CRM'
+                    ]
+                );
+            }
+        } else {
+            // Presupuesto solo local (sin sincronización CRM)
+            guardarAuditoria(
+                'presupuesto_eliminado',
+                'exitoso',
+                'Presupuesto local ' . $id . ' eliminado (no sincronizado con CRM)',
+                [
+                    'local_id' => $id,
+                    'cliente_nombre' => $presupuesto_a_eliminar['cliente_nombre'] ?? ''
+                ]
+            );
+        }
+        
+        // Eliminar del JSON local
+        $presupuestos = array_filter($presupuestos, function($p) use ($id) { 
+            return $p['id'] !== $id; 
+        });
+        
         file_put_contents($presupuestosFile, json_encode(array_values($presupuestos), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     }
 
@@ -387,7 +482,7 @@ function generarPDF() {
                 }
             }
             if (!empty($logo)) {
-                $logoW = 36;
+                $logoW = 44;
                 $x = ($pageW - $logoW) / 2;
                 $this->Image($logo, $x, 6, $logoW, 0, '', '', '', false, 300, '', false, false, 0, false, false, false);
             }
@@ -674,8 +769,20 @@ function generarPDF() {
         $pdf->MultiCell($contentW - 10, 3.5, pdf_text_plain($presupuesto['notas']), 0, 'L');
     }
 
-    $pdf->Output('Presupuesto_' . ($presupuesto['id'] ?? 'SIN_ID') . '.pdf', 'D');
+    // Determinar modo: descargar o guardar archivo
+$mode = $_GET['mode'] ?? 'download';
+$filename = 'Presupuesto_' . ($presupuesto['id'] ?? 'SIN_ID') . '.pdf';
+
+if ($mode === 'save') {
+    // Modo: guardar archivo temporal para email
+    $tmpFile = sys_get_temp_dir() . '/presupuesto_' . ($presupuesto['id'] ?? 'temp') . '_' . time() . '.pdf';
+    $pdf->Output($tmpFile, 'F');
+    return $tmpFile; // Devolver ruta del archivo
+} else {
+    // Modo: descargar (comportamiento por defecto)
+    $pdf->Output($filename, 'D');
     exit;
+}
 }
 
 /**
@@ -685,40 +792,48 @@ function enviarEmail() {
     global $presupuestosFile;
 
     $id = $_GET['id'] ?? '';
-    if (empty($id)) { header('Location: index.php?error=id_invalido'); exit; }
+    if (empty($id)) { 
+        header('Location: index.php?error=id_invalido'); 
+        exit; 
+    }
 
-    if (!file_exists($presupuestosFile)) { header('Location: index.php?error=no_encontrado'); exit; }
+    if (!file_exists($presupuestosFile)) { 
+        header('Location: index.php?error=no_encontrado'); 
+        exit; 
+    }
 
     $presupuestos = json_decode(file_get_contents($presupuestosFile), true);
     $presupuesto = null;
     $index = -1;
 
     foreach ($presupuestos as $key => $p) {
-        if (($p['id'] ?? '') === $id) { $presupuesto = $p; $index = $key; break; }
+        if (($p['id'] ?? '') === $id) { 
+            $presupuesto = $p; 
+            $index = $key; 
+            break; 
+        }
     }
 
-    if (!$presupuesto) { header('Location: index.php?error=no_encontrado'); exit; }
+    if (!$presupuesto) { 
+        header('Location: index.php?error=no_encontrado'); 
+        exit; 
+    }
 
-    if (!file_exists(BASE_PATH . '/tcpdf/tcpdf.php')) { header('Location: index.php?error=tcpdf_no_instalado'); exit; }
+    // ============================================
+    // GENERAR PDF PROFESIONAL (reutilizar generarPDF)
+    // ============================================
+    $_GET['mode'] = 'save'; // Indicar que queremos guardar archivo
+    $tmpFile = generarPDF(); // Llamar a la función que ya genera el PDF bonito
+    
+    if (!$tmpFile || !file_exists($tmpFile)) {
+        header('Location: index.php?error=pdf_no_generado');
+        exit;
+    }
 
-    require_once(BASE_PATH . '/tcpdf/tcpdf.php');
-
-    $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
-    $pdf->SetCreator('Tictac Comunicación');
-    $pdf->SetAuthor('Tictac Comunicación Digital SL');
-    $pdf->SetTitle('Presupuesto ' . ($presupuesto['id'] ?? ''));
-    $pdf->setPrintHeader(false);
-    $pdf->setPrintFooter(false);
-    $pdf->SetMargins(15, 15, 15);
-    $pdf->SetAutoPageBreak(TRUE, 15);
-    $pdf->AddPage();
-
-    $html = generarHTMLPresupuestoSimple($presupuesto);
-    $pdf->writeHTML($html, true, false, true, false, '');
-
-    $tmpFile = sys_get_temp_dir() . '/presupuesto_' . $id . '.pdf';
-    $pdf->Output($tmpFile, 'F');
-
+    // ============================================
+    // PREPARAR Y ENVIAR EMAIL
+    // ============================================
+    
     $to = $presupuesto['cliente_email'] ?? '';
     $subject = 'Presupuesto ' . ($presupuesto['id'] ?? '') . ' - Tictac Comunicación Digital SL';
 
@@ -743,7 +858,7 @@ function enviarEmail() {
         <div class="footer">Tictac Comunicación Digital SL · Plaza de los Carrillos, 5 · 14001 Córdoba</div>
     </body></html>';
 
-    $headers = "From: Tictac Comunicación <noreply@" . ($_SERVER['HTTP_HOST'] ?? 'localhost') . ">\r\n";
+    $headers = "From: Tictac Comunicación <noreply@" . ($_SERVER['HTTP_HOST'] ?? 'gestion-tictac-comunicacion.es') . ">\r\n";
     $headers .= "MIME-Version: 1.0\r\n";
     $boundary = md5(time());
     $headers .= "Content-Type: multipart/mixed; boundary=\"{$boundary}\"\r\n";
@@ -772,9 +887,14 @@ function enviarEmail() {
             $presupuestos[$index]['fecha_envio'] = date('Y-m-d H:i:s');
             file_put_contents($presupuestosFile, json_encode($presupuestos, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
         }
-        guardarAuditoria('presupuesto_enviado', 'enviado', 'Presupuesto enviado: ' . $id, []);
+        guardarAuditoria('presupuesto_enviado', 'exitoso', 'Presupuesto enviado: ' . $id, [
+            'cliente_email' => $to
+        ]);
         header('Location: index.php?success=email_enviado');
     } else {
+        guardarAuditoria('presupuesto_enviado', 'error', 'Error al enviar email: ' . $id, [
+            'cliente_email' => $to
+        ]);
         header('Location: index.php?error=email_no_enviado');
     }
     exit;

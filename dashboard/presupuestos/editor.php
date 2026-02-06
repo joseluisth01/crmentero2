@@ -26,12 +26,22 @@ if ($editId) {
     }
 }
 
-// Obtener lista de clientes del CRM
+// Obtener lista de clientes del CRM - DIRECTAMENTE DE BBDD
+// NOTA: El email NO está en crm_clients, está en crm_users (contactos)
 $clientes = array();
-for ($id = 1; $id <= 200; $id++) {
-    $cliente = callCrmApi('clients/' . $id);
-    if ($cliente && (!isset($cliente['deleted']) || $cliente['deleted'] == 0)) {
-        $clientes[] = $cliente;
+$mysqli = conexionBBDD();
+if ($mysqli) {
+    $sql = "SELECT id, company_name, phone, address, city, zip, country, vat_number 
+            FROM crm_clients 
+            WHERE deleted = 0 
+            ORDER BY company_name ASC";
+    
+    $result = $mysqli->query($sql);
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $clientes[] = $row;
+        }
+        $result->free();
     }
 }
 
@@ -403,16 +413,15 @@ include '../includes/header.php';
                     <select name="cliente_id" id="clienteSelect" style="display:none;">
                         <option value="">-- Opcional: buscar en CRM --</option>
                         <?php foreach ($clientes as $cliente): ?>
-                            <option value="<?php echo $cliente['id']; ?>" 
+                            <option value="<?php echo htmlspecialchars($cliente['id']); ?>" 
                                     data-nombre="<?php echo htmlspecialchars($cliente['company_name'] ?? ''); ?>"
-                                    data-email="<?php echo htmlspecialchars($cliente['email'] ?? ''); ?>"
                                     data-telefono="<?php echo htmlspecialchars($cliente['phone'] ?? ''); ?>"
                                     data-direccion="<?php echo htmlspecialchars($cliente['address'] ?? ''); ?>"
                                     data-ciudad="<?php echo htmlspecialchars($cliente['city'] ?? ''); ?>"
                                     data-cp="<?php echo htmlspecialchars($cliente['zip'] ?? ''); ?>"
                                     data-pais="<?php echo htmlspecialchars($cliente['country'] ?? ''); ?>"
                                     data-cif="<?php echo htmlspecialchars($cliente['vat_number'] ?? ''); ?>"
-                                    <?php echo ($presupuesto && $presupuesto['cliente_id'] == $cliente['id']) ? 'selected' : ''; ?>>
+                                    <?php echo ($presupuesto && isset($presupuesto['cliente_id']) && $presupuesto['cliente_id'] == $cliente['id']) ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($cliente['company_name'] ?? ''); ?>
                             </option>
                         <?php endforeach; ?>
@@ -507,7 +516,7 @@ include '../includes/header.php';
                                 <option value="">-- Opcional: seleccionar del catálogo --</option>
                                 <?php foreach ($articulos as $art): ?>
                                     <option value="<?php echo htmlspecialchars(json_encode($art)); ?>"
-                                            <?php echo ($item && ($item['nombre'] ?? '') == ($art['title'] ?? '')) ? 'selected' : ''; ?>>
+                                            <?php echo ($item && isset($item['nombre']) && ($item['nombre'] ?? '') == ($art['title'] ?? '')) ? 'selected' : ''; ?>>
                                         <?php echo htmlspecialchars($art['title'] ?? ''); ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -618,7 +627,7 @@ include '../includes/header.php';
 <?php
 $articulosJson = json_encode($articulos, JSON_UNESCAPED_UNICODE);
 $clientesJson = json_encode($clientes, JSON_UNESCAPED_UNICODE);
-$selectedClienteId = $presupuesto ? ($presupuesto['cliente_id'] ?? '') : '';
+$selectedClienteId = $presupuesto && isset($presupuesto['cliente_id']) ? $presupuesto['cliente_id'] : '';
 
 $additionalScripts = '
 <script>
@@ -634,7 +643,6 @@ const selectedClienteId = "' . $selectedClienteId . '";
 // SEARCHABLE SELECT ENGINE
 // ============================================================
 function initSearchableSelect(config) {
-    // config: { mainId, dropdownId, searchId, optionsId, textId, items, renderItem, onSelect, selectedValue }
     const main = document.getElementById(config.mainId);
     const dropdown = document.getElementById(config.dropdownId);
     const search = document.getElementById(config.searchId);
@@ -706,7 +714,6 @@ function initSearchableSelect(config) {
 
     function toggle() { isOpen ? close() : open(); }
 
-    // Events
     main.addEventListener("click", (e) => { e.stopPropagation(); toggle(); });
     search.addEventListener("input", (e) => { renderOptions(e.target.value); });
     search.addEventListener("keydown", (e) => {
@@ -729,7 +736,6 @@ function initSearchableSelect(config) {
         }
     });
 
-    // Close on outside click
     document.addEventListener("click", (e) => {
         const wrapper = document.getElementById(config.mainId.replace("main","Wrapper") || config.mainId);
         if (wrapper && !wrapper.contains(e.target)) {
@@ -751,7 +757,7 @@ const clienteSS = initSearchableSelect({
     textId: "clienteSStext",
     items: clientesData,
     getLabel: (c) => c.company_name || "",
-    getSub: (c) => (c.email || "") + (c.city ? " · " + c.city : ""),
+    getSub: (c) => (c.city ? c.city : "") + (c.phone ? " · " + c.phone : ""),
     isSelected: (c) => String(c.id) === String(selectedClienteId),
     selectedValue: clientesData.find(c => String(c.id) === String(selectedClienteId)) || null,
     onSelect: (cliente) => {
@@ -764,29 +770,25 @@ const clienteSS = initSearchableSelect({
         document.getElementById("clientePais").value = cliente.country || "";
         document.getElementById("clienteCif").value = cliente.vat_number || "";
         
-        // Obtener email del contacto principal
+        // El email hay que obtenerlo de los contactos
         fetch("get_contacto.php?client_id=" + cliente.id)
             .then(response => response.json())
             .then(contactos => {
                 if (contactos && contactos.length > 0) {
-                    // Buscar contacto principal
                     const contactoPrincipal = contactos.find(c => c.is_primary_contact === "1");
-                    const email = contactoPrincipal ? contactoPrincipal.email : (contactos[0].email || cliente.email || "");
+                    const email = contactoPrincipal ? contactoPrincipal.email : (contactos[0].email || "");
                     document.getElementById("clienteEmail").value = email;
                 } else {
-                    // Fallback al email del cliente si no hay contactos
-                    document.getElementById("clienteEmail").value = cliente.email || "";
+                    document.getElementById("clienteEmail").value = "";
                 }
             })
             .catch(error => {
                 console.error("Error obteniendo contacto:", error);
-                // Fallback al email del cliente
-                document.getElementById("clienteEmail").value = cliente.email || "";
+                document.getElementById("clienteEmail").value = "";
             });
     }
 });
 
-// Si hay cliente preseleccionado, mostrar nombre
 if (selectedClienteId) {
     const preSelected = clientesData.find(c => String(c.id) === String(selectedClienteId));
     if (preSelected) {
@@ -796,54 +798,35 @@ if (selectedClienteId) {
 }
 
 // ============================================================
-// ARTÍCULOS SEARCHABLE SELECT (por cada item-row)
+// ARTÍCULOS SEARCHABLE SELECT
 // ============================================================
 const articulosSS = {};
 
 function initArticuloSS(index) {
-    const wrapperId = "artSSWrapper_" + index;
-    const mainId = "artSSmain_" + index;
-    const dropdownId = "artSS-dropdown_" + index;
-    const searchId = "artSSsearch_" + index;
-    const optionsId = "artSSoptions_" + index;
-    const textId = "artSStext_" + index;
-
-    // Solo artículos del catálogo (sin opción "Personalizado")
-    const items = articulosData;
-
     articulosSS[index] = initSearchableSelect({
-        mainId: mainId,
-        dropdownId: dropdownId,
-        searchId: searchId,
-        optionsId: optionsId,
-        textId: textId,
-        items: items,
+        mainId: "artSSmain_" + index,
+        dropdownId: "artSS-dropdown_" + index,
+        searchId: "artSSsearch_" + index,
+        optionsId: "artSSoptions_" + index,
+        textId: "artSStext_" + index,
+        items: articulosData,
         getLabel: (a) => a.title || "",
         getSub: (a) => (a.category_title || "") + (a.unit_type ? " · " + a.unit_type : ""),
         getPrice: (a) => a.rate != null ? parseFloat(a.rate).toFixed(2) + " €" : "",
         onSelect: (articulo) => {
             const row = document.querySelector(`[data-item-index="${index}"]`);
             if (!row) return;
-            const nombreInput = row.querySelector(".item-nombre");
-            const descripcionInput = row.querySelector(".item-descripcion");
-            const precioInput = row.querySelector(".item-precio");
-            const unidadInput = row.querySelector(".item-unidad");
-
-            // Rellenar campos con datos del artículo seleccionado
-            nombreInput.value = articulo.title || "";
-            descripcionInput.value = articulo.description || "";
-            precioInput.value = parseFloat(articulo.rate || 0).toFixed(2);
-            unidadInput.value = articulo.unit_type || "";
-            
+            row.querySelector(".item-nombre").value = articulo.title || "";
+            row.querySelector(".item-descripcion").value = articulo.description || "";
+            row.querySelector(".item-precio").value = parseFloat(articulo.rate || 0).toFixed(2);
+            row.querySelector(".item-unidad").value = articulo.unit_type || "";
             calculateTotals();
         }
     });
 }
 
-// Init all existing article selects
 document.querySelectorAll("[data-item-index]").forEach(row => {
-    const idx = row.getAttribute("data-item-index");
-    initArticuloSS(parseInt(idx));
+    initArticuloSS(parseInt(row.getAttribute("data-item-index")));
 });
 
 // ============================================================
@@ -859,9 +842,6 @@ function addItem() {
     newItem.innerHTML = `
         <div class="form-group">
             <label>Artículo/Servicio</label>
-            <select class="articulo-select" data-index="${idx}" style="display:none;">
-                <option value="">-- Opcional: seleccionar del catálogo --</option>
-            </select>
             <div class="searchable-select-wrapper" id="artSSWrapper_${idx}">
                 <div class="ss-main" id="artSSmain_${idx}">
                     <span class="ss-selected-text ss-placeholder" id="artSStext_${idx}">-- Opcional: buscar en catálogo --</span>
@@ -891,7 +871,6 @@ function addItem() {
     container.appendChild(newItem);
     itemCounter++;
     
-    // Init searchable select for new item
     initArticuloSS(idx);
     attachItemListeners(newItem);
 }
@@ -954,7 +933,6 @@ function attachItemListeners(itemRow) {
     itemRow.querySelector(".item-precio").addEventListener("input", calculateTotals);
 }
 
-// Init listeners on existing items
 document.querySelectorAll(".item-row").forEach(attachItemListeners);
 document.getElementById("iva").addEventListener("input", calculateTotals);
 document.getElementById("segundoImpuesto").addEventListener("input", calculateTotals);
