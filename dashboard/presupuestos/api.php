@@ -861,7 +861,7 @@ function enviarEmail() {
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .header {
-            background: #E91E8C;
+            background: #D72072;
             color: white;
             padding: 40px 30px;
             text-align: center;
@@ -884,17 +884,17 @@ function enviarEmail() {
         }
         .resumen-box {
             background: #fff5f9;
-            border-left: 4px solid #E91E8C;
+            border-left: 4px solid #D72072;
             padding: 20px;
             margin: 25px 0;
             border-radius: 5px;
         }
         .resumen-box strong {
-            color: #E91E8C;
+            color: #D72072;
         }
         .total-destacado {
             font-size: 24px;
-            color: #E91E8C;
+            color: #D72072;
             font-weight: bold;
             margin-top: 10px;
         }
@@ -906,7 +906,7 @@ function enviarEmail() {
             font-size: 13px;
         }
         .footer a {
-            color: #E91E8C;
+            color: #D72072;
             text-decoration: none;
         }
         .contacto-info {
@@ -1007,7 +1007,7 @@ function generarHTMLPresupuestoSimple($presupuesto) {
         .totals-row { text-align: right; padding: 4px 0; }
         small { color: #666; }
     </style>
-    <h2 style="color:#E91E8C; text-align:center;">PRESUPUESTO - ' . htmlspecialchars($presupuesto['id'] ?? '') . '</h2>
+    <h2 style="color:#D72072; text-align:center;">PRESUPUESTO - ' . htmlspecialchars($presupuesto['id'] ?? '') . '</h2>
     <p><strong>Cliente:</strong> ' . htmlspecialchars($presupuesto['cliente_nombre'] ?? '') . '</p>
     <p><strong>Fecha:</strong> ' . (!empty($presupuesto['fecha_propuesta']) ? date('d/m/Y', strtotime($presupuesto['fecha_propuesta'])) : '') . ' | <strong>Válido hasta:</strong> ' . (!empty($presupuesto['valido_hasta']) ? date('d/m/Y', strtotime($presupuesto['valido_hasta'])) : '') . '</p>
     <table>
