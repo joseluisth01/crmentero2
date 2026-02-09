@@ -762,6 +762,7 @@ const clienteSS = initSearchableSelect({
     isSelected: (c) => String(c.id) === String(selectedClienteId),
     selectedValue: clientesData.find(c => String(c.id) === String(selectedClienteId)) || null,
     onSelect: (cliente) => {
+        // Rellenar datos de la empresa desde crm_clients
         document.getElementById("clienteSelect").value = cliente.id;
         document.getElementById("clienteNombre").value = cliente.company_name || "";
         document.getElementById("clienteDireccion").value = cliente.address || "";
@@ -770,26 +771,41 @@ const clienteSS = initSearchableSelect({
         document.getElementById("clientePais").value = cliente.country || "";
         document.getElementById("clienteCif").value = cliente.vat_number || "";
         
-        // Obtener email y teléfono del contacto principal
+        // ✅ NUEVO: Obtener email y teléfono del contacto principal desde crm_users
+        console.log("🔍 Obteniendo contacto para cliente ID:", cliente.id);
+        
         fetch("get_contacto.php?client_id=" + cliente.id)
-            .then(response => response.json())
+            .then(response => {
+                console.log("📡 Respuesta recibida:", response.status);
+                return response.json();
+            })
             .then(contactos => {
+                console.log("📋 Contactos recibidos:", contactos);
+                
                 if (contactos && contactos.length > 0) {
+                    // Buscar contacto principal (is_primary_contact = "1")
                     const contactoPrincipal = contactos.find(c => c.is_primary_contact === "1");
                     const contacto = contactoPrincipal || contactos[0];
                     
-                    // Rellenar EMAIL del contacto
-                    document.getElementById("clienteEmail").value = contacto.email || "";
+                    console.log("👤 Contacto seleccionado:", contacto);
                     
-                    // Rellenar TELÉFONO del contacto
-                    document.getElementById("clienteTelefono").value = contacto.phone || contacto.alternative_phone || "";
+                    // Rellenar EMAIL del contacto
+                    const email = contacto.email || "";
+                    document.getElementById("clienteEmail").value = email;
+                    console.log("✉️ Email asignado:", email);
+                    
+                    // Rellenar TELÉFONO del contacto (prioridad: phone > alternative_phone)
+                    const telefono = contacto.phone || contacto.alternative_phone || "";
+                    document.getElementById("clienteTelefono").value = telefono;
+                    console.log("📞 Teléfono asignado:", telefono);
                 } else {
+                    console.warn("⚠️ No hay contactos para este cliente");
                     document.getElementById("clienteEmail").value = "";
                     document.getElementById("clienteTelefono").value = "";
                 }
             })
             .catch(error => {
-                console.error("Error obteniendo contacto:", error);
+                console.error("❌ Error obteniendo contacto:", error);
                 document.getElementById("clienteEmail").value = "";
                 document.getElementById("clienteTelefono").value = "";
             });

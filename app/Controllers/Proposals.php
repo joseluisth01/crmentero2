@@ -985,105 +985,110 @@ class Proposals extends Security_Controller
     }
 
     function send_proposal()
-{
-    $this->validate_submitted_data(array(
-        "id" => "required|numeric"
-    ));
+    {
+        $this->validate_submitted_data(array(
+            "id" => "required|numeric"
+        ));
 
-    $proposal_id = $this->request->getPost('id');
-    $this->validate_proposal_access($proposal_id);
+        $proposal_id = $this->request->getPost('id');
+        $this->validate_proposal_access($proposal_id);
 
-    $contact_id = $this->request->getPost('contact_id');
-    $cc = $this->request->getPost('proposal_cc');
+        $contact_id = $this->request->getPost('contact_id');
+        $cc = $this->request->getPost('proposal_cc');
 
-    $custom_bcc = $this->request->getPost('proposal_bcc');
-    $subject = $this->request->getPost('subject');
-    $message = decode_ajax_post_data($this->request->getPost('message'));
+        $custom_bcc = $this->request->getPost('proposal_bcc');
+        $subject = $this->request->getPost('subject');
+        $message = decode_ajax_post_data($this->request->getPost('message'));
 
-    $attach_pdf = $this->request->getPost('attach_pdf');
+        $attach_pdf = $this->request->getPost('attach_pdf');
 
-    $attachments = array();
-    if ($attach_pdf) {
-        $attachement_url = null; // ← AÑADIR ESTA LÍNEA
-        
-        // Intentar usar el PDF de Tictac
-        $tictac_pdf_url = 'https://gestion-tictac-comunicacion.es/dashboard/presupuestos/email_pdf.php?proposal_id=' . $proposal_id;
-
-        $context = stream_context_create([
-            'http' => ['timeout' => 10, 'ignore_errors' => true]
-        ]);
-
-        $pdf_content = @file_get_contents($tictac_pdf_url, false, $context);
-
-        // Si se obtuvo el PDF de Tictac, usarlo
-        if ($pdf_content && strlen($pdf_content) > 1000) {
-            $attachement_url = sys_get_temp_dir() . '/tictac_proposal_' . $proposal_id . '_' . time() . '.pdf';
-            file_put_contents($attachement_url, $pdf_content);
-        } else {
-            // Fallback: usar PDF del CRM
-            $proposal_data = get_proposal_making_data($proposal_id);
-            $proposal_data['proposal_preview'] = prepare_proposal_view($proposal_data);
-            $attachement_url = prepare_proposal_pdf($proposal_data, "send_email");
-        }
-
-        // Verificar que se generó el PDF antes de añadirlo
-        if ($attachement_url && file_exists($attachement_url)) { // ← AÑADIR ESTA VALIDACIÓN
-            $attachment_size = filesize($attachement_url); // ← AÑADIR ESTA LÍNEA
+        $attachments = array();
+        if ($attach_pdf) {
+            $attachement_url = null;
             
-            if ($attachment_size / 1000000 > 10) { // ← AÑADIR ESTA VALIDACIÓN
-                echo json_encode(array("success" => false, 'message' => app_lang("attachment_size_is_too_large")));
-                exit();
+            // 🎨 INTENTAR USAR PDF PERSONALIZADO DE TICTAC
+            $tictac_pdf_url = 'https://gestion.tictac-comunicacion.es/dashboard/presupuestos/email_pdf.php?proposal_id=' . $proposal_id;
+            
+            $context = stream_context_create([
+                'http' => [
+                    'timeout' => 10,
+                    'ignore_errors' => true
+                ]
+            ]);
+            
+            $pdf_content = @file_get_contents($tictac_pdf_url, false, $context);
+            
+            // Si se obtuvo el PDF de Tictac correctamente
+            if ($pdf_content && strlen($pdf_content) > 1000) {
+                $attachement_url = sys_get_temp_dir() . '/tictac_proposal_' . $proposal_id . '_' . time() . '.pdf';
+                file_put_contents($attachement_url, $pdf_content);
+                error_log("✅ Usando PDF personalizado de Tictac para propuesta #$proposal_id");
+            } else {
+                // ⚠️ FALLBACK: usar PDF del CRM
+                error_log("⚠️ No se pudo obtener PDF de Tictac, usando PDF del CRM para propuesta #$proposal_id");
+                $proposal_data = get_proposal_making_data($proposal_id);
+                $proposal_data['proposal_preview'] = prepare_proposal_view($proposal_data);
+                $attachement_url = prepare_proposal_pdf($proposal_data, "send_email");
             }
-            
-            //add proposal pdf
-            array_unshift($attachments, array("file_path" => $attachement_url));
-        }
-    }
 
-    $contact = $this->Users_model->get_one($contact_id);
-
-    $default_bcc = get_setting('send_proposal_bcc_to');
-    $bcc_emails = "";
-
-    if ($default_bcc && $custom_bcc) {
-        $bcc_emails = $default_bcc . "," . $custom_bcc;
-    } else if ($default_bcc) {
-        $bcc_emails = $default_bcc;
-    } else if ($custom_bcc) {
-        $bcc_emails = $custom_bcc;
-    }
-
-    //insert the data in the event tracker. 
-    $now = get_current_utc_time();
-    $event_tracker_data = array(
-        "context" => "proposal",
-        "context_id" => $proposal_id,
-        "event_type" => "proposal_email",
-        "random_id" => make_random_string(),
-        "created_at" => $now
-    );
-
-    $event_tracker_model = model("App\Models\Event_tracker_model");
-    $event_tracker_model->ci_save($event_tracker_data);
-
-    $src = get_uri('event_tracker/load/' . $event_tracker_data["random_id"]);
-    $message .= "<img src='$src' alt='.' />";
-
-    if (send_app_mail($contact->email, $subject, $message, array("attachments" => $attachments, "cc" => $cc, "bcc" => $bcc_emails))) {
-        // change email status
-        $status_data = array("status" => "sent", "last_email_sent_date" => get_my_local_time());
-        if ($this->Proposals_model->ci_save($status_data, $proposal_id)) {
-            echo json_encode(array('success' => true, 'message' => app_lang("proposal_sent_message"), "proposal_id" => $proposal_id));
+            // Verificar que se generó el PDF
+            if ($attachement_url && file_exists($attachement_url)) {
+                $attachment_size = filesize($attachement_url);
+                
+                if ($attachment_size / 1000000 > 10) {
+                    echo json_encode(array("success" => false, 'message' => app_lang("attachment_size_is_too_large")));
+                    exit();
+                }
+                
+                //add proposal pdf
+                array_unshift($attachments, array("file_path" => $attachement_url));
+            }
         }
 
-        if ($attach_pdf && $attachement_url && file_exists($attachement_url)) { // ← MEJORAR ESTA VALIDACIÓN
-            // delete the temp proposal
-            unlink($attachement_url);
+        $contact = $this->Users_model->get_one($contact_id);
+
+        $default_bcc = get_setting('send_proposal_bcc_to');
+        $bcc_emails = "";
+
+        if ($default_bcc && $custom_bcc) {
+            $bcc_emails = $default_bcc . "," . $custom_bcc;
+        } else if ($default_bcc) {
+            $bcc_emails = $default_bcc;
+        } else if ($custom_bcc) {
+            $bcc_emails = $custom_bcc;
         }
-    } else {
-        echo json_encode(array('success' => false, 'message' => app_lang('error_occurred')));
+
+        //insert the data in the event tracker. 
+        $now = get_current_utc_time();
+        $event_tracker_data = array(
+            "context" => "proposal",
+            "context_id" => $proposal_id,
+            "event_type" => "proposal_email",
+            "random_id" => make_random_string(),
+            "created_at" => $now
+        );
+
+        $event_tracker_model = model("App\Models\Event_tracker_model");
+        $event_tracker_model->ci_save($event_tracker_data);
+
+        $src = get_uri('event_tracker/load/' . $event_tracker_data["random_id"]);
+        $message .= "<img src='$src' alt='.' />";
+
+        if (send_app_mail($contact->email, $subject, $message, array("attachments" => $attachments, "cc" => $cc, "bcc" => $bcc_emails))) {
+            // change email status
+            $status_data = array("status" => "sent", "last_email_sent_date" => get_my_local_time());
+            if ($this->Proposals_model->ci_save($status_data, $proposal_id)) {
+                echo json_encode(array('success' => true, 'message' => app_lang("proposal_sent_message"), "proposal_id" => $proposal_id));
+            }
+
+            if ($attach_pdf && $attachement_url && file_exists($attachement_url)) {
+                // delete the temp proposal
+                unlink($attachement_url);
+            }
+        } else {
+            echo json_encode(array('success' => false, 'message' => app_lang('error_occurred')));
+        }
     }
-}
 
     //update the sort value for proposal item
     function update_item_sort_values($id = 0)
