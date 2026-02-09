@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Editor de Presupuestos - Crear/Editar
  * VERSIÓN ACTUALIZADA: Campos manuales para clientes y artículos
@@ -35,7 +36,7 @@ if ($mysqli) {
             FROM crm_clients 
             WHERE deleted = 0 
             ORDER BY company_name ASC";
-    
+
     $result = $mysqli->query($sql);
     if ($result) {
         while ($row = $result->fetch_assoc()) {
@@ -379,33 +380,33 @@ include '../includes/header.php';
         <h1><?php echo $editId ? '✏️ Editar Presupuesto' : '📝 Nuevo Presupuesto'; ?></h1>
         <p>Introduce los datos manualmente o selecciona del catálogo</p>
     </div>
-    
+
     <form id="presupuestoForm" class="editor-container">
         <?php if ($editId): ?>
             <input type="hidden" name="id" value="<?php echo htmlspecialchars($editId); ?>">
         <?php endif; ?>
-        
+
         <!-- DATOS DEL PRESUPUESTO -->
         <div class="form-section">
             <h3>📊 Datos de la Propuesta</h3>
             <div class="form-row">
                 <div class="form-group">
                     <label>Fecha de la propuesta *</label>
-                    <input type="date" name="fecha_propuesta" required 
-                           value="<?php echo $presupuesto ? $presupuesto['fecha_propuesta'] : date('Y-m-d'); ?>">
+                    <input type="date" name="fecha_propuesta" required
+                        value="<?php echo $presupuesto ? $presupuesto['fecha_propuesta'] : date('Y-m-d'); ?>">
                 </div>
                 <div class="form-group">
                     <label>Válido hasta *</label>
                     <input type="date" name="valido_hasta" required
-                           value="<?php echo $presupuesto ? $presupuesto['valido_hasta'] : date('Y-m-d', strtotime('+30 days')); ?>">
+                        value="<?php echo $presupuesto ? $presupuesto['valido_hasta'] : date('Y-m-d', strtotime('+30 days')); ?>">
                 </div>
             </div>
         </div>
-        
+
         <!-- DATOS DEL CLIENTE (editable manualmente o desde CRM) -->
         <div class="form-section">
             <h3>👤 Información del Cliente</h3>
-            
+
             <div class="form-row">
                 <div class="form-group" style="grid-column: 1 / -1;">
                     <label>Seleccionar Cliente del CRM (opcional)</label>
@@ -413,15 +414,15 @@ include '../includes/header.php';
                     <select name="cliente_id" id="clienteSelect" style="display:none;">
                         <option value="">-- Opcional: buscar en CRM --</option>
                         <?php foreach ($clientes as $cliente): ?>
-                            <option value="<?php echo htmlspecialchars($cliente['id']); ?>" 
-                                    data-nombre="<?php echo htmlspecialchars($cliente['company_name'] ?? ''); ?>"
-                                    data-telefono="<?php echo htmlspecialchars($cliente['phone'] ?? ''); ?>"
-                                    data-direccion="<?php echo htmlspecialchars($cliente['address'] ?? ''); ?>"
-                                    data-ciudad="<?php echo htmlspecialchars($cliente['city'] ?? ''); ?>"
-                                    data-cp="<?php echo htmlspecialchars($cliente['zip'] ?? ''); ?>"
-                                    data-pais="<?php echo htmlspecialchars($cliente['country'] ?? ''); ?>"
-                                    data-cif="<?php echo htmlspecialchars($cliente['vat_number'] ?? ''); ?>"
-                                    <?php echo ($presupuesto && isset($presupuesto['cliente_id']) && $presupuesto['cliente_id'] == $cliente['id']) ? 'selected' : ''; ?>>
+                            <option value="<?php echo htmlspecialchars($cliente['id']); ?>"
+                                data-nombre="<?php echo htmlspecialchars($cliente['company_name'] ?? ''); ?>"
+                                data-telefono="<?php echo htmlspecialchars($cliente['phone'] ?? ''); ?>"
+                                data-direccion="<?php echo htmlspecialchars($cliente['address'] ?? ''); ?>"
+                                data-ciudad="<?php echo htmlspecialchars($cliente['city'] ?? ''); ?>"
+                                data-cp="<?php echo htmlspecialchars($cliente['zip'] ?? ''); ?>"
+                                data-pais="<?php echo htmlspecialchars($cliente['country'] ?? ''); ?>"
+                                data-cif="<?php echo htmlspecialchars($cliente['vat_number'] ?? ''); ?>"
+                                <?php echo ($presupuesto && isset($presupuesto['cliente_id']) && $presupuesto['cliente_id'] == $cliente['id']) ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($cliente['company_name'] ?? ''); ?>
                             </option>
                         <?php endforeach; ?>
@@ -440,71 +441,71 @@ include '../includes/header.php';
                     <small style="color: #666; margin-top: 5px; display: block;">Puedes buscar un cliente del CRM o introducir los datos manualmente abajo</small>
                 </div>
             </div>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <label>Nombre/Empresa *</label>
                     <input type="text" name="cliente_nombre" id="clienteNombre" required
-                           placeholder="Introduce el nombre del cliente"
-                           value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_nombre'] ?? '') : ''; ?>">
+                        placeholder="Introduce el nombre del cliente"
+                        value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_nombre'] ?? '') : ''; ?>">
                 </div>
                 <div class="form-group">
                     <label>Email *</label>
                     <input type="email" name="cliente_email" id="clienteEmail" required
-                           placeholder="email@ejemplo.com"
-                           value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_email'] ?? '') : ''; ?>">
+                        placeholder="email@ejemplo.com"
+                        value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_email'] ?? '') : ''; ?>">
                 </div>
                 <div class="form-group">
                     <label>Teléfono</label>
                     <input type="text" name="cliente_telefono" id="clienteTelefono"
-                           placeholder="Teléfono del cliente"
-                           value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_telefono'] ?? '') : ''; ?>">
+                        placeholder="Teléfono del cliente"
+                        value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_telefono'] ?? '') : ''; ?>">
                 </div>
             </div>
-            
+
             <div class="form-row">
                 <div class="form-group" style="grid-column: 1 / -1;">
                     <label>Dirección</label>
                     <input type="text" name="cliente_direccion" id="clienteDireccion"
-                           placeholder="Dirección completa"
-                           value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_direccion'] ?? '') : ''; ?>">
+                        placeholder="Dirección completa"
+                        value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_direccion'] ?? '') : ''; ?>">
                 </div>
             </div>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <label>Ciudad</label>
                     <input type="text" name="cliente_ciudad" id="clienteCiudad"
-                           placeholder="Ciudad"
-                           value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_ciudad'] ?? '') : ''; ?>">
+                        placeholder="Ciudad"
+                        value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_ciudad'] ?? '') : ''; ?>">
                 </div>
                 <div class="form-group">
                     <label>Código Postal</label>
                     <input type="text" name="cliente_cp" id="clienteCp"
-                           placeholder="CP"
-                           value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_cp'] ?? '') : ''; ?>">
+                        placeholder="CP"
+                        value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_cp'] ?? '') : ''; ?>">
                 </div>
                 <div class="form-group">
                     <label>País</label>
                     <input type="text" name="cliente_pais" id="clientePais"
-                           placeholder="País"
-                           value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_pais'] ?? '') : ''; ?>">
+                        placeholder="País"
+                        value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_pais'] ?? '') : ''; ?>">
                 </div>
                 <div class="form-group">
                     <label>CIF/NIF</label>
                     <input type="text" name="cliente_cif" id="clienteCif"
-                           placeholder="CIF/NIF"
-                           value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_cif'] ?? '') : ''; ?>">
+                        placeholder="CIF/NIF"
+                        value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_cif'] ?? '') : ''; ?>">
                 </div>
             </div>
         </div>
-        
+
         <!-- ARTÍCULOS/SERVICIOS -->
         <div class="form-section">
             <h3>📦 Artículos y Servicios</h3>
-            
+
             <div class="items-section" id="itemsContainer">
-                <?php 
+                <?php
                 $existingItems = ($presupuesto && isset($presupuesto['items'])) ? $presupuesto['items'] : [null];
                 foreach ($existingItems as $index => $item):
                 ?>
@@ -516,7 +517,7 @@ include '../includes/header.php';
                                 <option value="">-- Opcional: seleccionar del catálogo --</option>
                                 <?php foreach ($articulos as $art): ?>
                                     <option value="<?php echo htmlspecialchars(json_encode($art)); ?>"
-                                            <?php echo ($item && isset($item['nombre']) && ($item['nombre'] ?? '') == ($art['title'] ?? '')) ? 'selected' : ''; ?>>
+                                        <?php echo ($item && isset($item['nombre']) && ($item['nombre'] ?? '') == ($art['title'] ?? '')) ? 'selected' : ''; ?>>
                                         <?php echo htmlspecialchars($art['title'] ?? ''); ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -532,45 +533,45 @@ include '../includes/header.php';
                                     <div class="ss-options" id="artSSoptions_<?php echo $index; ?>"></div>
                                 </div>
                             </div>
-                            <input type="text" name="items[<?php echo $index; ?>][nombre]" 
-                                   placeholder="Nombre del servicio" required class="item-nombre" 
-                                   style="margin-top: 10px;"
-                                   value="<?php echo $item ? htmlspecialchars($item['nombre'] ?? '') : ''; ?>">
-                            <textarea name="items[<?php echo $index; ?>][descripcion]" 
-                                      placeholder="Descripción del servicio" class="item-descripcion" 
-                                      style="margin-top: 10px; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; min-height: 60px;"><?php echo $item ? htmlspecialchars($item['descripcion'] ?? '') : ''; ?></textarea>
+                            <input type="text" name="items[<?php echo $index; ?>][nombre]"
+                                placeholder="Nombre del servicio" required class="item-nombre"
+                                style="margin-top: 10px;"
+                                value="<?php echo $item ? htmlspecialchars($item['nombre'] ?? '') : ''; ?>">
+                            <textarea name="items[<?php echo $index; ?>][descripcion]"
+                                placeholder="Descripción del servicio" class="item-descripcion"
+                                style="margin-top: 10px; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; min-height: 60px;"><?php echo $item ? htmlspecialchars($item['descripcion'] ?? '') : ''; ?></textarea>
                         </div>
-                        
+
                         <div class="form-group">
                             <label>Cantidad</label>
-                            <input type="number" name="items[<?php echo $index; ?>][cantidad]" 
-                                   placeholder="1" step="0.01" required class="item-cantidad"
-                                   value="<?php echo $item ? ($item['cantidad'] ?? 1) : 1; ?>">
-                            <input type="text" name="items[<?php echo $index; ?>][unidad]" 
-                                   placeholder="Tipo (ej: Mensual, Único)" class="item-unidad" 
-                                   style="margin-top: 10px; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px;"
-                                   value="<?php echo $item ? htmlspecialchars($item['unidad'] ?? '') : ''; ?>">
+                            <input type="number" name="items[<?php echo $index; ?>][cantidad]"
+                                placeholder="1" step="0.01" required class="item-cantidad"
+                                value="<?php echo $item ? ($item['cantidad'] ?? 1) : 1; ?>">
+                            <input type="text" name="items[<?php echo $index; ?>][unidad]"
+                                placeholder="Tipo (ej: Mensual, Único)" class="item-unidad"
+                                style="margin-top: 10px; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px;"
+                                value="<?php echo $item ? htmlspecialchars($item['unidad'] ?? '') : ''; ?>">
                         </div>
-                        
+
                         <div class="form-group">
                             <label>Precio Unitario (€)</label>
-                            <input type="number" name="items[<?php echo $index; ?>][precio]" 
-                                   placeholder="0.00" step="0.01" required class="item-precio"
-                                   value="<?php echo $item ? ($item['precio'] ?? 0) : ''; ?>">
+                            <input type="number" name="items[<?php echo $index; ?>][precio]"
+                                placeholder="0.00" step="0.01" required class="item-precio"
+                                value="<?php echo $item ? ($item['precio'] ?? 0) : ''; ?>">
                             <div class="item-info">
                                 <strong>Total: <span class="item-total-display"><?php echo $item ? number_format(($item['cantidad'] ?? 0) * ($item['precio'] ?? 0), 2) . ' €' : '0.00 €'; ?></span></strong>
                             </div>
                             <input type="hidden" class="item-total" value="<?php echo $item ? (($item['cantidad'] ?? 0) * ($item['precio'] ?? 0)) : 0; ?>">
                         </div>
-                        
+
                         <button type="button" class="btn-remove" onclick="removeItem(this)">🗑️</button>
                     </div>
                 <?php endforeach; ?>
             </div>
-            
+
             <button type="button" class="btn-add" onclick="addItem()">+ Añadir Artículo</button>
         </div>
-        
+
         <!-- IMPUESTOS -->
         <div class="form-section">
             <h3>💰 Impuestos</h3>
@@ -585,7 +586,7 @@ include '../includes/header.php';
                 </div>
             </div>
         </div>
-        
+
         <!-- NOTAS -->
         <div class="form-section">
             <h3>📝 Notas Adicionales</h3>
@@ -594,7 +595,7 @@ include '../includes/header.php';
                 <textarea name="notas" rows="4" placeholder="Condiciones de pago, garantías, etc."><?php echo $presupuesto ? htmlspecialchars($presupuesto['notas'] ?? '') : ''; ?></textarea>
             </div>
         </div>
-        
+
         <!-- TOTALES -->
         <div class="totals-section">
             <div class="total-row">
@@ -614,7 +615,7 @@ include '../includes/header.php';
                 <span id="total">0,00 €</span>
             </div>
         </div>
-        
+
         <!-- BOTONES -->
         <div class="actions-bar">
             <a href="index.php" class="btn btn-secondary">Cancelar</a>
@@ -763,28 +764,34 @@ const clienteSS = initSearchableSelect({
     onSelect: (cliente) => {
         document.getElementById("clienteSelect").value = cliente.id;
         document.getElementById("clienteNombre").value = cliente.company_name || "";
-        document.getElementById("clienteTelefono").value = cliente.phone || "";
         document.getElementById("clienteDireccion").value = cliente.address || "";
         document.getElementById("clienteCiudad").value = cliente.city || "";
         document.getElementById("clienteCp").value = cliente.zip || "";
         document.getElementById("clientePais").value = cliente.country || "";
         document.getElementById("clienteCif").value = cliente.vat_number || "";
         
-        // El email hay que obtenerlo de los contactos
+        // Obtener email y teléfono del contacto principal
         fetch("get_contacto.php?client_id=" + cliente.id)
             .then(response => response.json())
             .then(contactos => {
                 if (contactos && contactos.length > 0) {
                     const contactoPrincipal = contactos.find(c => c.is_primary_contact === "1");
-                    const email = contactoPrincipal ? contactoPrincipal.email : (contactos[0].email || "");
-                    document.getElementById("clienteEmail").value = email;
+                    const contacto = contactoPrincipal || contactos[0];
+                    
+                    // Rellenar EMAIL del contacto
+                    document.getElementById("clienteEmail").value = contacto.email || "";
+                    
+                    // Rellenar TELÉFONO del contacto
+                    document.getElementById("clienteTelefono").value = contacto.phone || contacto.alternative_phone || "";
                 } else {
                     document.getElementById("clienteEmail").value = "";
+                    document.getElementById("clienteTelefono").value = "";
                 }
             })
             .catch(error => {
                 console.error("Error obteniendo contacto:", error);
                 document.getElementById("clienteEmail").value = "";
+                document.getElementById("clienteTelefono").value = "";
             });
     }
 });
