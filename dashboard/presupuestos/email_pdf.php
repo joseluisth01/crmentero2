@@ -78,7 +78,7 @@ if (!$presupuesto) {
         'cliente_cp' => $propuesta_crm['zip'] ?? '',
         'cliente_pais' => $propuesta_crm['country'] ?? '',
         'cliente_cif' => $propuesta_crm['vat_number'] ?? '',
-        'fecha_propuesta' => $propuesta_crm['date'] ?? date('Y-m-d'),
+        'fecha_propuesta' => $propuesta_crm['proposal_date'] ?? date('Y-m-d'),
         'valido_hasta' => $propuesta_crm['valid_until'] ?? '',
         'subtotal' => floatval($propuesta_crm['subtotal'] ?? 0),
         'iva_porcentaje' => 21,
@@ -94,7 +94,8 @@ if (!$presupuesto) {
     if ($result_items && $result_items->num_rows > 0) {
         while ($item = $result_items->fetch_assoc()) {
             $presupuesto['items'][] = [
-                'descripcion' => $item['title'] ?? '',
+                'nombre' => $item['title'] ?? '',
+                'descripcion' => $item['description'] ?? '',
                 'cantidad' => floatval($item['quantity'] ?? 1),
                 'precio' => floatval($item['rate'] ?? 0),
                 'subtotal' => floatval($item['total'] ?? 0)
@@ -103,8 +104,8 @@ if (!$presupuesto) {
     }
 }
 
-// Generar PDF con TCPDF
-require_once '../../vendor/autoload.php';
+// Generar PDF con TCPDF (usar la instalación del dashboard)
+require_once __DIR__ . '/../tcpdf/tcpdf.php';
 
 try {
     $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
@@ -126,7 +127,7 @@ try {
     $pdf->Rect(0, 0, 210, 8, 'F');
     
     // Logo (si existe)
-    $logoPath = '../assets/logo-tictac.png';
+    $logoPath = __DIR__ . '/../assets/logo-tictac.png';
     if (file_exists($logoPath)) {
         $pdf->Image($logoPath, 15, 15, 50, '', 'PNG');
     }
@@ -192,7 +193,15 @@ try {
     
     if (!empty($presupuesto['items']) && is_array($presupuesto['items'])) {
         foreach ($presupuesto['items'] as $item) {
-            $pdf->Cell(100, 6, $item['descripcion'] ?? '', 1, 0, 'L');
+            $nombre = $item['nombre'] ?? '';
+            $descripcion = $item['descripcion'] ?? '';
+            
+            // Si hay descripción, mostrarla
+            if (!empty($descripcion)) {
+                $nombre .= "\n" . $descripcion;
+            }
+            
+            $pdf->Cell(100, 6, $nombre, 1, 0, 'L');
             $pdf->Cell(20, 6, $item['cantidad'] ?? 1, 1, 0, 'C');
             $pdf->Cell(30, 6, number_format(floatval($item['precio'] ?? 0), 2, ',', '.') . ' €', 1, 0, 'R');
             $pdf->Cell(30, 6, number_format(floatval($item['subtotal'] ?? 0), 2, ',', '.') . ' €', 1, 1, 'R');
@@ -233,5 +242,5 @@ try {
 } catch (Exception $e) {
     error_log("❌ Error generando PDF: " . $e->getMessage());
     http_response_code(500);
-    die('Error al generar PDF');
+    die('Error al generar PDF: ' . $e->getMessage());
 }

@@ -1005,19 +1005,18 @@ class Proposals extends Security_Controller
         $attachments = array();
         if ($attach_pdf) {
             $attachement_url = null;
-            
+
             // 🎨 INTENTAR USAR PDF PERSONALIZADO DE TICTAC
-            $tictac_pdf_url = 'https://gestion.tictac-comunicacion.es/dashboard/presupuestos/email_pdf.php?proposal_id=' . $proposal_id;
-            
+            $tictac_pdf_url = 'https://gestion-tictac-comunicacion.es/dashboard/presupuestos/email_pdf.php?proposal_id=' . $proposal_id;
             $context = stream_context_create([
                 'http' => [
                     'timeout' => 10,
                     'ignore_errors' => true
                 ]
             ]);
-            
+
             $pdf_content = @file_get_contents($tictac_pdf_url, false, $context);
-            
+
             // Si se obtuvo el PDF de Tictac correctamente
             if ($pdf_content && strlen($pdf_content) > 1000) {
                 $attachement_url = sys_get_temp_dir() . '/tictac_proposal_' . $proposal_id . '_' . time() . '.pdf';
@@ -1034,12 +1033,12 @@ class Proposals extends Security_Controller
             // Verificar que se generó el PDF
             if ($attachement_url && file_exists($attachement_url)) {
                 $attachment_size = filesize($attachement_url);
-                
+
                 if ($attachment_size / 1000000 > 10) {
                     echo json_encode(array("success" => false, 'message' => app_lang("attachment_size_is_too_large")));
                     exit();
                 }
-                
+
                 //add proposal pdf
                 array_unshift($attachments, array("file_path" => $attachement_url));
             }
