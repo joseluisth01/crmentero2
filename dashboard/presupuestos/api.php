@@ -820,10 +820,10 @@ function enviarEmail() {
     }
 
     // ============================================
-    // GENERAR PDF PROFESIONAL (reutilizar generarPDF)
+    // GENERAR PDF PROFESIONAL
     // ============================================
-    $_GET['mode'] = 'save'; // Indicar que queremos guardar archivo
-    $tmpFile = generarPDF(); // Llamar a la función que ya genera el PDF bonito
+    $_GET['mode'] = 'save';
+    $tmpFile = generarPDF();
     
     if (!$tmpFile || !file_exists($tmpFile)) {
         header('Location: index.php?error=pdf_no_generado');
@@ -831,54 +831,141 @@ function enviarEmail() {
     }
 
     // ============================================
-    // PREPARAR Y ENVIAR EMAIL
+    // PREPARAR EMAIL CON DISEÑO MEJORADO
     // ============================================
     
     $to = $presupuesto['cliente_email'] ?? '';
-    $subject = 'Presupuesto ' . ($presupuesto['id'] ?? '') . ' - Tictac Comunicación Digital SL';
+    $subject = 'Presupuesto para ' . ($presupuesto['cliente_nombre'] ?? 'su proyecto') . ' - Tictac Comunicación';
 
-    $message = '<html><head><style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .header { background: #E91E8C; color: white; padding: 25px; text-align: center; }
-        .content { padding: 30px; }
-        .footer { background: #f5f5f5; padding: 15px; text-align: center; font-size: 12px; color: #666; }
-    </style></head><body>
-        <div class="header"><h2 style="margin:0;">Presupuesto ' . htmlspecialchars($presupuesto['id'] ?? '') . '</h2></div>
+    // HTML del email con logo
+    $message = '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: #E91E8C;
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header img {
+            max-width: 180px;
+            height: auto;
+            margin-bottom: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .content p {
+            margin: 0 0 15px 0;
+        }
+        .resumen-box {
+            background: #fff5f9;
+            border-left: 4px solid #E91E8C;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 5px;
+        }
+        .resumen-box strong {
+            color: #E91E8C;
+        }
+        .total-destacado {
+            font-size: 24px;
+            color: #E91E8C;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .footer {
+            background: #1a1a1a;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            font-size: 13px;
+        }
+        .footer a {
+            color: #E91E8C;
+            text-decoration: none;
+        }
+        .contacto-info {
+            margin-top: 15px;
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <img src="https://tictac-comunicacion.es/wp-content/uploads/2025/12/LOGO-1.png" alt="Tictac Comunicación">
+            <h1>Tu Presupuesto Está Listo</h1>
+        </div>
+        
         <div class="content">
             <p>Estimado/a <strong>' . htmlspecialchars($presupuesto['cliente_nombre'] ?? '') . '</strong>,</p>
-            <p>Adjunto encontrará el presupuesto solicitado con el detalle de los servicios propuestos.</p>
-            <p><strong>Resumen:</strong><br>
-            ID: ' . htmlspecialchars($presupuesto['id'] ?? '') . '<br>
-            Fecha: ' . (!empty($presupuesto['fecha_propuesta']) ? date('d/m/Y', strtotime($presupuesto['fecha_propuesta'])) : '') . '<br>
-            Válido hasta: ' . (!empty($presupuesto['valido_hasta']) ? date('d/m/Y', strtotime($presupuesto['valido_hasta'])) : '') . '<br>
-            Total: ' . number_format(floatval($presupuesto['total'] ?? 0), 2, ',', '.') . ' €</p>
-            <p>Quedamos a su disposición para cualquier consulta.</p>
-            <p>Atentamente,<br><strong>Tictac Comunicación Digital SL</strong></p>
+            
+            <p>Gracias por confiar en Tictac Comunicación Digital. Adjunto encontrarás el presupuesto detallado para tu proyecto con todos los servicios propuestos.</p>
+            
+            <div class="resumen-box">
+                <strong>📋 Resumen del Presupuesto</strong><br><br>
+                <strong>Fecha de emisión:</strong> ' . (!empty($presupuesto['fecha_propuesta']) ? date('d/m/Y', strtotime($presupuesto['fecha_propuesta'])) : '') . '<br>
+                <strong>Válido hasta:</strong> ' . (!empty($presupuesto['valido_hasta']) ? date('d/m/Y', strtotime($presupuesto['valido_hasta'])) : '') . '<br>
+                <div class="total-destacado">Total: ' . number_format(floatval($presupuesto['total'] ?? 0), 2, ',', '.') . ' €</div>
+            </div>
+            
+            <p>Hemos diseñado esta propuesta pensando específicamente en tus necesidades y objetivos. Si tienes alguna duda o quieres comentar cualquier aspecto del presupuesto, estaremos encantados de atenderte.</p>
+            
+            <p><strong>¿Necesitas más información?</strong><br>
+            No dudes en contactarnos. Estamos aquí para ayudarte.</p>
         </div>
-        <div class="footer">Tictac Comunicación Digital SL · Plaza de los Carrillos, 5 · 14001 Córdoba</div>
-    </body></html>';
+        
+        <div class="footer">
+            <strong>Tictac Comunicación Digital SL</strong>
+            <div class="contacto-info">
+                📍 Plaza de los Carrillos, 5 · 14001 Córdoba<br>
+                📞 <a href="tel:+34957048147">957 048 147</a><br>
+                ✉ <a href="mailto:hola@tictac-comunicacion.es">hola@tictac-comunicacion.es</a><br>
+                🌐 <a href="https://www.tictac-comunicacion.es" target="_blank">www.tictac-comunicacion.es</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>';
 
-    $headers = "From: Tictac Comunicación <noreply@" . ($_SERVER['HTTP_HOST'] ?? 'gestion-tictac-comunicacion.es') . ">\r\n";
-    $headers .= "MIME-Version: 1.0\r\n";
-    $boundary = md5(time());
-    $headers .= "Content-Type: multipart/mixed; boundary=\"{$boundary}\"\r\n";
-
-    $body = "--{$boundary}\r\n";
-    $body .= "Content-Type: text/html; charset=UTF-8\r\n";
-    $body .= "Content-Transfer-Encoding: 7bit\r\n\r\n";
-    $body .= $message . "\r\n";
-
-    $pdfContent = file_get_contents($tmpFile);
-    $pdfEncoded = chunk_split(base64_encode($pdfContent));
-
-    $body .= "--{$boundary}\r\n";
-    $body .= "Content-Type: application/pdf; name=\"Presupuesto_{$id}.pdf\"\r\n";
-    $body .= "Content-Transfer-Encoding: base64\r\n";
-    $body .= "Content-Disposition: attachment; filename=\"Presupuesto_{$id}.pdf\"\r\n\r\n";
-    $body .= $pdfEncoded . "\r\n";
-    $body .= "--{$boundary}--";
-
-    $enviado = mail($to, $subject, $body, $headers);
+    // ============================================
+    // ENVIAR EMAIL USANDO GMAIL API DEL CRM
+    // ============================================
+    
+    require_once __DIR__ . '/gmail_send.php';
+    
+    $attachments_array = array(
+        array("file_path" => $tmpFile)
+    );
+    
+    $enviado = enviarEmailGmailAPI($to, $subject, $message, $attachments_array);
+    
+    // Limpiar archivo temporal
     @unlink($tmpFile);
 
     if ($enviado) {
@@ -887,13 +974,17 @@ function enviarEmail() {
             $presupuestos[$index]['fecha_envio'] = date('Y-m-d H:i:s');
             file_put_contents($presupuestosFile, json_encode($presupuestos, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
         }
-        guardarAuditoria('presupuesto_enviado', 'exitoso', 'Presupuesto enviado: ' . $id, [
-            'cliente_email' => $to
+        
+        guardarAuditoria('presupuesto_enviado', 'exitoso', 'Presupuesto enviado vía Gmail API: ' . $id, [
+            'cliente_email' => $to,
+            'cliente_nombre' => $presupuesto['cliente_nombre'] ?? ''
         ]);
+        
         header('Location: index.php?success=email_enviado');
     } else {
-        guardarAuditoria('presupuesto_enviado', 'error', 'Error al enviar email: ' . $id, [
-            'cliente_email' => $to
+        guardarAuditoria('presupuesto_enviado', 'error', 'Error al enviar email vía Gmail API: ' . $id, [
+            'cliente_email' => $to,
+            'error' => 'Revisar logs del servidor'
         ]);
         header('Location: index.php?error=email_no_enviado');
     }

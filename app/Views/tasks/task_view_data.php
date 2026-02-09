@@ -205,9 +205,44 @@ if ($total_sub_tasks) {
 
                     <?php if ($model_info->project_id) { ?>
                         <div class="col-md-12 mb15">
-                            <strong><?php echo app_lang('project') . ": "; ?> </strong> <?php echo anchor(get_uri("projects/view/" . $model_info->project_id), $model_info->project_title); ?>
+                            <div>
+                                <strong><?php echo app_lang('project') . ": "; ?> </strong>
+                                <?php echo anchor(get_uri("projects/view/" . $model_info->project_id), $model_info->project_title); ?>
+                            </div>
+
+                            <?php
+                            $client_id   = $model_info->client_id ?? null;
+                            $client_name = $model_info->company_name ?? null;
+
+                            if (!$client_id || !$client_name) {
+                                try {
+                                    $db = db_connect();
+                                    $row = $db->table('projects')
+                                        ->select('clients.id AS client_id, clients.company_name AS client_name')
+                                        ->join('clients', 'clients.id = projects.client_id', 'left')
+                                        ->where('projects.id', $model_info->project_id)
+                                        ->get()
+                                        ->getRow();
+
+                                    if ($row) {
+                                        $client_id = $client_id ?: ($row->client_id ?? null);
+                                        $client_name = $client_name ?: ($row->client_name ?? null);
+                                    }
+                                } catch (\Throwable $e) {
+                                    // no romper la vista
+                                }
+                            }
+                            ?>
+
+                            <?php if ($client_id && $client_name) { ?>
+                                <div class="mt-1">
+                                    <strong><?php echo app_lang('client') . ": "; ?></strong>
+                                    <?php echo anchor(get_uri("clients/view/" . $client_id), $client_name); ?>
+                                </div>
+                            <?php } ?>
                         </div>
                     <?php } ?>
+
 
                     <?php if ($model_info->client_id) { ?>
                         <div class="col-md-12 mb15">
