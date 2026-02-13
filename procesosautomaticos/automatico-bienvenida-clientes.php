@@ -102,7 +102,7 @@ function enviarEmail($destinatario, $nombre, $empresa) {
     </style></head><body>
         <div class="container">
             <div class="header">
-                <img src="https://tictac-comunicacion.es/wp-content/uploads/2025/12/LOGO-1.png" alt="Tictac Comunicación" class="logo-img">
+                <img src="https://tictac-comunicacion.es/wp-content/uploads/2026/02/LOGO-1-2.png" alt="Tictac Comunicación" class="logo-img">
             </div>
             <div class="content">
                 <div class="greeting">¡Hola ' . htmlspecialchars($nombre) . '! 👋</div>
@@ -136,7 +136,7 @@ function enviarEmail($destinatario, $nombre, $empresa) {
                 </p>
             </div>
             <div class="footer">
-                <img src="https://tictac-comunicacion.es/wp-content/uploads/2025/12/LOGO-1.png" alt="Tictac" class="footer-logo">
+                <img src="https://tictac-comunicacion.es/wp-content/uploads/2026/02/LOGO-1-2.png" alt="Tictac" class="footer-logo">
                 <p><strong>Tictac Comunicación</strong></p>
                 <p style="margin-top:10px;font-size:14px">
                     📧 hola@tictac-comunicacion.es<br>

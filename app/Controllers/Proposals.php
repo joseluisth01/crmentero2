@@ -995,56 +995,240 @@ class Proposals extends Security_Controller
 
         $contact_id = $this->request->getPost('contact_id');
         $cc = $this->request->getPost('proposal_cc');
-
         $custom_bcc = $this->request->getPost('proposal_bcc');
-        $subject = $this->request->getPost('subject');
-        $message = decode_ajax_post_data($this->request->getPost('message'));
+
+        // ✅ IGNORAR subject y message del formulario, usar los del dashboard
+        // $subject = $this->request->getPost('subject');
+        // $message = decode_ajax_post_data($this->request->getPost('message'));
 
         $attach_pdf = $this->request->getPost('attach_pdf');
+
+        // ============================================
+        // 🎨 USAR LÓGICA DEL DASHBOARD TICTAC
+        // ============================================
+
+        // Obtener datos de la propuesta
+        $proposal_data = get_proposal_making_data($proposal_id);
+        if (!$proposal_data) {
+            echo json_encode(array('success' => false, 'message' => 'No se encontró la propuesta'));
+            return;
+        }
+
+        $proposal_info = $proposal_data['proposal_info'];
+        $contact = $this->Users_model->get_one($contact_id);
+
+        if (!$contact->email) {
+            echo json_encode(array('success' => false, 'message' => 'El contacto no tiene email'));
+            return;
+        }
+
+        $to = $contact->email;
+
+        // 📧 SUBJECT Y MESSAGE DEL DASHBOARD (idénticos a dashboard/presupuestos/api.php)
+        $subject = 'Presupuesto para ' . ($proposal_info->company_name ?? 'su proyecto') . ' - Tictac Comunicación';
+
+        $message = '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: #D72072;
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header img {
+            max-width: 180px;
+            height: auto;
+            margin-bottom: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .content p {
+            margin: 0 0 15px 0;
+        }
+        .resumen-box {
+            background: #fff5f9;
+            border-left: 4px solid #D72072;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 5px;
+        }
+        .resumen-box strong {
+            color: #D72072;
+        }
+        .total-destacado {
+            font-size: 24px;
+            color: #D72072;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .footer {
+            background: #1a1a1a;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            font-size: 13px;
+        }
+        .footer a {
+            color: #D72072;
+            text-decoration: none;
+        }
+        .contacto-info {
+            margin-top: 15px;
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <img src="https://tictac-comunicacion.es/wp-content/uploads/2026/02/LOGO-1-2.png" alt="Tictac Comunicación">
+            <h1>Tu Presupuesto Está Listo</h1>
+        </div>
+        
+        <div class="content">
+            <p>Estimado/a <strong>' . htmlspecialchars($contact->first_name . ' ' . $contact->last_name) . '</strong>,</p>
+            
+            <p>Gracias por confiar en Tictac Comunicación Digital. Adjunto encontrarás el presupuesto detallado para tu proyecto con todos los servicios propuestos.</p>
+            
+            <div class="resumen-box">
+                <strong>📋 Resumen del Presupuesto</strong><br><br>
+                <strong>Fecha de emisión:</strong> ' . format_to_date($proposal_info->proposal_date, false) . '<br>
+                <strong>Válido hasta:</strong> ' . format_to_date($proposal_info->valid_until, false) . '<br>
+                <div class="total-destacado">Total: ' . to_currency($proposal_data['proposal_total_summary']->proposal_total, $proposal_data['proposal_total_summary']->currency_symbol) . '</div>
+            </div>
+            
+            <p>Hemos diseñado esta propuesta pensando específicamente en tus necesidades y objetivos. Si tienes alguna duda o quieres comentar cualquier aspecto del presupuesto, estaremos encantados de atenderte.</p>
+            
+            <p><strong>¿Necesitas más información?</strong><br>
+            No dudes en contactarnos. Estamos aquí para ayudarte.</p>
+        </div>
+        
+        <div class="footer">
+            <strong>Tictac Comunicación Digital SL</strong>
+            <div class="contacto-info">
+                📍 Plaza de los Carrillos, 5 · 14001 Córdoba<br>
+                📞 <a href="tel:+34957048147">957 048 147</a><br>
+                ✉ <a href="mailto:hola@tictac-comunicacion.es">hola@tictac-comunicacion.es</a><br>
+                🌐 <a href="https://www.tictac-comunicacion.es" target="_blank">www.tictac-comunicacion.es</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>';
+
+        // ============================================
+        // 📎 GENERAR PDF PERSONALIZADO TICTAC
+        // ============================================
 
         $attachments = array();
         if ($attach_pdf) {
             $attachement_url = null;
 
-            // 🎨 INTENTAR USAR PDF PERSONALIZADO DE TICTAC
+            // 🎨 INTENTAR OBTENER PDF PERSONALIZADO DE TICTAC
             $tictac_pdf_url = 'https://gestion-tictac-comunicacion.es/dashboard/presupuestos/email_pdf.php?proposal_id=' . $proposal_id;
+
+            error_log("📥 Solicitando PDF de Tictac desde: " . $tictac_pdf_url);
+
             $context = stream_context_create([
                 'http' => [
-                    'timeout' => 10,
-                    'ignore_errors' => true
+                    'timeout' => 15,  // ⬆️ Aumentado timeout a 15 segundos
+                    'ignore_errors' => true,
+                    'method' => 'GET',
+                    'header' => "User-Agent: Rise-CRM-Tictac/1.0\r\n"
                 ]
             ]);
 
             $pdf_content = @file_get_contents($tictac_pdf_url, false, $context);
 
-            // Si se obtuvo el PDF de Tictac correctamente
+            // Verificar que el PDF se obtuvo correctamente
             if ($pdf_content && strlen($pdf_content) > 1000) {
+                // ✅ PDF obtenido correctamente
                 $attachement_url = sys_get_temp_dir() . '/tictac_proposal_' . $proposal_id . '_' . time() . '.pdf';
-                file_put_contents($attachement_url, $pdf_content);
-                error_log("✅ Usando PDF personalizado de Tictac para propuesta #$proposal_id");
+                $written = file_put_contents($attachement_url, $pdf_content);
+
+                if ($written === false) {
+                    error_log("❌ Error escribiendo PDF de Tictac en: " . $attachement_url);
+                    $attachement_url = null;
+                } else {
+                    error_log("✅ PDF de Tictac guardado correctamente: " . $attachement_url . " (" . strlen($pdf_content) . " bytes)");
+                }
             } else {
-                // ⚠️ FALLBACK: usar PDF del CRM
-                error_log("⚠️ No se pudo obtener PDF de Tictac, usando PDF del CRM para propuesta #$proposal_id");
-                $proposal_data = get_proposal_making_data($proposal_id);
-                $proposal_data['proposal_preview'] = prepare_proposal_view($proposal_data);
-                $attachement_url = prepare_proposal_pdf($proposal_data, "send_email");
-            }
+                // ❌ Error obteniendo el PDF
+                $error_info = "Contenido recibido: " . strlen($pdf_content ?? '') . " bytes";
 
-            // Verificar que se generó el PDF
-            if ($attachement_url && file_exists($attachement_url)) {
-                $attachment_size = filesize($attachement_url);
-
-                if ($attachment_size / 1000000 > 10) {
-                    echo json_encode(array("success" => false, 'message' => app_lang("attachment_size_is_too_large")));
-                    exit();
+                // Verificar si hay mensaje de error HTTP
+                if (isset($http_response_header)) {
+                    $status_line = $http_response_header[0] ?? 'unknown';
+                    error_log("❌ HTTP Status: " . $status_line);
+                    $error_info .= " | HTTP: " . $status_line;
                 }
 
-                //add proposal pdf
-                array_unshift($attachments, array("file_path" => $attachement_url));
+                error_log("❌ No se pudo obtener PDF de Tictac para propuesta #$proposal_id - " . $error_info);
+
+                // Si el contenido es pequeño, podría ser un mensaje de error, loguearlo
+                if ($pdf_content && strlen($pdf_content) < 1000) {
+                    error_log("❌ Respuesta del servidor: " . substr($pdf_content, 0, 500));
+                }
+
+                $attachement_url = null;
             }
+
+            // ⚠️ SI NO SE OBTUVO EL PDF DE TICTAC, NO ENVIAR EMAIL
+            if (!$attachement_url || !file_exists($attachement_url)) {
+                error_log("❌ CRÍTICO: No se pudo generar PDF para propuesta #$proposal_id");
+                echo json_encode(array(
+                    "success" => false,
+                    'message' => 'Error: No se pudo generar el PDF personalizado. Por favor, intenta de nuevo o contacta con soporte.'
+                ));
+                return;
+            }
+
+            // Verificar tamaño del archivo
+            $attachment_size = filesize($attachement_url);
+
+            error_log("📄 PDF final para envío: " . $attachement_url . " (" . number_format($attachment_size / 1024, 2) . " KB)");
+
+            if ($attachment_size / 1000000 > 10) {
+                error_log("❌ PDF demasiado grande: " . number_format($attachment_size / 1024 / 1024, 2) . " MB");
+                @unlink($attachement_url);
+                echo json_encode(array("success" => false, 'message' => app_lang("attachment_size_is_too_large")));
+                return;
+            }
+
+            // Añadir PDF a los adjuntos
+            array_unshift($attachments, array("file_path" => $attachement_url));
+            error_log("✅ PDF añadido a attachments: " . $attachement_url);
         }
 
-        $contact = $this->Users_model->get_one($contact_id);
+        // ============================================
+        // 📧 ENVIAR EMAIL
+        // ============================================
 
         $default_bcc = get_setting('send_proposal_bcc_to');
         $bcc_emails = "";
@@ -1073,7 +1257,7 @@ class Proposals extends Security_Controller
         $src = get_uri('event_tracker/load/' . $event_tracker_data["random_id"]);
         $message .= "<img src='$src' alt='.' />";
 
-        if (send_app_mail($contact->email, $subject, $message, array("attachments" => $attachments, "cc" => $cc, "bcc" => $bcc_emails))) {
+        if (send_app_mail($to, $subject, $message, array("attachments" => $attachments, "cc" => $cc, "bcc" => $bcc_emails))) {
             // change email status
             $status_data = array("status" => "sent", "last_email_sent_date" => get_my_local_time());
             if ($this->Proposals_model->ci_save($status_data, $proposal_id)) {

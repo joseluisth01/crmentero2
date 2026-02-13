@@ -46,38 +46,10 @@
             </div>
         </div>
 
-        <div class="form-group">
-            <div class="row">
-                <label for="subject" class=" col-md-3"><?php echo app_lang("subject"); ?></label>
-                <div class="col-md-9">
-                    <?php
-                    echo form_input(array(
-                        "id" => "subject",
-                        "name" => "subject",
-                        "value" => $subject,
-                        "class" => "form-control",
-                        "placeholder" => app_lang("subject")
-                    ));
-                    ?>
-                </div>
-            </div>
-        </div>
-        <div class="form-group">
-            <div class="row">
-                <div class=" col-md-12">
-                    <?php
-                    echo form_textarea(array(
-                        "id" => "message",
-                        "name" => "message",
-                        "value" => process_images_from_content($message, false),
-                        "class" => "form-control",
-                        "data-height" => 400,
-                        "data-toolbar" => "no_toolbar",
-                        "data-encode_ajax_post_data" => "1"
-                    ));
-                    ?>
-                </div>
-            </div>
+        <!-- ✅ INFORMACIÓN: Email se enviará con diseño Tictac -->
+        <div class="alert alert-info" style="margin-top: 20px;">
+            <strong>ℹ️ Información</strong><br>
+            El email se enviará con el diseño corporativo de Tictac Comunicación y el PDF personalizado adjunto.
         </div>
 
         <?php if ($has_pdf_access) { ?>
@@ -85,7 +57,7 @@
                 <?php
                 echo form_checkbox("attach_pdf", "1", true, "id='attach_pdf' class='form-check-input'");
                 ?>
-                <label for="attach_pdf"><?php echo app_lang('attach_pdf') . ' ' . anchor(get_uri("proposals/download_pdf/" . $proposal_info->id . "/download"), get_hyphenated_string(get_proposal_id($proposal_info->id)) . ".pdf", array("target" => "_blank", "id" => "attachment-url")); ?></label>
+                <label for="attach_pdf"><?php echo app_lang('attach_pdf'); ?> (Diseño Tictac)</label>
             </div>
         <?php } ?>
 
@@ -112,26 +84,5 @@
                 }
             }
         });
-
-        initWYSIWYGEditor("#message");
-
-        //load template view on changing of client contact
-        $("#contact_id").select2().on("change", function () {
-            var contact_id = $(this).val();
-            if (contact_id) {
-                appLoader.show();
-                appAjaxRequest({
-                    url: "<?php echo get_uri('proposals/get_send_proposal_template/' . $proposal_info->id) ?>" + "/" + contact_id + "/json",
-                    dataType: "json",
-                    success: function (result) {
-                        if (result.success) {
-                            setWYSIWYGEditorHTML("#message", result.message_view);
-                            appLoader.hide();
-                        }
-                    }
-                });
-            }
-        });
-
     });
 </script>

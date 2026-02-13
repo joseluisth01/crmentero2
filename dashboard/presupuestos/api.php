@@ -918,7 +918,7 @@ function enviarEmail() {
 <body>
     <div class="email-container">
         <div class="header">
-            <img src="https://tictac-comunicacion.es/wp-content/uploads/2025/12/LOGO-1.png" alt="Tictac Comunicación">
+            <img src="https://tictac-comunicacion.es/wp-content/uploads/2026/02/LOGO-1-2.png" alt="Tictac Comunicación">
             <h1>Tu Presupuesto Está Listo</h1>
         </div>
         
