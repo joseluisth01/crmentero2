@@ -3,6 +3,7 @@
 /**
  * Editor de Presupuestos - Crear/Editar
  * VERSIÓN ACTUALIZADA: Campos manuales para clientes y artículos
+ * + WYSIWYG para Notas Adicionales y Detalles Propuesta
  */
 
 require_once '../config.php';
@@ -28,7 +29,6 @@ if ($editId) {
 }
 
 // Obtener lista de clientes del CRM - DIRECTAMENTE DE BBDD
-// NOTA: El email NO está en crm_clients, está en crm_users (contactos)
 $clientes = array();
 $mysqli = conexionBBDD();
 if ($mysqli) {
@@ -50,6 +50,8 @@ if ($mysqli) {
 $articulos = getArticulosCRM();
 
 $additionalStyles = '
+<!-- Quill WYSIWYG Editor CSS -->
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
 <style>
     .editor-container {
         background: white;
@@ -109,6 +111,36 @@ $additionalStyles = '
         min-height: 100px;
         resize: vertical;
         font-family: inherit;
+    }
+    
+    /* ===== WYSIWYG STYLES ===== */
+    .wysiwyg-container {
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: border-color 0.3s;
+    }
+    .wysiwyg-container:focus-within {
+        border-color: ' . BRAND_COLOR . ';
+    }
+    .wysiwyg-container .ql-toolbar {
+        border: none;
+        border-bottom: 1px solid #e0e0e0;
+        background: #fafafa;
+    }
+    .wysiwyg-container .ql-container {
+        border: none;
+        min-height: 120px;
+        font-size: 14px;
+        font-family: "Helvetica Neue", Arial, sans-serif;
+    }
+    .wysiwyg-container .ql-editor {
+        min-height: 120px;
+        padding: 12px;
+    }
+    .wysiwyg-container .ql-editor.ql-blank::before {
+        font-style: normal;
+        color: #999;
     }
     
     /* ===== SEARCHABLE SELECT STYLES ===== */
@@ -587,12 +619,27 @@ include '../includes/header.php';
             </div>
         </div>
 
-        <!-- NOTAS -->
+        <!-- DETALLES PROPUESTA (WYSIWYG) -->
+        <div class="form-section">
+            <h3>📋 Detalles de la Propuesta</h3>
+            <div class="form-group">
+                <label>Detalles (opcional) — Aparecerá antes de la tabla de artículos en el PDF</label>
+                <input type="hidden" name="detalles_propuesta" id="detallesPropuestaHidden" value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['detalles_propuesta'] ?? '') : ''; ?>">
+                <div class="wysiwyg-container">
+                    <div id="detallesEditor"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NOTAS ADICIONALES (WYSIWYG) -->
         <div class="form-section">
             <h3>📝 Notas Adicionales</h3>
             <div class="form-group">
-                <label>Notas (opcional)</label>
-                <textarea name="notas" rows="4" placeholder="Condiciones de pago, garantías, etc."><?php echo $presupuesto ? htmlspecialchars($presupuesto['notas'] ?? '') : ''; ?></textarea>
+                <label>Notas (opcional) — Aparecerá al final del PDF</label>
+                <input type="hidden" name="notas" id="notasHidden" value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['notas'] ?? '') : ''; ?>">
+                <div class="wysiwyg-container">
+                    <div id="notasEditor"></div>
+                </div>
             </div>
         </div>
 
@@ -625,13 +672,68 @@ include '../includes/header.php';
     </form>
 </div>
 
+<!-- Quill JS -->
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+
 <?php
 $articulosJson = json_encode($articulos, JSON_UNESCAPED_UNICODE);
 $clientesJson = json_encode($clientes, JSON_UNESCAPED_UNICODE);
 $selectedClienteId = $presupuesto && isset($presupuesto['cliente_id']) ? $presupuesto['cliente_id'] : '';
 
+// Valores iniciales para los editores WYSIWYG (HTML)
+$notasInicial = $presupuesto ? ($presupuesto['notas'] ?? '') : '';
+$detallesInicial = $presupuesto ? ($presupuesto['detalles_propuesta'] ?? '') : '';
+
 $additionalScripts = '
 <script>
+// ============================================================
+// WYSIWYG EDITORS (Quill)
+// ============================================================
+const quillToolbar = [
+    ["bold", "italic", "underline"],
+    [{ "list": "ordered" }, { "list": "bullet" }],
+    ["clean"]
+];
+
+// Editor de Detalles de la Propuesta
+const detallesQuill = new Quill("#detallesEditor", {
+    theme: "snow",
+    modules: { toolbar: quillToolbar },
+    placeholder: "Escribe los detalles de la propuesta..."
+});
+
+// Editor de Notas Adicionales
+const notasQuill = new Quill("#notasEditor", {
+    theme: "snow",
+    modules: { toolbar: quillToolbar },
+    placeholder: "Condiciones de pago, garantías, observaciones..."
+});
+
+// Cargar contenido existente
+(function() {
+    var detallesVal = document.getElementById("detallesPropuestaHidden").value;
+    if (detallesVal && detallesVal.trim() !== "") {
+        detallesQuill.root.innerHTML = detallesVal;
+    }
+    var notasVal = document.getElementById("notasHidden").value;
+    if (notasVal && notasVal.trim() !== "") {
+        notasQuill.root.innerHTML = notasVal;
+    }
+})();
+
+// Sincronizar al escribir
+detallesQuill.on("text-change", function() {
+    var html = detallesQuill.root.innerHTML;
+    if (detallesQuill.getText().trim() === "") html = "";
+    document.getElementById("detallesPropuestaHidden").value = html;
+});
+
+notasQuill.on("text-change", function() {
+    var html = notasQuill.root.innerHTML;
+    if (notasQuill.getText().trim() === "") html = "";
+    document.getElementById("notasHidden").value = html;
+});
+
 // ============================================================
 // DATOS
 // ============================================================
@@ -762,7 +864,6 @@ const clienteSS = initSearchableSelect({
     isSelected: (c) => String(c.id) === String(selectedClienteId),
     selectedValue: clientesData.find(c => String(c.id) === String(selectedClienteId)) || null,
     onSelect: (cliente) => {
-        // Rellenar datos de la empresa desde crm_clients
         document.getElementById("clienteSelect").value = cliente.id;
         document.getElementById("clienteNombre").value = cliente.company_name || "";
         document.getElementById("clienteDireccion").value = cliente.address || "";
@@ -771,41 +872,21 @@ const clienteSS = initSearchableSelect({
         document.getElementById("clientePais").value = cliente.country || "";
         document.getElementById("clienteCif").value = cliente.vat_number || "";
         
-        // ✅ NUEVO: Obtener email y teléfono del contacto principal desde crm_users
-        console.log("🔍 Obteniendo contacto para cliente ID:", cliente.id);
-        
         fetch("get_contacto.php?client_id=" + cliente.id)
-            .then(response => {
-                console.log("📡 Respuesta recibida:", response.status);
-                return response.json();
-            })
+            .then(response => response.json())
             .then(contactos => {
-                console.log("📋 Contactos recibidos:", contactos);
-                
                 if (contactos && contactos.length > 0) {
-                    // Buscar contacto principal (is_primary_contact = "1")
                     const contactoPrincipal = contactos.find(c => c.is_primary_contact === "1");
                     const contacto = contactoPrincipal || contactos[0];
-                    
-                    console.log("👤 Contacto seleccionado:", contacto);
-                    
-                    // Rellenar EMAIL del contacto
-                    const email = contacto.email || "";
-                    document.getElementById("clienteEmail").value = email;
-                    console.log("✉️ Email asignado:", email);
-                    
-                    // Rellenar TELÉFONO del contacto (prioridad: phone > alternative_phone)
-                    const telefono = contacto.phone || contacto.alternative_phone || "";
-                    document.getElementById("clienteTelefono").value = telefono;
-                    console.log("📞 Teléfono asignado:", telefono);
+                    document.getElementById("clienteEmail").value = contacto.email || "";
+                    document.getElementById("clienteTelefono").value = contacto.phone || contacto.alternative_phone || "";
                 } else {
-                    console.warn("⚠️ No hay contactos para este cliente");
                     document.getElementById("clienteEmail").value = "";
                     document.getElementById("clienteTelefono").value = "";
                 }
             })
             .catch(error => {
-                console.error("❌ Error obteniendo contacto:", error);
+                console.error("Error obteniendo contacto:", error);
                 document.getElementById("clienteEmail").value = "";
                 document.getElementById("clienteTelefono").value = "";
             });
@@ -966,6 +1047,15 @@ calculateTotals();
 // ============================================================
 document.getElementById("presupuestoForm").addEventListener("submit", function(e) {
     e.preventDefault();
+    
+    // Sincronizar WYSIWYG a campos hidden antes de enviar
+    var detallesHtml = detallesQuill.root.innerHTML;
+    if (detallesQuill.getText().trim() === "") detallesHtml = "";
+    document.getElementById("detallesPropuestaHidden").value = detallesHtml;
+    
+    var notasHtml = notasQuill.root.innerHTML;
+    if (notasQuill.getText().trim() === "") notasHtml = "";
+    document.getElementById("notasHidden").value = notasHtml;
     
     const formData = new FormData(this);
     const action = e.submitter.value;

@@ -2,7 +2,10 @@
 /**
  * API Backend - Presupuestos
  * Maneja: Guardar, Eliminar, Generar PDF, Enviar Email
- * ACTUALIZADO: Sincroniza propuestas directamente en BBDD del CRM
+ * ACTUALIZADO: 
+ *   - Nuevo campo detalles_propuesta
+ *   - PDF con altura dinámica en cajas de texto
+ *   - Secciones opcionales (no aparecen si están vacías)
  */
 
 require_once '../config.php';
@@ -52,6 +55,39 @@ function pdf_text_plain($html) {
     return trim($txt);
 }
 
+/**
+ * Convierte HTML del WYSIWYG a texto con formato básico para TCPDF writeHTMLCell
+ * Mantiene negritas, cursivas, listas, etc.
+ * Elimina estilos de background que Quill añade y TCPDF renderiza como recuadros
+ */
+function pdf_html_clean($html) {
+    if ($html === null || trim($html) === '' || trim($html) === '<p><br></p>') return '';
+    
+    // Quill genera <p><br></p> para párrafos vacíos - limpiar
+    $html = preg_replace('~<p>\s*<br\s*/?>\s*</p>~i', '', $html);
+    
+    // Eliminar spans completamente (Quill los usa para estilos inline que causan backgrounds raros en TCPDF)
+    $html = preg_replace('~<span[^>]*>~i', '', $html);
+    $html = str_ireplace('</span>', '', $html);
+    
+    // Permitir solo tags seguros para TCPDF
+    $html = strip_tags($html, '<p><br><strong><b><em><i><u><ul><ol><li>');
+    
+    // Eliminar cualquier atributo style/class de los tags restantes (por si acaso)
+    $html = preg_replace('~(<(?:p|strong|b|em|i|u|ul|ol|li))\s+[^>]*>~i', '$1>', $html);
+    
+    return trim($html);
+}
+
+/**
+ * Comprueba si un campo HTML del WYSIWYG tiene contenido real
+ */
+function tiene_contenido($html) {
+    if ($html === null) return false;
+    $texto = pdf_text_plain($html);
+    return $texto !== '';
+}
+
 function crearPropuestaEnCRM($presupuesto) {
     if (empty($presupuesto['cliente_id']) || $presupuesto['cliente_id'] === '') {
         return ['success' => false, 'message' => 'No se puede sincronizar: falta cliente_id'];
@@ -67,15 +103,12 @@ function crearPropuestaEnCRM($presupuesto) {
     $valid_until = $presupuesto['valido_hasta'] ?? date('Y-m-d', strtotime('+30 days'));
     $note = $mysqli->real_escape_string($presupuesto['notas'] ?? '');
     
-    // Generar public_key único (10 caracteres alfanuméricos)
     $public_key = substr(md5(uniqid(rand(), true)), 0, 10);
     
-    // Generar contenido HTML simple para la propuesta
     $content = '<meta charset="UTF-8"><p><strong>Presupuesto: ' . htmlspecialchars($presupuesto['id'] ?? '') . '</strong></p>';
     $content .= '<p>' . nl2br(htmlspecialchars($note)) . '</p>';
     $content = $mysqli->real_escape_string($content);
     
-    // CONSULTA SQL EXACTA QUE FUNCIONA PARA PROPUESTAS (probada en phpMyAdmin)
     $sql = "INSERT INTO crm_proposals 
             (client_id, proposal_date, valid_until, note, 
              status, tax_id, tax_id2, 
@@ -93,7 +126,6 @@ function crearPropuestaEnCRM($presupuesto) {
     
     $proposal_id = $mysqli->insert_id;
     
-    // Insertar items en crm_proposal_items
     if (isset($presupuesto['items']) && is_array($presupuesto['items'])) {
         $sort = 0;
         foreach ($presupuesto['items'] as $item) {
@@ -104,7 +136,6 @@ function crearPropuestaEnCRM($presupuesto) {
             $rate = floatval($item['precio'] ?? 0);
             $item_total = $quantity * $rate;
             
-            // CONSULTA SQL EXACTA QUE FUNCIONA PARA ITEMS (probada en phpMyAdmin)
             $sqlItem = "INSERT INTO crm_proposal_items 
                         (proposal_id, title, description, quantity, unit_type, rate, total, sort, item_id, deleted) 
                         VALUES 
@@ -124,9 +155,6 @@ function crearPropuestaEnCRM($presupuesto) {
     ];
 }
 
-/**
- * Actualizar propuesta en el CRM
- */
 function actualizarPropuestaEnCRM($presupuesto) {
     if (empty($presupuesto['crm_proposal_id'])) {
         return crearPropuestaEnCRM($presupuesto);
@@ -147,12 +175,10 @@ function actualizarPropuestaEnCRM($presupuesto) {
     $valid_until = $presupuesto['valido_hasta'] ?? date('Y-m-d', strtotime('+30 days'));
     $note = $mysqli->real_escape_string($presupuesto['notas'] ?? '');
     
-    // Actualizar content
     $content = '<meta charset="UTF-8"><p><strong>Presupuesto: ' . htmlspecialchars($presupuesto['id'] ?? '') . '</strong></p>';
     $content .= '<p>' . nl2br(htmlspecialchars($note)) . '</p>';
     $content = $mysqli->real_escape_string($content);
     
-    // Actualizar proposal
     $sql = "UPDATE crm_proposals SET
             client_id = $client_id,
             proposal_date = '$proposal_date',
@@ -165,10 +191,8 @@ function actualizarPropuestaEnCRM($presupuesto) {
         return ['success' => false, 'message' => 'Error al actualizar proposal: ' . $mysqli->error];
     }
     
-    // Eliminar items antiguos
     $mysqli->query("DELETE FROM crm_proposal_items WHERE proposal_id = $proposal_id");
     
-    // Insertar items actualizados
     if (isset($presupuesto['items']) && is_array($presupuesto['items'])) {
         $sort = 0;
         foreach ($presupuesto['items'] as $item) {
@@ -248,6 +272,7 @@ function guardarPresupuesto() {
         'segundo_impuesto' => floatval($_POST['segundo_impuesto'] ?? 0),
         'subtotal' => floatval($_POST['subtotal'] ?? 0),
         'total' => floatval($_POST['total'] ?? 0),
+        'detalles_propuesta' => $_POST['detalles_propuesta'] ?? '',
         'notas' => $_POST['notas'] ?? '',
         'estado' => 'borrador',
         'fecha_creacion' => date('Y-m-d H:i:s'),
@@ -271,12 +296,9 @@ function guardarPresupuesto() {
         $presupuestos[] = $presupuesto;
     }
 
-    // ============================================
-    // SINCRONIZAR CON EL CRM
-    // ============================================
+    // Sincronizar con CRM
     $crmResult = ['success' => false, 'message' => 'No sincronizado'];
     
-    // Solo sincronizar si hay un cliente_id válido
     if (!empty($presupuesto['cliente_id']) && $presupuesto['cliente_id'] !== '') {
         if ($esActualizacion && !empty($presupuesto['crm_proposal_id'])) {
             $crmResult = actualizarPropuestaEnCRM($presupuesto);
@@ -284,7 +306,6 @@ function guardarPresupuesto() {
             $crmResult = crearPropuestaEnCRM($presupuesto);
         }
 
-        // Si se creó correctamente, guardar el ID del CRM
         if ($crmResult['success'] && isset($crmResult['proposal_id'])) {
             foreach ($presupuestos as $key => $p) {
                 if ($p['id'] === $id) {
@@ -295,10 +316,8 @@ function guardarPresupuesto() {
         }
     }
 
-    // Guardar en JSON
     file_put_contents($presupuestosFile, json_encode($presupuestos, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-    // Log de auditoría
     $auditMessage = 'Presupuesto ' . ($esActualizacion ? 'actualizado' : 'guardado') . ': ' . $id;
     if ($crmResult['success']) {
         $auditMessage .= ' | Sincronizado con CRM (ID: ' . $crmResult['proposal_id'] . ')';
@@ -336,7 +355,6 @@ function eliminarPresupuesto() {
     if (file_exists($presupuestosFile)) {
         $presupuestos = json_decode(file_get_contents($presupuestosFile), true);
         
-        // Buscar el presupuesto para obtener el crm_proposal_id
         $presupuesto_a_eliminar = null;
         foreach ($presupuestos as $p) {
             if ($p['id'] === $id) {
@@ -345,13 +363,11 @@ function eliminarPresupuesto() {
             }
         }
         
-        // Si tiene crm_proposal_id, eliminarlo también del CRM
         if ($presupuesto_a_eliminar && !empty($presupuesto_a_eliminar['crm_proposal_id'])) {
             $proposal_id = intval($presupuesto_a_eliminar['crm_proposal_id']);
             
             $mysqli = conexionBBDD();
             if ($mysqli) {
-                // Marcar como eliminado en el CRM (soft delete)
                 $sql = "UPDATE crm_proposals SET deleted = 1 WHERE id = ?";
                 $stmt = $mysqli->prepare($sql);
                 
@@ -360,7 +376,6 @@ function eliminarPresupuesto() {
                     $stmt->execute();
                     $stmt->close();
                     
-                    // También marcar items como eliminados
                     $sqlItems = "UPDATE crm_proposal_items SET deleted = 1 WHERE proposal_id = ?";
                     $stmtItems = $mysqli->prepare($sqlItems);
                     
@@ -372,7 +387,6 @@ function eliminarPresupuesto() {
                     
                     $mysqli->close();
                     
-                    // Log de auditoría
                     guardarAuditoria(
                         'propuesta_eliminada',
                         'exitoso',
@@ -387,7 +401,6 @@ function eliminarPresupuesto() {
                         ]
                     );
                 } else {
-                    // Error en prepared statement
                     guardarAuditoria(
                         'propuesta_eliminada',
                         'parcial',
@@ -401,7 +414,6 @@ function eliminarPresupuesto() {
                     $mysqli->close();
                 }
             } else {
-                // Si no se puede conectar al CRM, registrar error pero continuar con eliminación local
                 guardarAuditoria(
                     'propuesta_eliminada',
                     'parcial',
@@ -414,7 +426,6 @@ function eliminarPresupuesto() {
                 );
             }
         } else {
-            // Presupuesto solo local (sin sincronización CRM)
             guardarAuditoria(
                 'presupuesto_eliminado',
                 'exitoso',
@@ -426,7 +437,6 @@ function eliminarPresupuesto() {
             );
         }
         
-        // Eliminar del JSON local
         $presupuestos = array_filter($presupuestos, function($p) use ($id) { 
             return $p['id'] !== $id; 
         });
@@ -440,7 +450,7 @@ function eliminarPresupuesto() {
 
 /**
  * Generar PDF - DISEÑO PROFESIONAL
- * (Código completo incluido - 500+ líneas)
+ * ACTUALIZADO: Altura dinámica para notas y detalles, nuevo campo detalles_propuesta
  */
 function generarPDF() {
     global $presupuestosFile;
@@ -467,6 +477,12 @@ function generarPDF() {
 
     // Clase PDF personalizada
     class TictacPDF extends TCPDF {
+        // Flag para pintar fondo de color en páginas de contenido largo
+        public $bgEnabled = false;
+        public $bgColor = array(240, 248, 255); // azul por defecto
+        public $bgMarginLeft = 15;
+        public $bgWidth = 180;
+        
         public function header() {
             $pageW = $this->getPageWidth();
             $this->SetFillColor(233, 30, 140);
@@ -496,6 +512,16 @@ function generarPDF() {
             $this->SetTextColor(51, 51, 51);
             $this->SetMargins(15, 50, 15);
             $this->SetY(50);
+            
+            // Si hay fondo activo, pintar rectángulo de fondo en toda la zona de contenido
+            if ($this->bgEnabled) {
+                $this->SetFillColor($this->bgColor[0], $this->bgColor[1], $this->bgColor[2]);
+                $this->SetDrawColor($this->bgColor[0], $this->bgColor[1], $this->bgColor[2]);
+                $bgHeight = $this->getPageHeight() - 50 - 40; // desde header hasta footer
+                $this->Rect($this->bgMarginLeft, 50, $this->bgWidth, $bgHeight, 'F');
+                // Restaurar colores de texto
+                $this->SetTextColor(51, 51, 51);
+            }
         }
         public function footer() {
             $pageW = $this->getPageWidth();
@@ -531,6 +557,8 @@ function generarPDF() {
     $pdf->SetMargins(15, 50, 15);
     $pdf->SetY(50);
 
+    $pageW = $pdf->getPageWidth();
+    $contentW = $pageW - 30;
     $colW = 85;
     $startX = 15;
     $startY = $pdf->GetY();
@@ -580,14 +608,34 @@ function generarPDF() {
     $pdf->Line($rightX + 5, $pdf->GetY() + 1, $rightX + $colW - 5, $pdf->GetY() + 1);
     $pdf->Ln(4);
 
+    // Campos del cliente: solo se añaden si tienen valor
     $campos_cliente = [
         ['Cliente:', $presupuesto['cliente_nombre'] ?? ''],
         ['Contacto:', $presupuesto['cliente_nombre'] ?? ''],
-        ['Dirección:', $presupuesto['cliente_direccion'] ?? ''],
-        ['Ciudad:', ($presupuesto['cliente_ciudad'] ?? '') . (!empty($presupuesto['cliente_cp']) ? ', ' . $presupuesto['cliente_cp'] : '')],
-        ['País:', $presupuesto['cliente_pais'] ?? ''],
-        ['CIF/NIF:', $presupuesto['cliente_cif'] ?? ''],
     ];
+    
+    // Campos opcionales: solo si no están vacíos
+    $direccion = trim($presupuesto['cliente_direccion'] ?? '');
+    if ($direccion !== '') {
+        $campos_cliente[] = ['Dirección:', $direccion];
+    }
+    
+    $ciudad = trim($presupuesto['cliente_ciudad'] ?? '');
+    $cp = trim($presupuesto['cliente_cp'] ?? '');
+    $ciudadCompleta = $ciudad . ($cp !== '' ? ', ' . $cp : '');
+    if (trim($ciudadCompleta) !== '' && trim($ciudadCompleta) !== ',') {
+        $campos_cliente[] = ['Ciudad:', $ciudadCompleta];
+    }
+    
+    $pais = trim($presupuesto['cliente_pais'] ?? '');
+    if ($pais !== '') {
+        $campos_cliente[] = ['País:', $pais];
+    }
+    
+    $cif = trim($presupuesto['cliente_cif'] ?? '');
+    if ($cif !== '') {
+        $campos_cliente[] = ['CIF/NIF:', $cif];
+    }
 
     foreach ($campos_cliente as $campo) {
         $pdf->SetX($rightX + 5);
@@ -600,8 +648,6 @@ function generarPDF() {
 
     // Sección "Sobre Nosotros"
     $pdf->SetY($startY + 55);
-    $pageW = $pdf->getPageWidth();
-    $contentW = $pageW - 30;
     $sobreY = $pdf->GetY();
     $pdf->SetFillColor(255, 240, 247);
     $pdf->SetDrawColor(255, 240, 247);
@@ -752,37 +798,112 @@ function generarPDF() {
     $pdf->Cell($valW, 8, number_format($totalFinal, 2, ',', '.') . '€', 0, 1, 'R');
     $pdf->SetTextColor(51, 51, 51);
 
-    // Notas adicionales
-    if (!empty($presupuesto['notas'])) {
+    // ============================================
+    // DETALLES DE LA PROPUESTA (solo si tiene contenido)
+    // SIEMPRE empieza en página nueva
+    // ============================================
+    $detallesHtml = $presupuesto['detalles_propuesta'] ?? '';
+    $hayDetalles = tiene_contenido($detallesHtml);
+    
+    if ($hayDetalles) {
+        $cleanHtml = pdf_html_clean($detallesHtml);
+        $detallesTexto = pdf_text_plain($detallesHtml);
+        
+        // Activar fondo azul: header() lo pintará en cada página nueva
+        $pdf->bgEnabled = true;
+        $pdf->bgColor = array(240, 248, 255);
+        $pdf->bgWidth = $contentW;
+        
+        // Forzar página nueva (header() pinta fondo azul automáticamente)
+        $pdf->AddPage();
+        
+        $detallesStartY = $pdf->GetY();
+        
+        // Título
+        $pdf->SetXY(20, $detallesStartY + 4);
+        $pdf->SetTextColor(233, 30, 140);
+        $pdf->SetFont('Helvetica', 'B', 11);
+        $pdf->Cell($contentW - 10, 5, 'Detalles de la Propuesta', 0, 1, 'L');
+        
+        // Contenido con formato HTML
+        $pdf->SetTextColor(51, 51, 51);
+        $pdf->SetFont('Helvetica', '', 8);
+        
+        if (!empty($cleanHtml)) {
+            $pdf->writeHTMLCell($contentW - 10, 0, 20, $pdf->GetY(), $cleanHtml, 0, 1, false, true, 'L');
+        } else {
+            $pdf->SetX(20);
+            $pdf->MultiCell($contentW - 10, 3.5, $detallesTexto, 0, 'L');
+        }
+        
+        // Desactivar fondo azul
+        $pdf->bgEnabled = false;
+        
+        $pdf->Ln(4);
+    }
+
+    // ============================================
+    // NOTAS ADICIONALES (solo si tiene contenido)
+    // ============================================
+    $notasHtml = $presupuesto['notas'] ?? '';
+    $hayNotas = tiene_contenido($notasHtml);
+    
+    if ($hayNotas) {
         $pdf->Ln(6);
-        $notasY = $pdf->GetY();
-        $contentW = $pageW - 30;
+        
+        $cleanNotasHtml = pdf_html_clean($notasHtml);
+        $notasTexto = pdf_text_plain($notasHtml);
+        
+        // Activar fondo rosa para las páginas que cree el contenido
+        $pdf->bgEnabled = true;
+        $pdf->bgColor = array(255, 240, 247);
+        $pdf->bgWidth = $contentW;
+        
+        $notasStartY = $pdf->GetY();
+        
+        // Pintar fondo en la primera "franja" de esta página
         $pdf->SetFillColor(255, 240, 247);
-        $pdf->RoundedRect(15, $notasY, $contentW, 22, 3, 3, 'F');
-        $pdf->SetXY(20, $notasY + 4);
+        $pdf->SetDrawColor(255, 240, 247);
+        // Pintar un rect grande desde el inicio; se recortará por el contenido que venga después
+        $pageH = $pdf->getPageHeight();
+        $availableH = $pageH - 40 - $notasStartY;
+        $pdf->Rect(15, $notasStartY, $contentW, $availableH, 'F');
+        
+        // Título
+        $pdf->SetXY(20, $notasStartY + 4);
         $pdf->SetTextColor(233, 30, 140);
         $pdf->SetFont('Helvetica', 'B', 11);
         $pdf->Cell($contentW - 10, 5, 'Notas Adicionales', 0, 1, 'L');
-        $pdf->SetX(20);
+        
+        // Contenido
         $pdf->SetTextColor(51, 51, 51);
         $pdf->SetFont('Helvetica', '', 8);
-        $pdf->MultiCell($contentW - 10, 3.5, pdf_text_plain($presupuesto['notas']), 0, 'L');
+        
+        if (!empty($cleanNotasHtml)) {
+            $pdf->writeHTMLCell($contentW - 10, 0, 20, $pdf->GetY(), $cleanNotasHtml, 0, 1, false, true, 'L');
+        } else {
+            $pdf->SetX(20);
+            $pdf->MultiCell($contentW - 10, 3.5, $notasTexto, 0, 'L');
+        }
+        
+        // Desactivar fondo
+        $pdf->bgEnabled = false;
+        
+        $pdf->Ln(4);
     }
 
     // Determinar modo: descargar o guardar archivo
-$mode = $_GET['mode'] ?? 'download';
-$filename = 'Presupuesto_' . ($presupuesto['id'] ?? 'SIN_ID') . '.pdf';
+    $mode = $_GET['mode'] ?? 'download';
+    $filename = 'Presupuesto_' . ($presupuesto['id'] ?? 'SIN_ID') . '.pdf';
 
-if ($mode === 'save') {
-    // Modo: guardar archivo temporal para email
-    $tmpFile = sys_get_temp_dir() . '/presupuesto_' . ($presupuesto['id'] ?? 'temp') . '_' . time() . '.pdf';
-    $pdf->Output($tmpFile, 'F');
-    return $tmpFile; // Devolver ruta del archivo
-} else {
-    // Modo: descargar (comportamiento por defecto)
-    $pdf->Output($filename, 'D');
-    exit;
-}
+    if ($mode === 'save') {
+        $tmpFile = sys_get_temp_dir() . '/presupuesto_' . ($presupuesto['id'] ?? 'temp') . '_' . time() . '.pdf';
+        $pdf->Output($tmpFile, 'F');
+        return $tmpFile;
+    } else {
+        $pdf->Output($filename, 'D');
+        exit;
+    }
 }
 
 /**
@@ -819,9 +940,7 @@ function enviarEmail() {
         exit; 
     }
 
-    // ============================================
-    // GENERAR PDF PROFESIONAL
-    // ============================================
+    // Generar PDF
     $_GET['mode'] = 'save';
     $tmpFile = generarPDF();
     
@@ -830,14 +949,10 @@ function enviarEmail() {
         exit;
     }
 
-    // ============================================
-    // PREPARAR EMAIL CON DISEÑO MEJORADO
-    // ============================================
-    
+    // Preparar email
     $to = $presupuesto['cliente_email'] ?? '';
     $subject = 'Presupuesto para ' . ($presupuesto['cliente_nombre'] ?? 'su proyecto') . ' - Tictac Comunicación';
 
-    // HTML del email con logo
     $message = '<!DOCTYPE html>
 <html>
 <head>
@@ -953,10 +1068,7 @@ function enviarEmail() {
 </body>
 </html>';
 
-    // ============================================
-    // ENVIAR EMAIL USANDO GMAIL API DEL CRM
-    // ============================================
-    
+    // Enviar email
     require_once __DIR__ . '/gmail_send.php';
     
     $attachments_array = array(
@@ -965,7 +1077,6 @@ function enviarEmail() {
     
     $enviado = enviarEmailGmailAPI($to, $subject, $message, $attachments_array);
     
-    // Limpiar archivo temporal
     @unlink($tmpFile);
 
     if ($enviado) {
