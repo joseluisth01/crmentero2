@@ -245,6 +245,16 @@ $pageTitle = 'Dashboard';
                 <span class="badge">Disponible</span>
             </a>
 
+            <a href="<?php echo BASE_URL; ?>/contratos" class="dashboard-card active">
+    <div class="card-icon">📄</div>
+    <div class="card-title">Contratos</div>
+    <div class="card-description">
+        Genera contratos de servicios personalizados con todas las
+        cláusulas legales. Envíalos firmados directamente al cliente.
+    </div>
+    <span class="badge">Disponible</span>
+</a>
+
             <!-- Preparar Factura -->
             <a href="#" class="dashboard-card disabled" onclick="return false;">
                 <div class="card-icon">🧾</div>

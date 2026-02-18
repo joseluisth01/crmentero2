@@ -98,6 +98,7 @@ define('CLIENTES_URL', BASE_URL . '/clientes');
 define('AUDITORIA_URL', BASE_URL . '/auditoria');
 define('PRESUPUESTOS_URL', BASE_URL . '/presupuestos');
 define('FACTURAS_URL', BASE_URL . '/facturas');
+define('CONTRATOS_URL', BASE_URL . '/contratos');
 
 // ============================================
 // CONFIGURACIÓN DE MARCA
