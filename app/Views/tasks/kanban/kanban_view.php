@@ -360,3 +360,147 @@
 </script>
 
 <?php echo view("tasks/update_task_read_comments_status_script"); ?>
+
+<!-- ===== INICIO: Timer activo en tarjetas kanban - Tictac ===== -->
+<style>
+.kanban-timer-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 20px;
+    padding: 2px 7px 2px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #856404;
+    margin-top: 5px;
+    line-height: 1.4;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    cursor: default;
+}
+
+.kanban-timer-badge .timer-pulse {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e91e8c;
+    flex-shrink: 0;
+    animation: timerPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes timerPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(233,30,140,.6); opacity: 1; }
+    50%  { box-shadow: 0 0 0 5px rgba(233,30,140,0); opacity: .7; }
+    100% { box-shadow: 0 0 0 0 rgba(233,30,140,0); opacity: 1; }
+}
+
+.kanban-timer-badge .timer-users {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.kanban-item.has-active-timer {
+    border-left: 3px solid #e91e8c !important;
+}
+</style>
+
+<script type="text/javascript">
+(function() {
+    "use strict";
+
+    var API_URL      = '<?php echo get_uri("api_tictac/active_timers"); ?>';
+    var POLL_SECONDS = 30;
+
+    function refreshTimerBadges() {
+        $.ajax({
+            url:      API_URL,
+            method:   'GET',
+            dataType: 'json',
+            timeout:  10000,
+            success:  function(data) {
+                if (!data || !data.success) { return; }
+                applyTimersToCards(data.timers || {});
+            },
+            error: function() { /* silencioso */ }
+        });
+    }
+
+    function applyTimersToCards(timers) {
+        $('.kanban-timer-badge').remove();
+        $('.kanban-item.has-active-timer').removeClass('has-active-timer');
+
+        $.each(timers, function(taskId, users) {
+            var $card = $('.kanban-item[data-id="' + taskId + '"]');
+            if (!$card.length) { return; }
+
+            var names = $.map(users, function(u) { return u.user_name; });
+            var label = '';
+            if (names.length === 1) {
+                label = names[0] + ' trabajando';
+            } else if (names.length === 2) {
+                label = names[0] + ' y ' + names[1] + ' trabajando';
+            } else {
+                label = names[0] + ' +' + (names.length - 1) + ' trabajando';
+            }
+
+            var tooltip = names.join(', ');
+
+            var $badge = $(
+                '<div class="kanban-timer-badge" title="' + tooltip + '">' +
+                    '<span class="timer-pulse"></span>' +
+                    '<span class="timer-users">' + escapeHtml(label) + '</span>' +
+                '</div>'
+            );
+
+            $card.append($badge);
+            $card.addClass('has-active-timer');
+        });
+    }
+
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    $(document).ready(function() {
+        refreshTimerBadges();
+        setInterval(refreshTimerBadges, POLL_SECONDS * 1000);
+    });
+
+    // Re-aplicar tras recarga del kanban
+    $(document).on('click', '#reload-kanban-button', function() {
+        setTimeout(refreshTimerBadges, 1500);
+    });
+
+    // Re-aplicar cuando se cargan más tarjetas por scroll
+    var observer = new MutationObserver(function(mutations) {
+        var hasNewCards = false;
+        mutations.forEach(function(m) {
+            m.addedNodes.forEach(function(node) {
+                if (node.nodeType === 1 && ($(node).hasClass('kanban-item') || $(node).find('.kanban-item').length)) {
+                    hasNewCards = true;
+                }
+            });
+        });
+        if (hasNewCards) { setTimeout(refreshTimerBadges, 500); }
+    });
+
+    $(document).ready(function() {
+        var kanbanWrapper = document.getElementById('kanban-container');
+        if (kanbanWrapper) {
+            observer.observe(kanbanWrapper, { childList: true, subtree: true });
+        }
+    });
+
+})();
+</script>
+<!-- ===== FIN: Timer activo en tarjetas kanban - Tictac ===== -->

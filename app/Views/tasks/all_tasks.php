@@ -222,6 +222,104 @@ if (isset($selected_priority_id) && $selected_priority_id) {
     });
 </script>
 
+<!-- ===== Timer activo en lista de tareas - Tictac ===== -->
+<style>
+.task-timer-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 20px;
+    padding: 1px 7px 1px 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #856404;
+    margin-left: 6px;
+    vertical-align: middle;
+    cursor: default;
+}
+.task-timer-badge .timer-pulse {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #e91e8c;
+    flex-shrink: 0;
+    animation: timerPulse 1.4s ease-in-out infinite;
+}
+@keyframes timerPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(233,30,140,.6); opacity:1; }
+    50%  { box-shadow: 0 0 0 4px rgba(233,30,140,0); opacity:.7; }
+    100% { box-shadow: 0 0 0 0 rgba(233,30,140,0); opacity:1; }
+}
+</style>
+
+<script type="text/javascript">
+(function() {
+    "use strict";
+
+    var API_URL      = '<?php echo get_uri("api_tictac/active_timers"); ?>';
+    var POLL_SECONDS = 30;
+    var activeTimers = {};
+
+    function refreshTimerBadges() {
+        $.ajax({
+            url: API_URL, method: 'GET', dataType: 'json', timeout: 10000,
+            success: function(data) {
+                if (!data || !data.success) { return; }
+                activeTimers = data.timers || {};
+                applyBadgesToTable();
+            },
+            error: function() {}
+        });
+    }
+
+    function applyBadgesToTable() {
+        // Eliminar badges anteriores
+        $('.task-timer-badge').remove();
+
+        // Las filas del datatable tienen data-id en el <tr> o en el primer <td>
+        // En RISE el task id está en la columna JS-selection-id
+        $.each(activeTimers, function(taskId, users) {
+            // Buscar el enlace modal con data-id igual al taskId
+            var $link = $('a.js-selection-id[data-id="' + taskId + '"]');
+            if (!$link.length) { return; }
+
+            var names = $.map(users, function(u) { return u.user_name; });
+            var label = names.length === 1
+                ? names[0] + ' trabajando'
+                : names[0] + ' +' + (names.length - 1) + ' trabajando';
+
+            var $badge = $(
+                '<span class="task-timer-badge" title="' + names.join(', ') + '">' +
+                    '<span class="timer-pulse"></span>' +
+                    escapeHtml(label) +
+                '</span>'
+            );
+
+            $link.after($badge);
+        });
+    }
+
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    $(document).ready(function() {
+        refreshTimerBadges();
+        setInterval(refreshTimerBadges, POLL_SECONDS * 1000);
+
+        // Re-aplicar cuando la tabla se recarga (paginación, filtros, etc.)
+        $(document).on('draw.dt', '#task-table', function() {
+            setTimeout(applyBadgesToTable, 300);
+        });
+    });
+})();
+</script>
+
 <?php echo view("tasks/batch_update/batch_update_script"); ?>
 <?php echo view("tasks/task_table_common_script"); ?>
 <?php echo view("tasks/update_task_read_comments_status_script"); ?>
