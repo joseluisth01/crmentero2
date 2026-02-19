@@ -4,6 +4,8 @@
  * Editor de Presupuestos - Crear/Editar
  * VERSIÓN ACTUALIZADA: Campos manuales para clientes y artículos
  * + WYSIWYG para Notas Adicionales y Detalles Propuesta
+ * + Múltiples emails separados por comas
+ * + Precio original (sin rebajar) tachado en PDF
  */
 
 require_once '../config.php';
@@ -111,6 +113,58 @@ $additionalStyles = '
         min-height: 100px;
         resize: vertical;
         font-family: inherit;
+    }
+
+    /* Email tags input */
+    .email-tags-container {
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 8px 12px;
+        min-height: 48px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        cursor: text;
+        transition: border-color 0.3s;
+        background: white;
+    }
+    .email-tags-container:focus-within {
+        border-color: ' . BRAND_COLOR . ';
+    }
+    .email-tag {
+        background: #ffe8f3;
+        color: ' . BRAND_COLOR . ';
+        border: 1px solid ' . BRAND_COLOR . ';
+        border-radius: 20px;
+        padding: 3px 10px 3px 12px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+    .email-tag .remove-tag {
+        cursor: pointer;
+        font-size: 16px;
+        line-height: 1;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+    }
+    .email-tag .remove-tag:hover { opacity: 1; }
+    .email-tags-input {
+        border: none !important;
+        outline: none !important;
+        padding: 4px 0 !important;
+        min-width: 180px;
+        flex: 1;
+        font-size: 14px;
+        background: transparent;
+    }
+    .email-hint {
+        font-size: 11px;
+        color: #999;
+        margin-top: 4px;
     }
     
     /* ===== WYSIWYG STYLES ===== */
@@ -292,6 +346,26 @@ $additionalStyles = '
         border: 2px solid #e0e0e0;
         border-radius: 8px;
         font-size: 14px;
+    }
+
+    /* Precio original tachado */
+    .precio-original-wrap {
+        position: relative;
+        margin-top: 8px;
+    }
+    .precio-original-wrap label {
+        font-size: 11px;
+        color: #888;
+        margin-bottom: 4px;
+    }
+    .precio-original-wrap input {
+        border-color: #f0c0d0 !important;
+    }
+    .precio-original-preview {
+        font-size: 11px;
+        color: #999;
+        margin-top: 3px;
+        text-decoration: line-through;
     }
     
     .btn-remove {
@@ -481,12 +555,22 @@ include '../includes/header.php';
                         placeholder="Introduce el nombre del cliente"
                         value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_nombre'] ?? '') : ''; ?>">
                 </div>
-                <div class="form-group">
-                    <label>Email *</label>
-                    <input type="email" name="cliente_email" id="clienteEmail" required
-                        placeholder="email@ejemplo.com"
+
+                <!-- EMAILS MÚLTIPLES -->
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Email(s) del cliente *</label>
+                    <!-- Campo hidden que almacena emails separados por comas -->
+                    <input type="hidden" name="cliente_email" id="clienteEmailHidden"
                         value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_email'] ?? '') : ''; ?>">
+                    <div class="email-tags-container" id="emailTagsContainer">
+                        <!-- Las etiquetas se generan por JS -->
+                        <input type="text" class="email-tags-input" id="emailTagsInput"
+                            placeholder="Escribe un email y pulsa Enter o coma..."
+                            autocomplete="off">
+                    </div>
+                    <span class="email-hint">Puedes añadir varios emails. Pulsa <strong>Enter</strong> o <strong>,</strong> para añadir cada uno.</span>
                 </div>
+
                 <div class="form-group">
                     <label>Teléfono</label>
                     <input type="text" name="cliente_telefono" id="clienteTelefono"
@@ -586,10 +670,23 @@ include '../includes/header.php';
                         </div>
 
                         <div class="form-group">
-                            <label>Precio Unitario (€)</label>
+                            <label>Precio con descuento (€)</label>
                             <input type="number" name="items[<?php echo $index; ?>][precio]"
                                 placeholder="0.00" step="0.01" required class="item-precio"
-                                value="<?php echo $item ? ($item['precio'] ?? 0) : ''; ?>">
+                                value="<?php echo $item ? ($item['precio'] ?? '') : ''; ?>">
+
+                            <!-- PRECIO ORIGINAL (tachado) -->
+                            <div class="precio-original-wrap">
+                                <label>Precio original sin descuento (€) — opcional</label>
+                                <input type="number" name="items[<?php echo $index; ?>][precio_original]"
+                                    placeholder="Dejar vacío si no hay descuento" step="0.01" class="item-precio-original"
+                                    value="<?php echo $item ? htmlspecialchars($item['precio_original'] ?? '') : ''; ?>">
+                                <div class="precio-original-preview" id="previoOriginal_<?php echo $index; ?>"
+                                    style="display:<?php echo ($item && !empty($item['precio_original'])) ? 'block' : 'none'; ?>">
+                                    Antes: <?php echo ($item && !empty($item['precio_original'])) ? number_format($item['precio_original'], 2, ',', '.') . ' €' : ''; ?>
+                                </div>
+                            </div>
+
                             <div class="item-info">
                                 <strong>Total: <span class="item-total-display"><?php echo $item ? number_format(($item['cantidad'] ?? 0) * ($item['precio'] ?? 0), 2) . ' €' : '0.00 €'; ?></span></strong>
                             </div>
@@ -680,9 +777,11 @@ $articulosJson = json_encode($articulos, JSON_UNESCAPED_UNICODE);
 $clientesJson = json_encode($clientes, JSON_UNESCAPED_UNICODE);
 $selectedClienteId = $presupuesto && isset($presupuesto['cliente_id']) ? $presupuesto['cliente_id'] : '';
 
-// Valores iniciales para los editores WYSIWYG (HTML)
 $notasInicial = $presupuesto ? ($presupuesto['notas'] ?? '') : '';
 $detallesInicial = $presupuesto ? ($presupuesto['detalles_propuesta'] ?? '') : '';
+
+// Emails iniciales (pueden ser varios separados por comas)
+$emailsIniciales = $presupuesto ? ($presupuesto['cliente_email'] ?? '') : '';
 
 $additionalScripts = '
 <script>
@@ -695,33 +794,25 @@ const quillToolbar = [
     ["clean"]
 ];
 
-// Editor de Detalles de la Propuesta
 const detallesQuill = new Quill("#detallesEditor", {
     theme: "snow",
     modules: { toolbar: quillToolbar },
     placeholder: "Escribe los detalles de la propuesta..."
 });
 
-// Editor de Notas Adicionales
 const notasQuill = new Quill("#notasEditor", {
     theme: "snow",
     modules: { toolbar: quillToolbar },
     placeholder: "Condiciones de pago, garantías, observaciones..."
 });
 
-// Cargar contenido existente
 (function() {
     var detallesVal = document.getElementById("detallesPropuestaHidden").value;
-    if (detallesVal && detallesVal.trim() !== "") {
-        detallesQuill.root.innerHTML = detallesVal;
-    }
+    if (detallesVal && detallesVal.trim() !== "") detallesQuill.root.innerHTML = detallesVal;
     var notasVal = document.getElementById("notasHidden").value;
-    if (notasVal && notasVal.trim() !== "") {
-        notasQuill.root.innerHTML = notasVal;
-    }
+    if (notasVal && notasVal.trim() !== "") notasQuill.root.innerHTML = notasVal;
 })();
 
-// Sincronizar al escribir
 detallesQuill.on("text-change", function() {
     var html = detallesQuill.root.innerHTML;
     if (detallesQuill.getText().trim() === "") html = "";
@@ -733,6 +824,91 @@ notasQuill.on("text-change", function() {
     if (notasQuill.getText().trim() === "") html = "";
     document.getElementById("notasHidden").value = html;
 });
+
+// ============================================================
+// EMAIL TAGS (múltiples emails)
+// ============================================================
+(function() {
+    const container = document.getElementById("emailTagsContainer");
+    const input = document.getElementById("emailTagsInput");
+    const hidden = document.getElementById("clienteEmailHidden");
+
+    let emails = [];
+
+    // Cargar emails iniciales
+    const initialEmails = ' . json_encode($emailsIniciales) . ';
+    if (initialEmails && initialEmails.trim() !== "") {
+        initialEmails.split(",").forEach(e => {
+            const em = e.trim();
+            if (em) addEmailTag(em);
+        });
+    }
+
+    function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function updateHidden() {
+        hidden.value = emails.join(",");
+    }
+
+    function addEmailTag(email) {
+        email = email.trim().toLowerCase();
+        if (!email || emails.includes(email)) return;
+        if (!isValidEmail(email)) {
+            input.style.borderColor = "#dc3545";
+            setTimeout(() => input.style.borderColor = "", 800);
+            return;
+        }
+        emails.push(email);
+
+        const tag = document.createElement("div");
+        tag.className = "email-tag";
+        tag.dataset.email = email;
+        tag.innerHTML = escapeHtml(email) + \'<span class="remove-tag" title="Eliminar">×</span>\';
+        tag.querySelector(".remove-tag").addEventListener("click", () => {
+            emails = emails.filter(e => e !== email);
+            tag.remove();
+            updateHidden();
+        });
+
+        container.insertBefore(tag, input);
+        input.value = "";
+        updateHidden();
+    }
+
+    input.addEventListener("keydown", function(e) {
+        if (e.key === "Enter" || e.key === ",") {
+            e.preventDefault();
+            addEmailTag(input.value);
+        } else if (e.key === "Backspace" && input.value === "" && emails.length > 0) {
+            const lastEmail = emails[emails.length - 1];
+            const lastTag = container.querySelector(`.email-tag[data-email="${lastEmail}"]`);
+            if (lastTag) {
+                emails.pop();
+                lastTag.remove();
+                updateHidden();
+            }
+        }
+    });
+
+    input.addEventListener("blur", function() {
+        if (input.value.trim()) addEmailTag(input.value);
+    });
+
+    container.addEventListener("click", function() { input.focus(); });
+
+    // Exponer función para que el selector CRM pueda setear el email
+    window.setClienteEmails = function(emailStr) {
+        // Limpiar tags existentes
+        container.querySelectorAll(".email-tag").forEach(t => t.remove());
+        emails = [];
+        updateHidden();
+        if (emailStr) {
+            emailStr.split(",").forEach(e => addEmailTag(e.trim()));
+        }
+    };
+})();
 
 // ============================================================
 // DATOS
@@ -755,7 +931,6 @@ function initSearchableSelect(config) {
     let isOpen = false;
     let highlightedIndex = -1;
     let filteredItems = [];
-    let currentSelected = config.selectedValue || null;
 
     function renderOptions(filter) {
         filter = (filter || "").toLowerCase().trim();
@@ -791,7 +966,6 @@ function initSearchableSelect(config) {
     function selectItem(index) {
         const item = filteredItems[index];
         if (!item) return;
-        currentSelected = item;
         const label = config.getLabel ? config.getLabel(item) : item.label;
         textSpan.textContent = label;
         textSpan.classList.remove("ss-placeholder");
@@ -840,10 +1014,7 @@ function initSearchableSelect(config) {
     });
 
     document.addEventListener("click", (e) => {
-        const wrapper = document.getElementById(config.mainId.replace("main","Wrapper") || config.mainId);
-        if (wrapper && !wrapper.contains(e.target)) {
-            close();
-        }
+        if (main && !main.closest(".searchable-select-wrapper").contains(e.target)) close();
     });
 
     return { open, close, selectItem, renderOptions };
@@ -862,7 +1033,6 @@ const clienteSS = initSearchableSelect({
     getLabel: (c) => c.company_name || "",
     getSub: (c) => (c.city ? c.city : "") + (c.phone ? " · " + c.phone : ""),
     isSelected: (c) => String(c.id) === String(selectedClienteId),
-    selectedValue: clientesData.find(c => String(c.id) === String(selectedClienteId)) || null,
     onSelect: (cliente) => {
         document.getElementById("clienteSelect").value = cliente.id;
         document.getElementById("clienteNombre").value = cliente.company_name || "";
@@ -878,17 +1048,16 @@ const clienteSS = initSearchableSelect({
                 if (contactos && contactos.length > 0) {
                     const contactoPrincipal = contactos.find(c => c.is_primary_contact === "1");
                     const contacto = contactoPrincipal || contactos[0];
-                    document.getElementById("clienteEmail").value = contacto.email || "";
+                    if (window.setClienteEmails) window.setClienteEmails(contacto.email || "");
                     document.getElementById("clienteTelefono").value = contacto.phone || contacto.alternative_phone || "";
                 } else {
-                    document.getElementById("clienteEmail").value = "";
+                    if (window.setClienteEmails) window.setClienteEmails("");
                     document.getElementById("clienteTelefono").value = "";
                 }
             })
             .catch(error => {
                 console.error("Error obteniendo contacto:", error);
-                document.getElementById("clienteEmail").value = "";
-                document.getElementById("clienteTelefono").value = "";
+                if (window.setClienteEmails) window.setClienteEmails("");
             });
     }
 });
@@ -931,6 +1100,7 @@ function initArticuloSS(index) {
 
 document.querySelectorAll("[data-item-index]").forEach(row => {
     initArticuloSS(parseInt(row.getAttribute("data-item-index")));
+    attachPrecioOriginalListener(row, parseInt(row.getAttribute("data-item-index")));
 });
 
 // ============================================================
@@ -965,8 +1135,13 @@ function addItem() {
             <input type="text" name="items[${idx}][unidad]" placeholder="Tipo (ej: Mensual)" class="item-unidad" style="margin-top:10px; padding:10px; border:2px solid #e0e0e0; border-radius:8px; font-size:13px;">
         </div>
         <div class="form-group">
-            <label>Precio Unitario (€)</label>
+            <label>Precio con descuento (€)</label>
             <input type="number" name="items[${idx}][precio]" placeholder="0.00" step="0.01" required class="item-precio">
+            <div class="precio-original-wrap">
+                <label>Precio original sin descuento (€) — opcional</label>
+                <input type="number" name="items[${idx}][precio_original]" placeholder="Dejar vacío si no hay descuento" step="0.01" class="item-precio-original">
+                <div class="precio-original-preview" id="previoOriginal_${idx}" style="display:none;"></div>
+            </div>
             <div class="item-info"><strong>Total: <span class="item-total-display">0.00 €</span></strong></div>
             <input type="hidden" class="item-total" value="0">
         </div>
@@ -977,6 +1152,23 @@ function addItem() {
     
     initArticuloSS(idx);
     attachItemListeners(newItem);
+    attachPrecioOriginalListener(newItem, idx);
+}
+
+function attachPrecioOriginalListener(row, idx) {
+    const inputOrig = row.querySelector(".item-precio-original");
+    const preview = document.getElementById("previoOriginal_" + idx);
+    if (!inputOrig || !preview) return;
+    inputOrig.addEventListener("input", function() {
+        const val = parseFloat(this.value);
+        if (!isNaN(val) && val > 0) {
+            preview.style.display = "block";
+            preview.textContent = "Antes: " + val.toLocaleString("es-ES", {minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
+        } else {
+            preview.style.display = "none";
+            preview.textContent = "";
+        }
+    });
 }
 
 function removeItem(button) {
@@ -1047,8 +1239,15 @@ calculateTotals();
 // ============================================================
 document.getElementById("presupuestoForm").addEventListener("submit", function(e) {
     e.preventDefault();
+
+    // Validar que haya al menos un email
+    const emailHidden = document.getElementById("clienteEmailHidden").value.trim();
+    if (!emailHidden) {
+        alert("Por favor, añade al menos un email para el cliente.");
+        document.getElementById("emailTagsInput").focus();
+        return;
+    }
     
-    // Sincronizar WYSIWYG a campos hidden antes de enviar
     var detallesHtml = detallesQuill.root.innerHTML;
     if (detallesQuill.getText().trim() === "") detallesHtml = "";
     document.getElementById("detallesPropuestaHidden").value = detallesHtml;

@@ -6,6 +6,8 @@
  *   - Nuevo campo detalles_propuesta
  *   - PDF con altura dinámica en cajas de texto
  *   - Secciones opcionales (no aparecen si están vacías)
+ *   - Múltiples emails separados por comas
+ *   - Precio original (sin rebajar) tachado en PDF
  */
 
 require_once '../config.php';
@@ -57,23 +59,14 @@ function pdf_text_plain($html) {
 
 /**
  * Convierte HTML del WYSIWYG a texto con formato básico para TCPDF writeHTMLCell
- * Mantiene negritas, cursivas, listas, etc.
- * Elimina estilos de background que Quill añade y TCPDF renderiza como recuadros
  */
 function pdf_html_clean($html) {
     if ($html === null || trim($html) === '' || trim($html) === '<p><br></p>') return '';
     
-    // Quill genera <p><br></p> para párrafos vacíos - limpiar
     $html = preg_replace('~<p>\s*<br\s*/?>\s*</p>~i', '', $html);
-    
-    // Eliminar spans completamente (Quill los usa para estilos inline que causan backgrounds raros en TCPDF)
     $html = preg_replace('~<span[^>]*>~i', '', $html);
     $html = str_ireplace('</span>', '', $html);
-    
-    // Permitir solo tags seguros para TCPDF
     $html = strip_tags($html, '<p><br><strong><b><em><i><u><ul><ol><li>');
-    
-    // Eliminar cualquier atributo style/class de los tags restantes (por si acaso)
     $html = preg_replace('~(<(?:p|strong|b|em|i|u|ul|ol|li))\s+[^>]*>~i', '$1>', $html);
     
     return trim($html);
@@ -243,11 +236,15 @@ function guardarPresupuesto() {
     if (isset($_POST['items']) && is_array($_POST['items'])) {
         foreach ($_POST['items'] as $item) {
             if (!empty($item['nombre'])) {
+                $precioOriginal = isset($item['precio_original']) && $item['precio_original'] !== '' 
+                    ? floatval($item['precio_original']) 
+                    : null;
                 $items[] = [
                     'nombre' => $item['nombre'],
                     'descripcion' => $item['descripcion'] ?? '',
                     'cantidad' => floatval($item['cantidad']),
                     'precio' => floatval($item['precio']),
+                    'precio_original' => $precioOriginal,
                     'unidad' => $item['unidad'] ?? ''
                 ];
             }
@@ -260,7 +257,7 @@ function guardarPresupuesto() {
         'valido_hasta' => $_POST['valido_hasta'],
         'cliente_id' => $_POST['cliente_id'] ?? '',
         'cliente_nombre' => $_POST['cliente_nombre'],
-        'cliente_email' => $_POST['cliente_email'],
+        'cliente_email' => $_POST['cliente_email'], // Puede ser "a@x.com,b@x.com"
         'cliente_telefono' => $_POST['cliente_telefono'] ?? '',
         'cliente_direccion' => $_POST['cliente_direccion'] ?? '',
         'cliente_ciudad' => $_POST['cliente_ciudad'] ?? '',
@@ -450,7 +447,7 @@ function eliminarPresupuesto() {
 
 /**
  * Generar PDF - DISEÑO PROFESIONAL
- * ACTUALIZADO: Altura dinámica para notas y detalles, nuevo campo detalles_propuesta
+ * ACTUALIZADO: Precio original tachado, múltiples emails
  */
 function generarPDF() {
     global $presupuestosFile;
@@ -477,9 +474,8 @@ function generarPDF() {
 
     // Clase PDF personalizada
     class TictacPDF extends TCPDF {
-        // Flag para pintar fondo de color en páginas de contenido largo
         public $bgEnabled = false;
-        public $bgColor = array(240, 248, 255); // azul por defecto
+        public $bgColor = array(240, 248, 255);
         public $bgMarginLeft = 15;
         public $bgWidth = 180;
         
@@ -513,13 +509,11 @@ function generarPDF() {
             $this->SetMargins(15, 50, 15);
             $this->SetY(50);
             
-            // Si hay fondo activo, pintar rectángulo de fondo en toda la zona de contenido
             if ($this->bgEnabled) {
                 $this->SetFillColor($this->bgColor[0], $this->bgColor[1], $this->bgColor[2]);
                 $this->SetDrawColor($this->bgColor[0], $this->bgColor[1], $this->bgColor[2]);
-                $bgHeight = $this->getPageHeight() - 50 - 40; // desde header hasta footer
+                $bgHeight = $this->getPageHeight() - 50 - 40;
                 $this->Rect($this->bgMarginLeft, 50, $this->bgWidth, $bgHeight, 'F');
-                // Restaurar colores de texto
                 $this->SetTextColor(51, 51, 51);
             }
         }
@@ -545,6 +539,19 @@ function generarPDF() {
             $this->SetTextColor(150, 150, 150);
             $this->SetX(0);
             $this->Cell($pageW, 4, 'Página ' . $this->PageNo() . ' / ' . $this->getNumPages(), 0, 1, 'C');
+        }
+
+        /**
+         * Dibuja texto tachado manualmente (TCPDF no soporta strikethrough nativo de forma fiable)
+         */
+        public function CellStrikethrough($x, $y, $w, $h, $txt, $fontSize) {
+            $this->SetXY($x, $y);
+            $this->Cell($w, $h, $txt, 0, 0, 'L');
+            // Línea de tachado: a mitad del texto
+            $strikeY = $y + ($h / 2) + 0.3;
+            $txtW = $this->GetStringWidth($txt);
+            $this->SetLineWidth(0.3);
+            $this->Line($x, $strikeY, $x + $txtW, $strikeY);
         }
     }
 
@@ -608,13 +615,11 @@ function generarPDF() {
     $pdf->Line($rightX + 5, $pdf->GetY() + 1, $rightX + $colW - 5, $pdf->GetY() + 1);
     $pdf->Ln(4);
 
-    // Campos del cliente: solo se añaden si tienen valor
     $campos_cliente = [
         ['Cliente:', $presupuesto['cliente_nombre'] ?? ''],
         ['Contacto:', $presupuesto['cliente_nombre'] ?? ''],
     ];
     
-    // Campos opcionales: solo si no están vacíos
     $direccion = trim($presupuesto['cliente_direccion'] ?? '');
     if ($direccion !== '') {
         $campos_cliente[] = ['Dirección:', $direccion];
@@ -719,12 +724,22 @@ function generarPDF() {
         $total    = $cantidad * $precio;
         $nombre = pdf_text_plain($item['nombre'] ?? '');
         $desc   = pdf_text_plain($item['descripcion'] ?? '');
+        
+        // Precio original (sin rebajar) — si existe, ocupa línea extra en la tarifa
+        $precioOriginal = isset($item['precio_original']) && $item['precio_original'] !== null && $item['precio_original'] > 0
+            ? floatval($item['precio_original'])
+            : null;
+        $hayDescuento = $precioOriginal !== null && $precioOriginal > $precio;
+
         $descH = 0;
         if ($desc !== '') {
             $descH = $pdf->getStringHeight($cArticulo - 2, $desc, false, true, '', 1);
         }
-        $rowH = ($desc !== '') ? (6 + $descH + 2) : 7;
+        // Si hay descuento, la columna tarifa necesita una línea extra para el precio tachado
+        $extraTarifaH = $hayDescuento ? 5 : 0;
+        $rowH = ($desc !== '') ? (6 + $descH + 2 + $extraTarifaH) : (7 + $extraTarifaH);
         if ($rowH < 7) $rowH = 7;
+
         $bottomLimit = $pdf->getPageHeight() - 45;
         if (($pdf->GetY() + $rowH) > $bottomLimit) {
             $pdf->AddPage();
@@ -735,21 +750,62 @@ function generarPDF() {
             $pdf->SetFillColor(250, 250, 250);
             $pdf->Rect(15, $rowY, $tableW, $rowH, 'F');
         }
+
+        // Nombre artículo
         $pdf->SetXY(17, $rowY + 1);
         $pdf->SetFont('Helvetica', 'B', 8.5);
         $pdf->Cell($cArticulo - 2, 5, $nombre, 0, 0, 'L');
+
+        // Cantidad
         $cantTexto = number_format($cantidad, 2, ',', '.') . ($unidad ? ' ' . $unidad : '');
         $pdf->SetFont('Helvetica', '', 8.5);
         $pdf->Cell($cCantidad, 5, $cantTexto, 0, 0, 'C');
-        $pdf->Cell($cTarifa, 5, number_format($precio, 2, ',', '.') . '€', 0, 0, 'R');
+
+        // Tarifa — con precio original tachado encima si hay descuento
+        $tarifaX = 15 + $cArticulo + $cCantidad;
+        if ($hayDescuento) {
+            // Precio original tachado — alineado a la derecha de la columna, encima del rebajado
+            $origTxt = number_format($precioOriginal, 2, ',', '.') . '€';
+            $pdf->SetFont('Helvetica', '', 7.5);
+            $pdf->SetTextColor(160, 160, 160);
+            $origTxtW = $pdf->GetStringWidth($origTxt);
+            // Posición X: pegado al borde derecho de la columna Tarifa
+            $origX = $tarifaX + $cTarifa - $origTxtW;
+            $pdf->SetXY($origX, $rowY + 1);
+            $pdf->Cell($origTxtW, 4, $origTxt, 0, 0, 'L');
+            // Línea de tachado centrada verticalmente en el texto
+            $strikeY = $rowY + 1 + 2.0;
+            $pdf->SetLineWidth(0.3);
+            $pdf->SetDrawColor(160, 160, 160);
+            $pdf->Line($origX, $strikeY, $origX + $origTxtW, $strikeY);
+
+            // Precio con descuento (rosa/brand, negrita, justo debajo)
+            $pdf->SetFont('Helvetica', 'B', 8.5);
+            $pdf->SetTextColor(233, 30, 140);
+            $pdf->SetXY($tarifaX, $rowY + 5);
+            $pdf->Cell($cTarifa, 5, number_format($precio, 2, ',', '.') . '€', 0, 0, 'R');
+            $pdf->SetTextColor(51, 51, 51);
+            $pdf->SetDrawColor(230, 230, 230); // restaurar color de líneas
+        } else {
+            $pdf->SetFont('Helvetica', '', 8.5);
+            $pdf->Cell($cTarifa, 5, number_format($precio, 2, ',', '.') . '€', 0, 0, 'R');
+        }
+
+        // Total
+        $totalX = 15 + $cArticulo + $cCantidad + $cTarifa;
+        $pdf->SetXY($totalX, $rowY + 1);
         $pdf->SetFont('Helvetica', 'B', 8.5);
+        $pdf->SetTextColor(51, 51, 51);
         $pdf->Cell($cTotal - 2, 5, number_format($total, 2, ',', '.') . '€', 0, 1, 'R');
+
         if ($desc !== '') {
             $pdf->SetFont('Helvetica', '', 7.5);
             $pdf->SetTextColor(100, 100, 100);
-            $pdf->MultiCell($cArticulo - 2, 4, $desc, 0, 'L', false, 0, 17, $rowY + 6, true, 0, false, true);
+            $descOffsetY = $hayDescuento ? ($rowY + 10) : ($rowY + 6);
+            $pdf->MultiCell($cArticulo - 2, 4, $desc, 0, 'L', false, 0, 17, $descOffsetY, true, 0, false, true);
             $pdf->SetTextColor(51, 51, 51);
         }
+
         $pdf->SetDrawColor(230, 230, 230);
         $pdf->SetLineWidth(0.2);
         $pdf->Line(15, $rowY + $rowH, 15 + $tableW, $rowY + $rowH);
@@ -761,25 +817,46 @@ function generarPDF() {
     $pdf->Ln(4);
     $pdf->SetFont('Helvetica', '', 10);
     $pdf->SetTextColor(51, 51, 51);
-    $subtotal       = floatval($presupuesto['subtotal'] ?? 0);
-    $iva            = floatval($presupuesto['iva'] ?? 21);
-    $segundoImpuesto= floatval($presupuesto['segundo_impuesto'] ?? 0);
-    $ivaAmount = ($subtotal * $iva) / 100;
-    $segAmount = ($subtotal * $segundoImpuesto) / 100;
+    $subtotal        = floatval($presupuesto['subtotal'] ?? 0);
+    $iva             = floatval($presupuesto['iva'] ?? 21);
+    $segundoImpuesto = floatval($presupuesto['segundo_impuesto'] ?? 0);
+    $ivaAmount  = ($subtotal * $iva) / 100;
+    $segAmount  = ($subtotal * $segundoImpuesto) / 100;
     $totalFinal = floatval($presupuesto['total'] ?? ($subtotal + $ivaAmount + $segAmount));
     $rightMargin = 15 + $tableW;
     $labelW = 40;
     $valW   = 25;
+
+    // Calcular ahorro total si hay precios originales en los items
+    $subtotalSinDescuento = 0;
+    $hayDescuentoGlobal   = false;
+    foreach (($presupuesto['items'] ?? []) as $it) {
+        $cant  = floatval($it['cantidad'] ?? 0);
+        $prec  = floatval($it['precio'] ?? 0);
+        $orig  = isset($it['precio_original']) && $it['precio_original'] > 0 ? floatval($it['precio_original']) : $prec;
+        $subtotalSinDescuento += $cant * $orig;
+        if ($orig > $prec) $hayDescuentoGlobal = true;
+    }
+    $ahorroSubtotal  = $subtotalSinDescuento - $subtotal;
+    $ivaAmountOrig   = ($subtotalSinDescuento * $iva) / 100;
+    $segAmountOrig   = ($subtotalSinDescuento * $segundoImpuesto) / 100;
+    $totalSinDescuento = $subtotalSinDescuento + $ivaAmountOrig + $segAmountOrig;
+    $ahorroTotal     = $totalSinDescuento - $totalFinal;
+
+    // Sub Total
     $pdf->SetX($rightMargin - $labelW - $valW);
     $pdf->SetFont('Helvetica', '', 9);
     $pdf->Cell($labelW, 5, 'Sub Total', 0, 0, 'R');
     $pdf->SetFont('Helvetica', 'B', 9);
     $pdf->Cell($valW, 5, number_format($subtotal, 2, ',', '.') . '€', 0, 1, 'R');
+
+    // IVA
     $pdf->SetX($rightMargin - $labelW - $valW);
     $pdf->SetFont('Helvetica', '', 9);
     $pdf->Cell($labelW, 5, 'IVA', 0, 0, 'R');
     $pdf->SetFont('Helvetica', 'B', 9);
     $pdf->Cell($valW, 5, number_format($ivaAmount, 2, ',', '.') . '€', 0, 1, 'R');
+
     if ($segundoImpuesto > 0) {
         $pdf->SetX($rightMargin - $labelW - $valW);
         $pdf->SetFont('Helvetica', '', 9);
@@ -787,6 +864,38 @@ function generarPDF() {
         $pdf->SetFont('Helvetica', 'B', 9);
         $pdf->Cell($valW, 5, number_format($segAmount, 2, ',', '.') . '€', 0, 1, 'R');
     }
+
+    // Fila de ahorro (solo si hay descuentos)
+    if ($hayDescuentoGlobal) {
+        $pdf->Ln(1);
+        $pdf->SetX($rightMargin - $labelW - $valW);
+        $pdf->SetFont('Helvetica', '', 8);
+        $pdf->SetTextColor(180, 180, 180);
+        $pdf->Cell($labelW, 4, 'Precio sin descuento', 0, 0, 'R');
+        // Precio total sin descuento tachado
+        $origTotalTxt = number_format($totalSinDescuento, 2, ',', '.') . '€';
+        $origTotalW = $pdf->GetStringWidth($origTotalTxt);
+        $origX = $rightMargin - $origTotalW;
+        $origY = $pdf->GetY();
+        $pdf->SetFont('Helvetica', '', 8);
+        $pdf->SetXY($origX, $origY);
+        $pdf->Cell($origTotalW, 4, $origTotalTxt, 0, 1, 'L');
+        // Línea de tachado
+        $strikeY = $origY + 2.2;
+        $pdf->SetLineWidth(0.3);
+        $pdf->SetDrawColor(180, 180, 180);
+        $pdf->Line($origX, $strikeY, $origX + $origTotalW, $strikeY);
+        $pdf->SetDrawColor(230, 230, 230);
+
+        // Fila ahorro en verde
+        $pdf->SetX($rightMargin - $labelW - $valW);
+        $pdf->SetFont('Helvetica', 'B', 8);
+        $pdf->SetTextColor(34, 139, 34);
+        $pdf->Cell($labelW, 4, 'Ahorro total', 0, 0, 'R');
+        $pdf->Cell($valW, 4, '-' . number_format($ahorroTotal, 2, ',', '.') . '€', 0, 1, 'R');
+        $pdf->Ln(1);
+    }
+
     $pdf->Ln(2);
     $totalY = $pdf->GetY();
     $pdf->SetFillColor(30, 30, 30);
@@ -799,8 +908,7 @@ function generarPDF() {
     $pdf->SetTextColor(51, 51, 51);
 
     // ============================================
-    // DETALLES DE LA PROPUESTA (solo si tiene contenido)
-    // SIEMPRE empieza en página nueva
+    // DETALLES DE LA PROPUESTA
     // ============================================
     $detallesHtml = $presupuesto['detalles_propuesta'] ?? '';
     $hayDetalles = tiene_contenido($detallesHtml);
@@ -808,91 +916,155 @@ function generarPDF() {
     if ($hayDetalles) {
         $cleanHtml = pdf_html_clean($detallesHtml);
         $detallesTexto = pdf_text_plain($detallesHtml);
-        
-        // Activar fondo azul: header() lo pintará en cada página nueva
-        $pdf->bgEnabled = true;
-        $pdf->bgColor = array(240, 248, 255);
-        $pdf->bgWidth = $contentW;
-        
-        // Forzar página nueva (header() pinta fondo azul automáticamente)
-        $pdf->AddPage();
-        
-        $detallesStartY = $pdf->GetY();
-        
-        // Título
-        $pdf->SetXY(20, $detallesStartY + 4);
-        $pdf->SetTextColor(233, 30, 140);
-        $pdf->SetFont('Helvetica', 'B', 11);
-        $pdf->Cell($contentW - 10, 5, 'Detalles de la Propuesta', 0, 1, 'L');
-        
-        // Contenido con formato HTML
+
+        $pdf->Ln(6);
+        $pdf->bgEnabled = false;
+
+        // Usar startTransaction para medir sin dejar rastro, luego hacer rollback y redibujar
+        $pageAntes  = $pdf->PageNo();
+        $yAntes     = $pdf->GetY();
+        $bottomLimit = $pdf->getPageHeight() - 45;
+
+        // -- Transaccion de medicion --
+        $pdf->startTransaction();
+        $pdf->SetAutoPageBreak(false, 0); // Desactivar salto automatico durante medicion
+        $pdf->SetXY(20, $yAntes + 10);
         $pdf->SetTextColor(51, 51, 51);
         $pdf->SetFont('Helvetica', '', 8);
-        
         if (!empty($cleanHtml)) {
             $pdf->writeHTMLCell($contentW - 10, 0, 20, $pdf->GetY(), $cleanHtml, 0, 1, false, true, 'L');
         } else {
             $pdf->SetX(20);
             $pdf->MultiCell($contentW - 10, 3.5, $detallesTexto, 0, 'L');
         }
-        
-        // Desactivar fondo azul
-        $pdf->bgEnabled = false;
-        
+        $yDespues = $pdf->GetY();
+        $alturaContenido = $yDespues - $yAntes; // cuanto ocupa en total (titulo + contenido)
+        $pdf->rollbackTransaction(true); // deshacer completamente
+        $pdf->SetAutoPageBreak(true, 40); // restaurar salto automatico
+
+        // Decidir: cabe en la pagina actual o hay que saltar?
+        $espacioDisponible = $bottomLimit - $yAntes;
+        if ($alturaContenido > $espacioDisponible) {
+            $pdf->AddPage();
+        }
+
+        $detallesStartY = $pdf->GetY();
+
+        // -- Escritura real: primero medir endY --
+        $pdf->SetXY(20, $detallesStartY + 10);
+        $pdf->SetTextColor(51, 51, 51);
+        $pdf->SetFont('Helvetica', '', 8);
+        if (!empty($cleanHtml)) {
+            $pdf->writeHTMLCell($contentW - 10, 0, 20, $pdf->GetY(), $cleanHtml, 0, 1, false, true, 'L');
+        } else {
+            $pdf->SetX(20);
+            $pdf->MultiCell($contentW - 10, 3.5, $detallesTexto, 0, 'L');
+        }
+        $detallesEndY = $pdf->GetY();
+        $detallesH    = $detallesEndY - $detallesStartY + 6;
+
+        // Pintar fondo ajustado al contenido real
+        $pdf->SetFillColor(240, 248, 255);
+        $pdf->SetDrawColor(240, 248, 255);
+        $pdf->Rect(15, $detallesStartY, $contentW, $detallesH, 'F');
+
+        // Reescribir titulo y contenido encima del fondo
+        $pdf->SetXY(20, $detallesStartY + 4);
+        $pdf->SetTextColor(233, 30, 140);
+        $pdf->SetFont('Helvetica', 'B', 11);
+        $pdf->Cell($contentW - 10, 5, 'Detalles de la Propuesta', 0, 1, 'L');
+
+        $pdf->SetXY(20, $detallesStartY + 10);
+        $pdf->SetTextColor(51, 51, 51);
+        $pdf->SetFont('Helvetica', '', 8);
+        if (!empty($cleanHtml)) {
+            $pdf->writeHTMLCell($contentW - 10, 0, 20, $pdf->GetY(), $cleanHtml, 0, 1, false, true, 'L');
+        } else {
+            $pdf->SetX(20);
+            $pdf->MultiCell($contentW - 10, 3.5, $detallesTexto, 0, 'L');
+        }
+
         $pdf->Ln(4);
     }
 
     // ============================================
-    // NOTAS ADICIONALES (solo si tiene contenido)
+    // NOTAS ADICIONALES
     // ============================================
     $notasHtml = $presupuesto['notas'] ?? '';
     $hayNotas = tiene_contenido($notasHtml);
     
     if ($hayNotas) {
         $pdf->Ln(6);
-        
+
         $cleanNotasHtml = pdf_html_clean($notasHtml);
-        $notasTexto = pdf_text_plain($notasHtml);
-        
-        // Activar fondo rosa para las páginas que cree el contenido
-        $pdf->bgEnabled = true;
-        $pdf->bgColor = array(255, 240, 247);
-        $pdf->bgWidth = $contentW;
-        
-        $notasStartY = $pdf->GetY();
-        
-        // Pintar fondo en la primera "franja" de esta página
-        $pdf->SetFillColor(255, 240, 247);
-        $pdf->SetDrawColor(255, 240, 247);
-        // Pintar un rect grande desde el inicio; se recortará por el contenido que venga después
-        $pageH = $pdf->getPageHeight();
-        $availableH = $pageH - 40 - $notasStartY;
-        $pdf->Rect(15, $notasStartY, $contentW, $availableH, 'F');
-        
-        // Título
-        $pdf->SetXY(20, $notasStartY + 4);
-        $pdf->SetTextColor(233, 30, 140);
-        $pdf->SetFont('Helvetica', 'B', 11);
-        $pdf->Cell($contentW - 10, 5, 'Notas Adicionales', 0, 1, 'L');
-        
-        // Contenido
+        $notasTexto     = pdf_text_plain($notasHtml);
+
+        $yAntesNotas    = $pdf->GetY();
+        $bottomLimit2   = $pdf->getPageHeight() - 45;
+
+        // Medir sin dejar rastro usando transaccion
+        $pdf->startTransaction();
+        $pdf->SetAutoPageBreak(false, 0);
+        $pdf->SetXY(20, $yAntesNotas + 10);
         $pdf->SetTextColor(51, 51, 51);
         $pdf->SetFont('Helvetica', '', 8);
-        
         if (!empty($cleanNotasHtml)) {
             $pdf->writeHTMLCell($contentW - 10, 0, 20, $pdf->GetY(), $cleanNotasHtml, 0, 1, false, true, 'L');
         } else {
             $pdf->SetX(20);
             $pdf->MultiCell($contentW - 10, 3.5, $notasTexto, 0, 'L');
         }
-        
-        // Desactivar fondo
+        $alturaNotas = $pdf->GetY() - $yAntesNotas;
+        $pdf->rollbackTransaction(true);
+        $pdf->SetAutoPageBreak(true, 40);
+
+        // Saltar pagina solo si no cabe
+        $espacioNotas = $bottomLimit2 - $yAntesNotas;
+        if ($alturaNotas > $espacioNotas) {
+            $pdf->AddPage();
+        }
+
+        $notasStartY = $pdf->GetY();
+
+        // Escritura real
+        $pdf->SetXY(20, $notasStartY + 10);
+        $pdf->SetTextColor(51, 51, 51);
+        $pdf->SetFont('Helvetica', '', 8);
+        if (!empty($cleanNotasHtml)) {
+            $pdf->writeHTMLCell($contentW - 10, 0, 20, $pdf->GetY(), $cleanNotasHtml, 0, 1, false, true, 'L');
+        } else {
+            $pdf->SetX(20);
+            $pdf->MultiCell($contentW - 10, 3.5, $notasTexto, 0, 'L');
+        }
+        $notasEndY = $pdf->GetY();
+        $notasH    = $notasEndY - $notasStartY + 6;
+
+        // Pintar fondo rosa ajustado
+        $pdf->SetFillColor(255, 240, 247);
+        $pdf->SetDrawColor(255, 240, 247);
+        $pdf->Rect(15, $notasStartY, $contentW, $notasH, 'F');
+
+        // Reescribir titulo y contenido encima del fondo
+        $pdf->SetXY(20, $notasStartY + 4);
+        $pdf->SetTextColor(233, 30, 140);
+        $pdf->SetFont('Helvetica', 'B', 11);
+        $pdf->Cell($contentW - 10, 5, 'Notas Adicionales', 0, 1, 'L');
+
+        $pdf->SetXY(20, $notasStartY + 10);
+        $pdf->SetTextColor(51, 51, 51);
+        $pdf->SetFont('Helvetica', '', 8);
+        if (!empty($cleanNotasHtml)) {
+            $pdf->writeHTMLCell($contentW - 10, 0, 20, $pdf->GetY(), $cleanNotasHtml, 0, 1, false, true, 'L');
+        } else {
+            $pdf->SetX(20);
+            $pdf->MultiCell($contentW - 10, 3.5, $notasTexto, 0, 'L');
+        }
+
         $pdf->bgEnabled = false;
-        
         $pdf->Ln(4);
     }
 
-    // Determinar modo: descargar o guardar archivo
+    // Determinar modo
     $mode = $_GET['mode'] ?? 'download';
     $filename = 'Presupuesto_' . ($presupuesto['id'] ?? 'SIN_ID') . '.pdf';
 
@@ -908,6 +1080,7 @@ function generarPDF() {
 
 /**
  * Enviar email con PDF adjunto
+ * ACTUALIZADO: Soporta múltiples destinatarios separados por comas
  */
 function enviarEmail() {
     global $presupuestosFile;
@@ -949,8 +1122,15 @@ function enviarEmail() {
         exit;
     }
 
-    // Preparar email
-    $to = $presupuesto['cliente_email'] ?? '';
+    // Preparar destinatarios — puede ser "a@a.com,b@b.com"
+    $emailRaw = $presupuesto['cliente_email'] ?? '';
+    $destinatarios = array_filter(array_map('trim', explode(',', $emailRaw)));
+    
+    if (empty($destinatarios)) {
+        header('Location: index.php?error=email_invalido');
+        exit;
+    }
+
     $subject = 'Presupuesto para ' . ($presupuesto['cliente_nombre'] ?? 'su proyecto') . ' - Tictac Comunicación';
 
     $message = '<!DOCTYPE html>
@@ -1068,18 +1248,27 @@ function enviarEmail() {
 </body>
 </html>';
 
-    // Enviar email
     require_once __DIR__ . '/gmail_send.php';
     
     $attachments_array = array(
         array("file_path" => $tmpFile)
     );
-    
-    $enviado = enviarEmailGmailAPI($to, $subject, $message, $attachments_array);
+
+    // Enviar a cada destinatario
+    $todosEnviados = true;
+    $errores = [];
+
+    foreach ($destinatarios as $to) {
+        $enviado = enviarEmailGmailAPI($to, $subject, $message, $attachments_array);
+        if (!$enviado) {
+            $todosEnviados = false;
+            $errores[] = $to;
+        }
+    }
     
     @unlink($tmpFile);
 
-    if ($enviado) {
+    if ($todosEnviados) {
         if (is_array($presupuestos) && $index >= 0) {
             $presupuestos[$index]['estado'] = 'enviado';
             $presupuestos[$index]['fecha_envio'] = date('Y-m-d H:i:s');
@@ -1087,14 +1276,14 @@ function enviarEmail() {
         }
         
         guardarAuditoria('presupuesto_enviado', 'exitoso', 'Presupuesto enviado vía Gmail API: ' . $id, [
-            'cliente_email' => $to,
+            'destinatarios' => implode(', ', $destinatarios),
             'cliente_nombre' => $presupuesto['cliente_nombre'] ?? ''
         ]);
         
         header('Location: index.php?success=email_enviado');
     } else {
         guardarAuditoria('presupuesto_enviado', 'error', 'Error al enviar email vía Gmail API: ' . $id, [
-            'cliente_email' => $to,
+            'destinatarios_con_error' => implode(', ', $errores),
             'error' => 'Revisar logs del servidor'
         ]);
         header('Location: index.php?error=email_no_enviado');
@@ -1117,6 +1306,7 @@ function generarHTMLPresupuestoSimple($presupuesto) {
         td { padding: 8px; border-bottom: 1px solid #eee; font-size: 10px; vertical-align: top; }
         .totals-row { text-align: right; padding: 4px 0; }
         small { color: #666; }
+        .precio-tachado { text-decoration: line-through; color: #aaa; font-size: 9px; }
     </style>
     <h2 style="color:#D72072; text-align:center;">PRESUPUESTO - ' . htmlspecialchars($presupuesto['id'] ?? '') . '</h2>
     <p><strong>Cliente:</strong> ' . htmlspecialchars($presupuesto['cliente_nombre'] ?? '') . '</p>
@@ -1130,14 +1320,22 @@ function generarHTMLPresupuestoSimple($presupuesto) {
     foreach ($items as $item) {
         $cantidad = floatval($item['cantidad'] ?? 0);
         $precio   = floatval($item['precio'] ?? 0);
+        $precioOriginal = isset($item['precio_original']) && $item['precio_original'] > 0 ? floatval($item['precio_original']) : null;
         $itemTotal = $cantidad * $precio;
         $nombre = pdf_text_plain($item['nombre'] ?? '');
         $desc   = pdf_text_plain($item['descripcion'] ?? '');
 
+        $tarifaHtml = '';
+        if ($precioOriginal && $precioOriginal > $precio) {
+            $tarifaHtml = '<span class="precio-tachado">' . number_format($precioOriginal, 2, ',', '.') . '€</span><br><strong style="color:#D72072;">' . number_format($precio, 2, ',', '.') . '€</strong>';
+        } else {
+            $tarifaHtml = number_format($precio, 2, ',', '.') . '€';
+        }
+
         $html .= '<tr>
             <td><strong>' . htmlspecialchars($nombre) . '</strong><br><small>' . nl2br(htmlspecialchars($desc)) . '</small></td>
             <td>' . number_format($cantidad, 2, ',', '.') . (!empty($item['unidad']) ? ' ' . htmlspecialchars($item['unidad']) : '') . '</td>
-            <td style="text-align:right;">' . number_format($precio, 2, ',', '.') . '€</td>
+            <td style="text-align:right;">' . $tarifaHtml . '</td>
             <td style="text-align:right;"><strong>' . number_format($itemTotal, 2, ',', '.') . '€</strong></td>
         </tr>';
     }
