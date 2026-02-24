@@ -2,6 +2,8 @@
 /**
  * Contratos - Lista de contratos
  * Sistema Tictac Comunicación
+ * MODIFICADO: Filtro de tipo contrato (Kit Digital / SEPA / Normal) por título o campo kit_digital
+ *             Botón "+ Nuevo SEPA" en action-bar
  */
 
 require_once '../config.php';
@@ -39,6 +41,15 @@ foreach ($contratos as $c) {
 }
 sort($clientesUnicos);
 
+// Helper: detectar tipo de contrato por campo kit_digital o título
+function detectarTipoContrato($c) {
+    if (!empty($c['kit_digital'])) return 'kit_digital';
+    $titulo = strtolower($c['titulo'] ?? '');
+    if (strpos($titulo, 'kit digital') !== false) return 'kit_digital';
+    if (strpos($titulo, 'sepa') !== false) return 'sepa';
+    return 'normal';
+}
+
 // URL base CRM
 define('CRM_BASE_URL', 'https://gestion-tictac-comunicacion.es/index.php');
 
@@ -51,7 +62,6 @@ $additionalStyles = '
     .stat-item { text-align:center; }
     .stat-number { font-size:36px;font-weight:bold;color:' . BRAND_COLOR . '; }
     .stat-label { color:#666;font-size:14px; }
-    /* Filtros */
     .filter-bar { background:white;padding:16px 20px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.05);margin-bottom:20px;display:flex;gap:12px;flex-wrap:wrap;align-items:center; }
     .filter-bar input, .filter-bar select { padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:13px;color:#333;background:white; }
     .filter-bar input { min-width:200px; }
@@ -59,7 +69,6 @@ $additionalStyles = '
     .btn-clear { background:#f0f0f0;color:#555;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600; }
     .btn-clear:hover { background:#e0e0e0; }
     .filter-count { color:#666;font-size:13px;margin-left:auto; }
-    /* Tabla */
     .table-container { background:white;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.05);overflow-x:auto; }
     table { width:100%;border-collapse:collapse; }
     thead { background:' . BRAND_COLOR . ';color:white; }
@@ -68,12 +77,14 @@ $additionalStyles = '
     tbody tr:hover { background:#f9f9f9; }
     tbody tr.fila-oculta { display:none; }
     .badge { display:inline-block;padding:5px 12px;border-radius:15px;font-size:12px;font-weight:600;margin:2px; }
-    .badge-enviado  { background:#d4edda;color:#155724; }
-    .badge-borrador { background:#fff3cd;color:#856404; }
-    .badge-crm-sync { background:#d1ecf1;color:#0c5460; }
-    .badge-crm-no   { background:#f8d7da;color:#721c24; }
+    .badge-enviado    { background:#d4edda;color:#155724; }
+    .badge-borrador   { background:#fff3cd;color:#856404; }
+    .badge-crm-sync   { background:#d1ecf1;color:#0c5460; }
+    .badge-crm-no     { background:#f8d7da;color:#721c24; }
     .badge-crm-sync a { color:#0c5460;text-decoration:none;font-weight:600; }
     .badge-crm-sync a:hover { text-decoration:underline; }
+    .badge-tipo-kd   { background:#fff3cd;color:#856404;border:1px solid #ffc107; }
+    .badge-tipo-sepa { background:#cfe2ff;color:#084298;border:1px solid #9ec5fe; }
     .actions { display:flex;gap:8px;flex-wrap:wrap; }
     .btn-action { padding:7px 12px;border-radius:5px;text-decoration:none;font-size:13px;font-weight:600;transition:all 0.3s;border:none;cursor:pointer;display:inline-block; }
     .btn-edit   { background:#007bff;color:white; } .btn-edit:hover   { background:#0056b3; }
@@ -107,7 +118,10 @@ include '../includes/header.php';
 
     <div class="action-bar">
         <h3 style="color:<?php echo BRAND_COLOR; ?>;margin:0;">Mis Contratos</h3>
-        <a href="editor.php" class="btn-primary">+ Nuevo Contrato</a>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="editor.php" class="btn-primary">+ Nuevo Contrato</a>
+            <a href="sepa.php" class="btn-primary" style="background:#084298;">📋 Nuevo SEPA</a>
+        </div>
     </div>
 
     <div class="stats-bar">
@@ -125,6 +139,12 @@ include '../includes/header.php';
             <?php foreach ($clientesUnicos as $cli): ?>
                 <option value="<?php echo htmlspecialchars($cli); ?>"><?php echo htmlspecialchars($cli); ?></option>
             <?php endforeach; ?>
+        </select>
+        <select id="filtro-tipo" onchange="aplicarFiltros()">
+            <option value="">📁 Todos los tipos</option>
+            <option value="normal">📄 Normal</option>
+            <option value="kit_digital">🇪🇺 Kit Digital</option>
+            <option value="sepa">🏦 SEPA</option>
         </select>
         <select id="filtro-estado" onchange="aplicarFiltros()">
             <option value="">📬 Todos los estados</option>
@@ -159,21 +179,30 @@ include '../includes/header.php';
                     <?php foreach ($contratos as $contrato):
                         $esCRM  = !empty($contrato['crm_contract_id']) ? 'con' : 'sin';
                         $estado = (isset($contrato['estado']) && $contrato['estado'] === 'enviado') ? 'enviado' : 'borrador';
+                        $tipo   = detectarTipoContrato($contrato);
                         $textoData = strtolower(
                             ($contrato['cliente_nombre'] ?? '') . ' ' .
                             ($contrato['cliente_email']  ?? '') . ' ' .
                             ($contrato['titulo']         ?? '') . ' ' .
                             ($contrato['id']             ?? '')
                         );
+                        // Badge de tipo
+                        $tipoBadge = '';
+                        if ($tipo === 'kit_digital') $tipoBadge = '<span class="badge badge-tipo-kd">🇪🇺 Kit Digital</span>';
+                        elseif ($tipo === 'sepa')     $tipoBadge = '<span class="badge badge-tipo-sepa">🏦 SEPA</span>';
                     ?>
                         <tr
                             data-cliente="<?php echo htmlspecialchars($contrato['cliente_nombre'] ?? ''); ?>"
                             data-estado="<?php echo $estado; ?>"
                             data-crm="<?php echo $esCRM; ?>"
+                            data-tipo="<?php echo $tipo; ?>"
                             data-texto="<?php echo htmlspecialchars($textoData); ?>"
                         >
                             <td><strong>#<?php echo htmlspecialchars($contrato['id']); ?></strong></td>
-                            <td><strong><?php echo htmlspecialchars(isset($contrato['titulo']) ? $contrato['titulo'] : 'Sin título'); ?></strong></td>
+                            <td>
+                                <strong><?php echo htmlspecialchars(isset($contrato['titulo']) ? $contrato['titulo'] : 'Sin título'); ?></strong>
+                                <?php if ($tipoBadge) echo '<br>' . $tipoBadge; ?>
+                            </td>
                             <td>
                                 <strong><?php echo htmlspecialchars($contrato['cliente_nombre']); ?></strong><br>
                                 <small style="color:#666;"><?php echo htmlspecialchars(isset($contrato['cliente_email']) ? $contrato['cliente_email'] : ''); ?></small>
@@ -240,6 +269,7 @@ $additionalScripts = '
     function aplicarFiltros() {
         var buscar  = document.getElementById("filtro-buscar").value.toLowerCase().trim();
         var cliente = document.getElementById("filtro-cliente").value;
+        var tipo    = document.getElementById("filtro-tipo").value;
         var estado  = document.getElementById("filtro-estado").value;
         var crm     = document.getElementById("filtro-crm").value;
         var filas   = document.querySelectorAll("#tabla-contratos tbody tr");
@@ -248,10 +278,11 @@ $additionalScripts = '
         filas.forEach(function(fila) {
             var okBuscar  = !buscar  || fila.dataset.texto.indexOf(buscar) !== -1;
             var okCliente = !cliente || fila.dataset.cliente === cliente;
+            var okTipo    = !tipo    || fila.dataset.tipo === tipo;
             var okEstado  = !estado  || fila.dataset.estado === estado;
             var okCrm     = !crm     || fila.dataset.crm === crm;
 
-            if (okBuscar && okCliente && okEstado && okCrm) {
+            if (okBuscar && okCliente && okTipo && okEstado && okCrm) {
                 fila.classList.remove("fila-oculta");
                 visibles++;
             } else {
@@ -263,7 +294,7 @@ $additionalScripts = '
         var countEl = document.getElementById("filter-count");
         var emptyEl = document.getElementById("empty-filtered");
 
-        countEl.textContent = (buscar || cliente || estado || crm)
+        countEl.textContent = (buscar || cliente || tipo || estado || crm)
             ? "Mostrando " + visibles + " de " + total
             : "";
 
@@ -273,6 +304,7 @@ $additionalScripts = '
     function resetFiltros() {
         document.getElementById("filtro-buscar").value  = "";
         document.getElementById("filtro-cliente").value = "";
+        document.getElementById("filtro-tipo").value    = "";
         document.getElementById("filtro-estado").value  = "";
         document.getElementById("filtro-crm").value     = "";
         aplicarFiltros();

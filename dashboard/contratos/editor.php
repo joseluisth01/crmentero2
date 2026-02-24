@@ -2,6 +2,7 @@
 /**
  * Editor de Contratos - Crear/Editar
  * Sistema Tictac Comunicación
+ * MODIFICADO: Añadida sección Kit Digital con cláusulas independientes
  */
 
 require_once '../config.php';
@@ -37,8 +38,10 @@ $clientesJson  = json_encode($clientes, JSON_UNESCAPED_UNICODE);
 $articulosJson = json_encode($articulos, JSON_UNESCAPED_UNICODE);
 $selectedClienteId = $contrato ? ($contrato['cliente_id'] ?? '') : '';
 
-$notasInicial      = $contrato ? ($contrato['notas'] ?? '') : '';
-$clausulasInicial  = $contrato ? ($contrato['clausulas_html'] ?? '') : '';
+$notasInicial                 = $contrato ? ($contrato['notas'] ?? '') : '';
+$clausulasInicial             = $contrato ? ($contrato['clausulas_html'] ?? '') : '';
+$kitDigitalActivoPhp          = $contrato ? (!empty($contrato['kit_digital'])) : false;
+$clausulasKitDigitalInicial   = $contrato ? ($contrato['clausulas_kit_digital_html'] ?? '') : '';
 $existingItems   = ($contrato && !empty($contrato['items'])) ? $contrato['items'] : [null];
 
 $additionalStyles = '
@@ -57,8 +60,6 @@ $additionalStyles = '
         outline:none; border-color:' . BRAND_COLOR . ';
     }
     .form-group textarea { min-height:80px; resize:vertical; font-family:inherit; }
-
-    /* Searchable select */
     .ss-wrapper { position:relative; width:100%; }
     .ss-main { display:flex; align-items:center; border:2px solid #e0e0e0; border-radius:8px; padding:10px 12px; cursor:pointer; background:white; min-height:44px; transition:border-color .3s; }
     .ss-main.ss-open { border-color:' . BRAND_COLOR . '; }
@@ -77,16 +78,12 @@ $additionalStyles = '
     .ss-option .ss-sub { display:block; font-size:11px; color:#888; margin-top:2px; }
     .ss-option .ss-price { float:right; color:' . BRAND_COLOR . '; font-weight:600; font-size:12px; }
     .ss-none { padding:12px; text-align:center; color:#999; font-style:italic; }
-
-    /* WYSIWYG */
     .wysiwyg-container { border:2px solid #e0e0e0; border-radius:8px; overflow:hidden; transition:border-color .3s; }
     .wysiwyg-container:focus-within { border-color:' . BRAND_COLOR . '; }
     .wysiwyg-container .ql-toolbar { border:none; border-bottom:1px solid #e0e0e0; background:#fafafa; }
     .wysiwyg-container .ql-container { border:none; min-height:100px; font-size:14px; }
     .wysiwyg-container .ql-editor { min-height:100px; padding:12px; }
     .wysiwyg-container .ql-editor.ql-blank::before { font-style:normal; color:#999; }
-
-    /* Items */
     .items-section { background:#f9f9f9; padding:20px; border-radius:8px; margin-top:20px; }
     .item-row { background:white; padding:15px; border-radius:8px; margin-bottom:15px; display:grid; grid-template-columns:2fr 1fr 1fr 60px; gap:15px; align-items:end; }
     .item-row input { padding:10px; border:2px solid #e0e0e0; border-radius:8px; font-size:14px; }
@@ -95,19 +92,23 @@ $additionalStyles = '
     .btn-add { background:' . ACCENT_COLOR . '; color:#333; border:none; padding:12px 25px; border-radius:8px; cursor:pointer; font-weight:600; margin-top:15px; }
     .btn-add:hover { opacity:.8; }
     .item-info { font-size:11px; color:#666; margin-top:5px; }
-
-    /* Totals */
     .totals-section { background:#f0f0f0; padding:20px; border-radius:8px; margin-top:30px; }
     .total-row { display:flex; justify-content:space-between; padding:10px 0; font-size:16px; }
     .total-row.final { border-top:3px solid ' . BRAND_COLOR . '; margin-top:10px; padding-top:15px; font-size:24px; font-weight:bold; color:' . BRAND_COLOR . '; }
-
-    /* Actions */
+    /* ── Kit Digital ── */
+    .kit-digital-section { background:#fff8e1; border:2px solid #ffc107; border-radius:10px; padding:20px 24px; margin-bottom:30px; }
+    .kit-digital-section h3 { color:#856404 !important; border-bottom-color:#ffc107 !important; }
+    .kit-digital-toggle { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+    .kit-digital-toggle input[type=checkbox] { width:20px; height:20px; cursor:pointer; accent-color:#E91E8C; flex-shrink:0; }
+    .kit-digital-toggle label { font-size:15px; font-weight:600; color:#333; cursor:pointer; }
+    #kitDigitalContent { display:none; }
+    #kitDigitalContent.visible { display:block; }
+    /* ── Actions ── */
     .actions-bar { display:flex; gap:15px; justify-content:flex-end; margin-top:40px; padding-top:20px; border-top:2px solid #e0e0e0; }
     .btn { padding:15px 30px; border-radius:50px; font-weight:600; font-size:16px; border:none; cursor:pointer; transition:all .3s; text-decoration:none; display:inline-block; }
     .btn-secondary { background:#6c757d; color:white; } .btn-secondary:hover { background:#5a6268; }
     .btn-primary { background:' . BRAND_COLOR . '; color:white; } .btn-primary:hover { background:' . BRAND_COLOR_DARK . '; transform:translateY(-2px); }
     .btn-success { background:#28a745; color:white; } .btn-success:hover { background:#218838; }
-
     @media (max-width:768px) { .item-row { grid-template-columns:1fr; } .actions-bar { flex-direction:column; } .btn { width:100%; } }
 </style>
 ';
@@ -333,6 +334,45 @@ include '../includes/header.php';
             </div>
         </div>
 
+        <!-- KIT DIGITAL — sección independiente -->
+        <div class="form-section kit-digital-section">
+            <h3>🇪🇺 Kit Digital</h3>
+            <div class="kit-digital-toggle">
+                <input type="checkbox" name="kit_digital" id="kitDigitalCheck" value="1"
+                    onchange="toggleKitDigital(this)"
+                    <?php echo $kitDigitalActivoPhp ? 'checked' : ''; ?>>
+                <label for="kitDigitalCheck">
+                    Este contrato incluye subvención <strong>Kit Digital</strong> — se añadirán cláusulas Kit Digital al final del PDF
+                </label>
+            </div>
+            <div id="kitDigitalContent" class="<?php echo $kitDigitalActivoPhp ? 'visible' : ''; ?>">
+                <div class="form-group">
+                    <label>
+                        Cláusulas Kit Digital — Déjalo vacío para usar las <strong>cláusulas estándar Kit Digital</strong> de Tictac.
+                        Si escribes aquí, reemplazarán las estándar.
+                    </label>
+                    <input type="hidden" name="clausulas_kit_digital_html" id="clausulasKDHidden"
+                        value="<?php echo htmlspecialchars($clausulasKitDigitalInicial); ?>">
+                    <div style="margin:8px 0;">
+                        <button type="button" onclick="cargarClausulasKDDefault()"
+                            style="background:#ffc107;color:#333;border:none;padding:8px 18px;border-radius:20px;cursor:pointer;font-size:13px;font-weight:600;">
+                            📋 Cargar cláusulas Kit Digital estándar
+                        </button>
+                        <button type="button" onclick="limpiarClausulasKD()"
+                            style="background:#6c757d;color:white;border:none;padding:8px 18px;border-radius:20px;cursor:pointer;font-size:13px;font-weight:600;margin-left:8px;">
+                            🗑️ Usar cláusulas estándar (vaciar)
+                        </button>
+                    </div>
+                    <div id="kdEstado" style="font-size:12px;color:#666;margin:4px 0 8px 0;">
+                        <?php echo empty($clausulasKitDigitalInicial) ? '✅ Usando cláusulas Kit Digital estándar de Tictac' : '✏️ Cláusulas Kit Digital personalizadas activas'; ?>
+                    </div>
+                    <div class="wysiwyg-container">
+                        <div id="kdEditor"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- TOTALES -->
         <div class="totals-section">
             <div class="total-row"><span>Subtotal:</span><span id="subtotal">0,00 €</span></div>
@@ -357,56 +397,72 @@ include '../includes/header.php';
 <?php
 $additionalScripts = '
 <script>
-// ============================================================
-// WYSIWYG — NOTAS
-// ============================================================
+// ── NOTAS WYSIWYG ──────────────────────────────────────────────
 const notasQuill = new Quill("#notasEditor", {
     theme: "snow",
     modules: { toolbar: [["bold","italic","underline"],[{"list":"ordered"},{"list":"bullet"}],["clean"]] },
     placeholder: "Añade aquí condiciones especiales, notas o cláusulas adicionales..."
 });
-(function(){
-    var v = document.getElementById("notasHidden").value;
-    if (v && v.trim()) notasQuill.root.innerHTML = v;
-})();
+(function(){ var v = document.getElementById("notasHidden").value; if (v && v.trim()) notasQuill.root.innerHTML = v; })();
 notasQuill.on("text-change", function(){
     var h = notasQuill.root.innerHTML;
     if (notasQuill.getText().trim() === "") h = "";
     document.getElementById("notasHidden").value = h;
 });
 
-// ============================================================
-// WYSIWYG — CLÁUSULAS
-// ============================================================
+// ── CLÁUSULAS PRINCIPALES WYSIWYG ─────────────────────────────
 const clausulasQuill = new Quill("#clausulasEditor", {
     theme: "snow",
-    modules: { toolbar: [
-        [{"header":[1,2,3,false]}],
-        ["bold","italic","underline"],
-        [{"list":"ordered"},{"list":"bullet"}],
-        ["clean"]
-    ]},
+    modules: { toolbar: [[{"header":[1,2,3,false]}],["bold","italic","underline"],[{"list":"ordered"},{"list":"bullet"}],["clean"]]},
     placeholder: "Vacío = se usarán las cláusulas estándar de Tictac en el PDF..."
 });
-(function(){
-    var v = document.getElementById("clausulasHidden").value;
-    if (v && v.trim()) clausulasQuill.root.innerHTML = v;
-})();
+(function(){ var v = document.getElementById("clausulasHidden").value; if (v && v.trim()) clausulasQuill.root.innerHTML = v; })();
 clausulasQuill.on("text-change", function(){
     var h = clausulasQuill.root.innerHTML;
     var vacio = clausulasQuill.getText().trim() === "";
     if (vacio) h = "";
     document.getElementById("clausulasHidden").value = h;
-    document.getElementById("clausulasEstado").innerHTML = vacio
-        ? "✅ Usando cláusulas estándar de Tictac"
-        : "✏️ Cláusulas personalizadas activas";
+    document.getElementById("clausulasEstado").innerHTML = vacio ? "✅ Usando cláusulas estándar de Tictac" : "✏️ Cláusulas personalizadas activas";
 });
+
+// ── KIT DIGITAL WYSIWYG ────────────────────────────────────────
+const kdQuill = new Quill("#kdEditor", {
+    theme: "snow",
+    modules: { toolbar: [[{"header":[1,2,3,false]}],["bold","italic","underline"],[{"list":"ordered"},{"list":"bullet"}],["clean"]]},
+    placeholder: "Vacío = se usarán las cláusulas Kit Digital estándar de Tictac..."
+});
+(function(){ var v = document.getElementById("clausulasKDHidden").value; if (v && v.trim()) kdQuill.root.innerHTML = v; })();
+kdQuill.on("text-change", function(){
+    var h = kdQuill.root.innerHTML;
+    var vacio = kdQuill.getText().trim() === "";
+    if (vacio) h = "";
+    document.getElementById("clausulasKDHidden").value = h;
+    document.getElementById("kdEstado").innerHTML = vacio ? "✅ Usando cláusulas Kit Digital estándar de Tictac" : "✏️ Cláusulas Kit Digital personalizadas activas";
+});
+
+function toggleKitDigital(cb) {
+    document.getElementById("kitDigitalContent").classList.toggle("visible", cb.checked);
+}
+
+const KD_CLAUSULAS_DEFAULT = "<p><strong>CLÁUSULAS KIT DIGITAL</strong></p><p><strong>DETALLES DE FACTURACIÓN</strong></p><p>El cobro de la cuota mensual se realizará a través de domiciliación bancaria SEPA, por el importe proporcional del servicio contratado. En el caso de tarifa fija, el cobro se realizará por adelantado el día 1 de cada mes. En el caso de tarifa variable (comisión del 3% sobre las ventas), el cobro se realizará a final del mes por las ventas realizadas. Para formalizar la domiciliación será necesaria la firma de la Orden de Domiciliación SEPA.</p><p><strong>SUBVENCIÓN KIT DIGITAL</strong></p><p>El cliente es beneficiario de una subvención Kit Digital de 2.000 € concedida por Red.es. Dicho importe será descontado del precio de la solución de digitalización objeto del presente contrato.</p><p>El cliente deberá mantener sus obligaciones tributarias al corriente durante los 12 meses de vigencia del servicio subvencionado.</p><p>El IVA no es subvencionable y deberá ser abonado por el beneficiario mediante domiciliación bancaria en los 3 meses siguientes a la validación del agente digitalizador.</p><p>En el supuesto de que la subvención sea denegada por causas ajenas al agente digitalizador, el cliente abonará la totalidad del importe (2.000 € + IVA correspondiente).</p><p>Si el cliente desiste del servicio antes de completar los 12 meses de vigencia, deberá abonar el importe proporcional al trabajo ejecutado hasta la aceptación formal del desistimiento.</p><p>Normativa aplicable: Orden TDF/435/2024, de 9 de mayo; Orden ETD/1498/2021, de 29 de diciembre; Agenda España Digital 2025; Plan de Digitalización de PYMEs 2021-2025.</p>";
+
+function cargarClausulasKDDefault() {
+    if (kdQuill.getText().trim() !== "" && !confirm("¿Cargar las cláusulas Kit Digital estándar? Esto reemplazará el contenido actual.")) return;
+    kdQuill.root.innerHTML = KD_CLAUSULAS_DEFAULT;
+    document.getElementById("clausulasKDHidden").value = KD_CLAUSULAS_DEFAULT;
+    document.getElementById("kdEstado").innerHTML = "✏️ Cláusulas Kit Digital estándar cargadas para editar";
+}
+function limpiarClausulasKD() {
+    if (!confirm("¿Vaciar el editor Kit Digital? El PDF usará las cláusulas estándar automáticamente.")) return;
+    kdQuill.setText("");
+    document.getElementById("clausulasKDHidden").value = "";
+    document.getElementById("kdEstado").innerHTML = "✅ Usando cláusulas Kit Digital estándar de Tictac";
+}
 
 const CLAUSULAS_DEFAULT = "<p><strong>1. OBJETO</strong></p><p>El objeto del Contrato consiste en la prestación de servicios por parte del Proveedor a cambio del pago de un precio por parte del Cliente, en los términos establecidos en el mismo.</p><p>Las solicitudes de modificación del contrato se harán siempre por escrito, remitido por correo ordinario o electrónico hola@tictac-comunicacion.es. Se ejecutarán siempre que sea posible y el cliente deberá asumir los costes en los que el Proveedor haya incurrido, tras dicha modificación del contrato.</p><p>El Cliente acepta que el Proveedor pueda publicar su imagen corporativa, nombre comercial y sitio web dentro de \"casos de éxito\" o \"sección clientes\" de la web de Tic Tac Comunicación (www.tictac-comunicacion.es), así como la firma de la Empresa Tic Tac Comunicación en Footer (Pie de Página de la web del Cliente).</p><p><strong>2. SERVICIOS DEL PROVEEDOR</strong></p><p>2.1. Los Servicios del proyecto vendrán descritos en la hoja de encargo adjunta que deberá ser firmada por el cliente y por la empresa que provee el servicio.</p><p>En relación al diseño web, si el cliente ha contratado este servicio y procede, el Proveedor presentará al cliente hasta 3 bocetos en soporte físico o digital. El Cliente ha de firmar el Boceto escogido, todos los cambios a partir del momento de la firma, conllevarán costos adicionales.</p><p>2.1.1. Realización de material especial tal como: tipografía no convencional, caligrafía, mapas, diagramas, gráficos, vectores o fotomontajes.</p><p>2.1.2. Preparación de material existente para su reproducción tales como: redibujo parcial o total, conversión a líneas, escaneado y retoque de imágenes, tipeados, etc.</p><p>2.1.3. Seguimiento de la producción.</p><p>2.1.4. Recuperación de información, siempre que técnicamente sea posible. El horario de trabajo de los técnicos del Proveedor será de lunes a viernes de 9:00 a 17:00, salvo en los meses de Julio y agosto que será de 9:00 a 15:00.</p><p>2.1.5. La corrección de errores imputables a la manipulación a través de los Programas de gestión de contenidos por personal no autorizado expresamente por el Proveedor.</p><p>2.1.6. Las tareas necesarias para restablecer la situación anterior derivada de operaciones incorrectas por parte del Cliente que ocasionen pérdidas de información, destrucción o desorganización de ficheros, y situaciones análogas.</p><p>2.1.7. La reparación de daños causados por virus o defectos de otros programas no relacionados en el Contrato, o en anexo posterior.</p><p>2.1.8. La reparación de daños y malfuncionamientos causados por accidentes, uso indebido, catástrofes, abusos, alteraciones, sustitución de elementos o software no suministrado y/o recomendado por el Proveedor.</p><p><strong>3. VALORACIÓN DE LOS SERVICIOS, FACTURACIÓN, FORMA DE PAGO, IMPUESTOS Y GASTOS</strong></p><p>3.1. La valoración económica será actualizada anualmente por el Proveedor, en función de las nuevas tarifas que el Proveedor establezca.</p><p>3.2. El precio de los Servicios será abonado por el Cliente al Proveedor en el momento de la formalización del Contrato, con carácter previo al inicio de la prestación de los Servicios, mediante transferencia a la cuenta número que el proveedor designe para tal efecto.</p><p>3.3. El precio expresado a continuación contienen los impuestos indirectos desglosados a la fecha de la firma actual.</p><p>3.4. Se emitirá un cobro mensual en el siguiente número de cuenta bancaria facilitado por el Cliente.</p><p>3.5. Cualquier revisión o adiciones a los servicios descritos en el contrato serán facturados como Servicios Adicionales no incluidos en el presupuesto estimado.</p><p><strong>4. RESPONSABILIDAD DEL CLIENTE</strong></p><p>4.1. El Cliente proveerá información fehaciente y completa y materiales al Proveedor, y será responsable de la exactitud y completitud de toda la información y los materiales provistos.</p><p>4.2. El Cliente en caso haber realizado alguna modificación por su cuenta y por ello, haber desconfigurado la web, será el mismo Cliente quien responda por el costo del arreglo.</p><p>4.3. Todo texto e información aportado por el Cliente se entregará al Proveedor en formato digital. Este proceso (escaneado, OCR, tipeado, etc.) será presupuestado como un servicio suplementario.</p><p><strong>5. DERECHOS Y PROPIEDAD</strong></p><p>5.1. Todos los servicios provistos por el Proveedor y aprobados bajo este contrato serán para uso exclusivo del Cliente más allá de su uso promocional propio del Proveedor.</p><p>5.2. El Proveedor se compromete a almacenar los originales durante 6 meses a partir de la finalización del Proyecto. Una vez concluido dicho período, no garantizará su manutención.</p><p>5.3. El Dominio (dirección web) pertenecerá al Cliente, siendo éste su propietario en todo momento.</p><p>5.4. Una vez finalizado el pago total del monto acordado, el Cliente, pasará a ser propietario de la Web.</p><p><strong>6. DURACIÓN DEL CONTRATO</strong></p><p>6.1. El Contrato tendrá una vigencia mínima de un (1) año, contada a partir de la fecha de la firma del presente Contrato.</p><p>6.2. El Cliente podrá rescindir el presente Contrato, notificándoselo por escrito al Proveedor con al menos treinta (30) días de antelación a la fecha de vencimiento inicial, o, en su caso, de cualquiera de sus prórrogas. En todo caso, la prórroga del Contrato no significará que se mantenga el mismo precio por los Servicios.</p><p><strong>7. EXTINCIÓN DEL CONTRATO</strong></p><p>7.1. El Contrato se extinguirá por las causas generales establecidas en la legislación vigente.</p><p>7.2. En todo caso, la extinción del Contrato antes de la finalización del período inicial no dará lugar a devolución alguna del precio abonado al Proveedor.</p><p>7.3. La no acreditación del pago del precio será causa automática de resolución del Contrato, sin perjuicio de la posible reclamación de daños y perjuicios.</p><p><strong>8. NATURALEZA DE LA RELACIÓN</strong></p><p>8.1. El presente Contrato tiene carácter mercantil y se regirá por sus propias cláusulas, y en lo que en ellas no estuviere previsto, por las disposiciones del Código de Comercio, leyes especiales y usos mercantiles, y en su defecto, por el Código Civil.</p><p><strong>9. PROTECCIÓN DE DATOS DE CARÁCTER PERSONAL</strong></p><p>9.1. Debido a la naturaleza de los Servicios, el Proveedor puede tener que realizar tratamientos automatizados de ficheros del Cliente que contengan datos de carácter personal. El Proveedor utilizará dichos datos única y exclusivamente para los fines que figuran en el Contrato y siempre por cuenta del Cliente.</p><p>9.2. El Cliente únicamente permitirá el acceso a datos de carácter personal al Proveedor cuando sea necesario para la ejecución del objeto del Contrato.</p><p>9.3. El Cliente afirma y garantiza que los datos han sido recogidos de acuerdo a lo establecido en la LOPD, así como que cumple todas las obligaciones establecidas en la LOPD.</p><p><strong>10. CONFIDENCIALIDAD</strong></p><p>10.1. El Proveedor considerará confidencial toda la información relacionada con los Servicios, y que obtenga durante la prestación de los mismos, salvo que dicha información le fuera conocida previamente o hubiera sido divulgada públicamente con anterioridad.</p><p><strong>11. RESPONSABILIDAD DEL PROVEEDOR</strong></p><p>11.1. Salvo en los casos de culpa grave o dolo, la responsabilidad total del Proveedor no excederá, en su conjunto, de la cantidad correspondiente al precio abonado por los Servicios durante la última anualidad. El Proveedor no será responsable, en ningún caso, de los daños que puedan ser calificados como daños indirectos, consecuenciales, pérdida de beneficio, negocio, ingresos, clientes, datos, imagen o reputación comercial.</p><p><strong>12. ACTUALIZACIÓN</strong></p><p>12.1. En el caso de que alguna o algunas de las cláusulas del Contrato pasen a ser inválidas, ilegales o inejecutables, se considerarán ineficaces en la medida que corresponda, pero en lo demás, este Contrato conservará su validez.</p><p>12.2. Las Partes acuerdan sustituir la cláusula o cláusulas afectadas por otra u otras que tengan los efectos económicos más semejantes. CONTRATO ÚNICO</p><p><strong>13. NOTIFICACIONES Y REQUERIMIENTOS</strong></p><p>13.1. Toda notificación o requerimiento que traiga su causa del Contrato se deberá remitir por escrito a la otra Parte, bien por E-mail, bien personalmente, o por mensajero o correo certificado con acuse de recibo a portes pagados a las personas y direcciones que aparecen en el apartado \"Reunidos\" del presente Contrato.</p><p><strong>14. JURISDICCIÓN Y COMPETENCIA</strong></p><p>14.1. Las Partes, con renuncia expresa a cualquier otro fuero que pudiera corresponderles, se someten para cuantos asuntos litigiosos pudieran derivarse en todo lo referente a la interpretación, aplicación o cumplimiento y ejecución del presente Contrato, a la jurisdicción y competencia de los Juzgados y Tribunales de Córdoba.</p><p>14.2. Y para que así conste, y en prueba de conformidad y aceptación de todo cuanto antecede, las Partes firman el presente Contrato por duplicado ejemplar y a un sólo efecto en la fecha y lugar indicados en el encabezamiento.</p>";
 
 function cargarClausulasDefault() {
-    if (clausulasQuill.getText().trim() !== "" &&
-        !confirm("¿Cargar las cláusulas estándar? Esto reemplazará el contenido actual del editor.")) return;
+    if (clausulasQuill.getText().trim() !== "" && !confirm("¿Cargar las cláusulas estándar? Esto reemplazará el contenido actual del editor.")) return;
     clausulasQuill.root.innerHTML = CLAUSULAS_DEFAULT;
     document.getElementById("clausulasHidden").value = CLAUSULAS_DEFAULT;
     document.getElementById("clausulasEstado").innerHTML = "✏️ Cláusulas estándar cargadas para editar";
@@ -418,17 +474,13 @@ function limpiarClausulas() {
     document.getElementById("clausulasEstado").innerHTML = "✅ Usando cláusulas estándar de Tictac";
 }
 
-// ============================================================
-// DATA
-// ============================================================
+// ── DATA ───────────────────────────────────────────────────────
 let itemCounter = ' . count($existingItems) . ';
 const articulosData = ' . $articulosJson . ';
 const clientesData  = ' . $clientesJson . ';
 const selClienteId  = "' . $selectedClienteId . '";
 
-// ============================================================
-// GENERIC SEARCHABLE SELECT
-// ============================================================
+// ── GENERIC SEARCHABLE SELECT ──────────────────────────────────
 function makeSearchableSelect(cfg) {
     const main   = document.getElementById(cfg.mainId);
     const drop   = document.getElementById(cfg.dropId);
@@ -436,230 +488,155 @@ function makeSearchableSelect(cfg) {
     const optsEl = document.getElementById(cfg.optsId);
     const txtEl  = document.getElementById(cfg.txtId);
     let open = false, filtered = [], hi = -1;
-
     function render(q) {
         q = (q||"").toLowerCase();
-        filtered = cfg.items.filter(i => {
-            const l = (cfg.label(i)||"").toLowerCase();
-            const s = (cfg.sub ? cfg.sub(i) : "").toLowerCase();
-            return l.includes(q) || s.includes(q);
-        });
-        if (!filtered.length) { optsEl.innerHTML = \'<div class="ss-none">Sin resultados</div>\'; return; }
-        optsEl.innerHTML = filtered.map((item, i) => {
-            const l = cfg.label(item);
-            const s = cfg.sub ? cfg.sub(item) : "";
-            const p = cfg.price ? cfg.price(item) : "";
-            const sel = cfg.isSelected ? cfg.isSelected(item) : false;
-            return `<div class="ss-option ${sel?"ss-sel":""}" data-i="${i}">
-                ${p ? `<span class="ss-price">${p}</span>` : ""}
-                <strong>${esc(l)}</strong>
-                ${s ? `<span class="ss-sub">${esc(s)}</span>` : ""}
-            </div>`;
-        }).join("");
-        optsEl.querySelectorAll(".ss-option").forEach((el,i) => el.addEventListener("click", () => pick(i)));
-        hi = -1;
+        filtered = cfg.items.filter(i => { const l=(cfg.label(i)||"").toLowerCase(); const s=(cfg.sub?cfg.sub(i):"").toLowerCase(); return l.includes(q)||s.includes(q); });
+        if (!filtered.length) { optsEl.innerHTML=\'<div class="ss-none">Sin resultados</div>\'; return; }
+        optsEl.innerHTML = filtered.map((item,i) => { const l=cfg.label(item); const s=cfg.sub?cfg.sub(item):""; const p=cfg.price?cfg.price(item):""; const sel=cfg.isSelected?cfg.isSelected(item):false; return `<div class="ss-option ${sel?"ss-sel":""}" data-i="${i}">${p?`<span class="ss-price">${p}</span>`:""}<strong>${esc(l)}</strong>${s?`<span class="ss-sub">${esc(s)}</span>`:""}</div>`; }).join("");
+        optsEl.querySelectorAll(".ss-option").forEach((el,i)=>el.addEventListener("click",()=>pick(i))); hi=-1;
     }
-
-    function pick(i) {
-        const item = filtered[i]; if (!item) return;
-        txtEl.textContent = cfg.label(item); txtEl.classList.remove("ss-ph");
-        close(); if (cfg.onSelect) cfg.onSelect(item);
-    }
-
-    function openDD() {
-        if (open) return;
-        open = true; main.classList.add("ss-open"); drop.classList.add("ss-open");
-        search.value = ""; render(""); search.focus();
-    }
-    function close() {
-        open = false; main.classList.remove("ss-open"); drop.classList.remove("ss-open");
-    }
-
-    main.addEventListener("click", e => { e.stopPropagation(); open ? close() : openDD(); });
-    search.addEventListener("input", e => render(e.target.value));
-    search.addEventListener("keydown", e => {
-        const opts = optsEl.querySelectorAll(".ss-option");
-        if (e.key === "ArrowDown") { e.preventDefault(); hi = Math.min(hi+1, opts.length-1); opts.forEach((o,i) => o.classList.toggle("ss-hi", i===hi)); if(opts[hi]) opts[hi].scrollIntoView({block:"nearest"}); }
-        else if (e.key === "ArrowUp") { e.preventDefault(); hi = Math.max(hi-1, 0); opts.forEach((o,i) => o.classList.toggle("ss-hi", i===hi)); }
-        else if (e.key === "Enter" && hi >= 0) { e.preventDefault(); pick(hi); }
-        else if (e.key === "Escape") close();
+    function pick(i) { const item=filtered[i]; if(!item) return; txtEl.textContent=cfg.label(item); txtEl.classList.remove("ss-ph"); close(); if(cfg.onSelect) cfg.onSelect(item); }
+    function openDD() { if(open) return; open=true; main.classList.add("ss-open"); drop.classList.add("ss-open"); search.value=""; render(""); search.focus(); }
+    function close() { open=false; main.classList.remove("ss-open"); drop.classList.remove("ss-open"); }
+    main.addEventListener("click", e=>{e.stopPropagation(); open?close():openDD();});
+    search.addEventListener("input", e=>render(e.target.value));
+    search.addEventListener("keydown", e=>{
+        const opts=optsEl.querySelectorAll(".ss-option");
+        if(e.key==="ArrowDown"){e.preventDefault();hi=Math.min(hi+1,opts.length-1);opts.forEach((o,i)=>o.classList.toggle("ss-hi",i===hi));if(opts[hi])opts[hi].scrollIntoView({block:"nearest"});}
+        else if(e.key==="ArrowUp"){e.preventDefault();hi=Math.max(hi-1,0);opts.forEach((o,i)=>o.classList.toggle("ss-hi",i===hi));}
+        else if(e.key==="Enter"&&hi>=0){e.preventDefault();pick(hi);}
+        else if(e.key==="Escape") close();
     });
-    document.addEventListener("click", e => { const w = document.getElementById(cfg.wrapperId); if (w && !w.contains(e.target)) close(); });
-    return { pick };
+    document.addEventListener("click",e=>{const w=document.getElementById(cfg.wrapperId);if(w&&!w.contains(e.target))close();});
+    return {pick};
 }
+function esc(t){const d=document.createElement("div");d.textContent=t;return d.innerHTML;}
 
-function esc(t) { const d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
-
-// ============================================================
-// CLIENTE SS
-// ============================================================
+// ── CLIENTE SS ─────────────────────────────────────────────────
 makeSearchableSelect({
-    wrapperId: "clienteWrapper", mainId: "clienteMain", dropId: "clienteDropdown",
-    searchId: "clienteSearch", optsId: "clienteOptions", txtId: "clienteText",
-    items: clientesData,
-    label: c => c.company_name || "",
-    sub:   c => (c.city || "") + (c.phone ? " · " + c.phone : ""),
-    isSelected: c => String(c.id) === String(selClienteId),
-    onSelect: cliente => {
-        document.getElementById("clienteSelect").value = cliente.id;
-        document.getElementById("clienteNombre").value   = cliente.company_name || "";
-        document.getElementById("clienteDireccion").value = cliente.address || "";
-        document.getElementById("clienteCiudad").value   = cliente.city || "";
-        document.getElementById("clienteCp").value       = cliente.zip || "";
-        document.getElementById("clientePais").value     = cliente.country || "";
-        document.getElementById("clienteCif").value      = cliente.vat_number || "";
-        fetch("../presupuestos/get_contacto.php?client_id=" + cliente.id)
-            .then(r => r.json())
-            .then(contactos => {
-                if (contactos && contactos.length > 0) {
-                    const cp = contactos.find(c => c.is_primary_contact === "1") || contactos[0];
-                    document.getElementById("clienteEmail").value = cp.email || "";
-                    const fn = ((cp.first_name||"")+" "+(cp.last_name||"")).trim();
-                    if (fn && document.getElementById("clienteFirmante")) document.getElementById("clienteFirmante").value = fn;
-                }
-            }).catch(() => {});
+    wrapperId:"clienteWrapper",mainId:"clienteMain",dropId:"clienteDropdown",
+    searchId:"clienteSearch",optsId:"clienteOptions",txtId:"clienteText",
+    items:clientesData, label:c=>c.company_name||"",
+    sub:c=>(c.city||"")+(c.phone?" · "+c.phone:""),
+    isSelected:c=>String(c.id)===String(selClienteId),
+    onSelect:cliente=>{
+        document.getElementById("clienteSelect").value=cliente.id;
+        document.getElementById("clienteNombre").value=cliente.company_name||"";
+        document.getElementById("clienteDireccion").value=cliente.address||"";
+        document.getElementById("clienteCiudad").value=cliente.city||"";
+        document.getElementById("clienteCp").value=cliente.zip||"";
+        document.getElementById("clientePais").value=cliente.country||"";
+        document.getElementById("clienteCif").value=cliente.vat_number||"";
+        fetch("../presupuestos/get_contacto.php?client_id="+cliente.id).then(r=>r.json()).then(contactos=>{
+            if(contactos&&contactos.length>0){
+                const cp=contactos.find(c=>c.is_primary_contact==="1")||contactos[0];
+                document.getElementById("clienteEmail").value=cp.email||"";
+                const fn=((cp.first_name||"")+" "+(cp.last_name||"")).trim();
+                if(fn&&document.getElementById("clienteFirmante")) document.getElementById("clienteFirmante").value=fn;
+            }
+        }).catch(()=>{});
     }
 });
+if(selClienteId){const pre=clientesData.find(c=>String(c.id)===String(selClienteId));if(pre){const t=document.getElementById("clienteText");t.textContent=pre.company_name||"";t.classList.remove("ss-ph");}}
 
-if (selClienteId) {
-    const pre = clientesData.find(c => String(c.id) === String(selClienteId));
-    if (pre) { const t = document.getElementById("clienteText"); t.textContent = pre.company_name || ""; t.classList.remove("ss-ph"); }
-}
-
-// ============================================================
-// ARTÍCULOS SS PER ITEM
-// ============================================================
-const artSS = {};
-function initArtSS(idx) {
-    artSS[idx] = makeSearchableSelect({
-        wrapperId: "artWrapper_"+idx, mainId: "artMain_"+idx, dropId: "artDropdown_"+idx,
-        searchId: "artSearch_"+idx, optsId: "artOptions_"+idx, txtId: "artText_"+idx,
-        items: articulosData,
-        label: a => a.title || "",
-        sub:   a => (a.category_title || "") + (a.unit_type ? " · " + a.unit_type : ""),
-        price: a => a.rate != null ? parseFloat(a.rate).toFixed(2) + " €" : "",
-        onSelect: art => {
-            const row = document.querySelector(`[data-item-index="${idx}"]`); if (!row) return;
-            row.querySelector(".item-nombre").value    = art.title || "";
-            row.querySelector(".item-descripcion").value = art.description || "";
-            row.querySelector(".item-precio").value    = parseFloat(art.rate || 0).toFixed(2);
-            row.querySelector(".item-unidad").value    = art.unit_type || "";
+// ── ARTÍCULOS SS PER ITEM ──────────────────────────────────────
+const artSS={};
+function initArtSS(idx){
+    artSS[idx]=makeSearchableSelect({
+        wrapperId:"artWrapper_"+idx,mainId:"artMain_"+idx,dropId:"artDropdown_"+idx,
+        searchId:"artSearch_"+idx,optsId:"artOptions_"+idx,txtId:"artText_"+idx,
+        items:articulosData,label:a=>a.title||"",
+        sub:a=>(a.category_title||"")+(a.unit_type?" · "+a.unit_type:""),
+        price:a=>a.rate!=null?parseFloat(a.rate).toFixed(2)+" €":"",
+        onSelect:art=>{
+            const row=document.querySelector(`[data-item-index="${idx}"]`);if(!row)return;
+            row.querySelector(".item-nombre").value=art.title||"";
+            row.querySelector(".item-descripcion").value=art.description||"";
+            row.querySelector(".item-precio").value=parseFloat(art.rate||0).toFixed(2);
+            row.querySelector(".item-unidad").value=art.unit_type||"";
             calcTotals();
         }
     });
 }
-document.querySelectorAll("[data-item-index]").forEach(row => initArtSS(parseInt(row.getAttribute("data-item-index"))));
+document.querySelectorAll("[data-item-index]").forEach(row=>initArtSS(parseInt(row.getAttribute("data-item-index"))));
 
-// ============================================================
-// ADD / REMOVE ITEMS
-// ============================================================
-function addItem() {
-    const idx = itemCounter;
-    const div = document.createElement("div");
-    div.className = "item-row"; div.setAttribute("data-item-index", idx);
-    div.innerHTML = `
-        <div class="form-group">
-            <label>Artículo/Servicio</label>
-            <div class="ss-wrapper" id="artWrapper_${idx}">
-                <div class="ss-main" id="artMain_${idx}"><span class="ss-selected ss-ph" id="artText_${idx}">-- Buscar en catálogo --</span><div class="ss-arrow"></div></div>
-                <div class="ss-dropdown" id="artDropdown_${idx}"><div class="ss-search"><input type="text" id="artSearch_${idx}" placeholder="Buscar artículo..." autocomplete="off"></div><div class="ss-options" id="artOptions_${idx}"></div></div>
-            </div>
-            <input type="text" name="items[${idx}][nombre]" placeholder="Nombre del servicio" required class="item-nombre" style="margin-top:10px;">
-            <textarea name="items[${idx}][descripcion]" placeholder="Descripción" class="item-descripcion" style="margin-top:10px;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;min-height:50px;"></textarea>
-        </div>
-        <div class="form-group">
-            <label>Cantidad</label>
-            <input type="number" name="items[${idx}][cantidad]" placeholder="1" step="0.01" value="1" required class="item-cantidad">
-            <input type="text" name="items[${idx}][unidad]" placeholder="Mensual, Único..." class="item-unidad" style="margin-top:10px;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;">
-        </div>
-        <div class="form-group">
-            <label>Precio Unitario (€)</label>
-            <input type="number" name="items[${idx}][precio]" placeholder="0.00" step="0.01" required class="item-precio">
-            <div class="item-info"><strong>Total: <span class="item-total-display">0.00 €</span></strong></div>
-            <input type="hidden" class="item-total" value="0">
-        </div>
-        <button type="button" class="btn-remove" onclick="removeItem(this)">🗑️</button>
-    `;
+// ── ADD / REMOVE ITEMS ─────────────────────────────────────────
+function addItem(){
+    const idx=itemCounter;
+    const div=document.createElement("div");
+    div.className="item-row";div.setAttribute("data-item-index",idx);
+    div.innerHTML=`<div class="form-group"><label>Artículo/Servicio</label><div class="ss-wrapper" id="artWrapper_${idx}"><div class="ss-main" id="artMain_${idx}"><span class="ss-selected ss-ph" id="artText_${idx}">-- Buscar en catálogo --</span><div class="ss-arrow"></div></div><div class="ss-dropdown" id="artDropdown_${idx}"><div class="ss-search"><input type="text" id="artSearch_${idx}" placeholder="Buscar artículo..." autocomplete="off"></div><div class="ss-options" id="artOptions_${idx}"></div></div></div><input type="text" name="items[${idx}][nombre]" placeholder="Nombre del servicio" required class="item-nombre" style="margin-top:10px;"><textarea name="items[${idx}][descripcion]" placeholder="Descripción" class="item-descripcion" style="margin-top:10px;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;min-height:50px;"></textarea></div><div class="form-group"><label>Cantidad</label><input type="number" name="items[${idx}][cantidad]" placeholder="1" step="0.01" value="1" required class="item-cantidad"><input type="text" name="items[${idx}][unidad]" placeholder="Mensual, Único..." class="item-unidad" style="margin-top:10px;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;"></div><div class="form-group"><label>Precio Unitario (€)</label><input type="number" name="items[${idx}][precio]" placeholder="0.00" step="0.01" required class="item-precio"><div class="item-info"><strong>Total: <span class="item-total-display">0.00 €</span></strong></div><input type="hidden" class="item-total" value="0"></div><button type="button" class="btn-remove" onclick="removeItem(this)">🗑️</button>`;
     document.getElementById("itemsContainer").appendChild(div);
-    itemCounter++;
-    initArtSS(idx);
-    attachItemListeners(div);
+    itemCounter++;initArtSS(idx);attachItemListeners(div);
 }
-
-function removeItem(btn) {
-    if (document.querySelectorAll(".item-row").length > 1) { btn.closest(".item-row").remove(); calcTotals(); }
+function removeItem(btn){
+    if(document.querySelectorAll(".item-row").length>1){btn.closest(".item-row").remove();calcTotals();}
     else alert("Debe haber al menos un servicio en el contrato.");
 }
 
-// ============================================================
-// TOTALS
-// ============================================================
-function fmtCurr(n) { return new Intl.NumberFormat("es-ES",{style:"currency",currency:"EUR"}).format(n); }
-
-function calcTotals() {
-    let sub = 0;
-    document.querySelectorAll(".item-row").forEach(row => {
-        const c = parseFloat(row.querySelector(".item-cantidad").value) || 0;
-        const p = parseFloat(row.querySelector(".item-precio").value) || 0;
-        const t = c * p;
-        row.querySelector(".item-total").value = t.toFixed(2);
-        row.querySelector(".item-total-display").textContent = fmtCurr(t);
-        sub += t;
+// ── TOTALS ─────────────────────────────────────────────────────
+function fmtCurr(n){return new Intl.NumberFormat("es-ES",{style:"currency",currency:"EUR"}).format(n);}
+function calcTotals(){
+    let sub=0;
+    document.querySelectorAll(".item-row").forEach(row=>{
+        const c=parseFloat(row.querySelector(".item-cantidad").value)||0;
+        const p=parseFloat(row.querySelector(".item-precio").value)||0;
+        const t=c*p;
+        row.querySelector(".item-total").value=t.toFixed(2);
+        row.querySelector(".item-total-display").textContent=fmtCurr(t);
+        sub+=t;
     });
-    const iva = parseFloat(document.getElementById("iva").value) || 0;
-    const seg = parseFloat(document.getElementById("segundoImpuesto").value) || 0;
-    const ivaA = sub * iva / 100;
-    const segA = sub * seg / 100;
-    const tot  = sub + ivaA + segA;
-    document.getElementById("subtotal").textContent   = fmtCurr(sub);
-    document.getElementById("ivaPercent").textContent = iva.toFixed(0);
-    document.getElementById("ivaAmount").textContent  = fmtCurr(ivaA);
-    document.getElementById("segPercent").textContent = seg.toFixed(0);
-    document.getElementById("segAmount").textContent  = fmtCurr(segA);
-    document.getElementById("total").textContent      = fmtCurr(tot);
-    document.getElementById("segRow").style.display   = seg > 0 ? "flex" : "none";
+    const iva=parseFloat(document.getElementById("iva").value)||0;
+    const seg=parseFloat(document.getElementById("segundoImpuesto").value)||0;
+    const ivaA=sub*iva/100; const segA=sub*seg/100; const tot=sub+ivaA+segA;
+    document.getElementById("subtotal").textContent=fmtCurr(sub);
+    document.getElementById("ivaPercent").textContent=iva.toFixed(0);
+    document.getElementById("ivaAmount").textContent=fmtCurr(ivaA);
+    document.getElementById("segPercent").textContent=seg.toFixed(0);
+    document.getElementById("segAmount").textContent=fmtCurr(segA);
+    document.getElementById("total").textContent=fmtCurr(tot);
+    document.getElementById("segRow").style.display=seg>0?"flex":"none";
 }
-
-function attachItemListeners(row) {
-    row.querySelector(".item-cantidad").addEventListener("input", calcTotals);
-    row.querySelector(".item-precio").addEventListener("input", calcTotals);
+function attachItemListeners(row){
+    row.querySelector(".item-cantidad").addEventListener("input",calcTotals);
+    row.querySelector(".item-precio").addEventListener("input",calcTotals);
 }
 document.querySelectorAll(".item-row").forEach(attachItemListeners);
-document.getElementById("iva").addEventListener("input", calcTotals);
-document.getElementById("segundoImpuesto").addEventListener("input", calcTotals);
+document.getElementById("iva").addEventListener("input",calcTotals);
+document.getElementById("segundoImpuesto").addEventListener("input",calcTotals);
 calcTotals();
 
-// ============================================================
-// SUBMIT
-// ============================================================
-document.getElementById("contratoForm").addEventListener("submit", function(e) {
+// ── SUBMIT ─────────────────────────────────────────────────────
+document.getElementById("contratoForm").addEventListener("submit", function(e){
     e.preventDefault();
-    var notasHtml = notasQuill.root.innerHTML;
-    if (notasQuill.getText().trim() === "") notasHtml = "";
-    document.getElementById("notasHidden").value = notasHtml;
+    var notasHtml=notasQuill.root.innerHTML;
+    if(notasQuill.getText().trim()==="") notasHtml="";
+    document.getElementById("notasHidden").value=notasHtml;
 
-    const fd = new FormData(this);
-    fd.append("action", e.submitter.value);
+    // Si Kit Digital no está marcado, no enviar cláusulas KD
+    if(!document.getElementById("kitDigitalCheck").checked){
+        document.getElementById("clausulasKDHidden").value="";
+    }
 
-    let sub = 0;
-    document.querySelectorAll(".item-total").forEach(i => { sub += parseFloat(i.value) || 0; });
-    const iva = parseFloat(document.getElementById("iva").value) || 0;
-    const seg = parseFloat(document.getElementById("segundoImpuesto").value) || 0;
-    const tot = sub + sub*iva/100 + sub*seg/100;
-    fd.append("subtotal", sub.toFixed(2));
-    fd.append("total", tot.toFixed(2));
+    const fd=new FormData(this);
+    fd.append("action",e.submitter.value);
+    let sub=0;
+    document.querySelectorAll(".item-total").forEach(i=>{sub+=parseFloat(i.value)||0;});
+    const iva=parseFloat(document.getElementById("iva").value)||0;
+    const seg=parseFloat(document.getElementById("segundoImpuesto").value)||0;
+    const tot=sub+sub*iva/100+sub*seg/100;
+    fd.append("subtotal",sub.toFixed(2));
+    fd.append("total",tot.toFixed(2));
 
-    fetch("api.php", { method: "POST", body: fd })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                if (e.submitter.value === "guardar_pdf") window.open("api.php?action=pdf&id=" + data.id, "_blank");
-                setTimeout(() => window.location.href = "index.php", 500);
-            } else {
-                alert("Error: " + (data.message || "No se pudo guardar"));
-            }
+    fetch("api.php",{method:"POST",body:fd})
+        .then(r=>r.json())
+        .then(data=>{
+            if(data.success){
+                if(e.submitter.value==="guardar_pdf") window.open("api.php?action=pdf&id="+data.id,"_blank");
+                setTimeout(()=>window.location.href="index.php",500);
+            } else { alert("Error: "+(data.message||"No se pudo guardar")); }
         })
-        .catch(err => { console.error(err); alert("Error al guardar el contrato."); });
+        .catch(err=>{console.error(err);alert("Error al guardar el contrato.");});
 });
 </script>
 ';
