@@ -49,7 +49,18 @@
                 if ($login_user->user_type === "client") {
                     show_clients_of_this_client_contact($login_user);
                 }
+                
                 ?>
+                <?php if ($login_user->user_type == "staff") { ?>
+    <li class="nav-item" style="    display: flex;
+    align-items: center;">
+        <a class="nav-link" href="https://gestion-tictac-comunicacion.es/dashboard" target="_blank" title="Dashboard"
+           style="background: linear-gradient(135deg, #e91e8c, #c6120a); color: #fff !important; border-radius: 6px; padding: 5px 12px !important; margin: 0 6px; font-weight: 600; font-size: 13px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(233,30,140,0.35); transition: all 0.2s ease;">
+            <i data-feather="layout" class="icon" style="width:15px; height:15px;"></i>
+            <span>DASHBOARD</span>
+        </a>
+    </li>
+<?php } ?>
             </ul>
 
             <div class="d-flex w-auto">
