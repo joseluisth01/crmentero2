@@ -90,6 +90,7 @@ $additionalStyles = '
     .btn-edit   { background:#007bff;color:white; } .btn-edit:hover   { background:#0056b3; }
     .btn-pdf    { background:#dc3545;color:white; } .btn-pdf:hover    { background:#c82333; }
     .btn-email  { background:#28a745;color:white; } .btn-email:hover  { background:#218838; }
+    .btn-sepa   { background:#17a2b8;color:white; } .btn-sepa:hover   { background:#138496; }
     .btn-delete { background:#6c757d;color:white; } .btn-delete:hover { background:#5a6268; }
     .empty-state { text-align:center;padding:60px 20px;color:#999; }
     @media(max-width:768px){ table{min-width:900px;} .filter-bar{flex-direction:column;} .filter-bar input,.filter-bar select{width:100%;} }
@@ -190,6 +191,10 @@ include '../includes/header.php';
                         $tipoBadge = '';
                         if ($tipo === 'kit_digital') $tipoBadge = '<span class="badge badge-tipo-kd">🇪🇺 Kit Digital</span>';
                         elseif ($tipo === 'sepa')     $tipoBadge = '<span class="badge badge-tipo-sepa">🏦 SEPA</span>';
+
+                        // URL SEPA pre-seleccionando cliente
+                        $clienteId = $contrato['cliente_id'] ?? '';
+                        $urlSepa   = 'sepa.php' . ($clienteId ? '?cliente_id=' . urlencode($clienteId) : '');
                     ?>
                         <tr
                             data-cliente="<?php echo htmlspecialchars($contrato['cliente_nombre'] ?? ''); ?>"
@@ -229,7 +234,8 @@ include '../includes/header.php';
                                 <div class="actions">
                                     <a href="editor.php?id=<?php echo $contrato['id']; ?>" class="btn-action btn-edit" title="Editar">✏️</a>
                                     <a href="api.php?action=pdf&id=<?php echo $contrato['id']; ?>" class="btn-action btn-pdf" target="_blank" title="PDF">📄</a>
-                                    <button onclick="enviarEmail('<?php echo $contrato['id']; ?>')" class="btn-action btn-email" title="Email">📧</button>
+                                    <button onclick="enviarEmail('<?php echo $contrato['id']; ?>')" class="btn-action btn-email" title="Enviar por email">📧</button>
+                                    <a href="<?php echo htmlspecialchars($urlSepa); ?>" class="btn-action btn-sepa" title="Generar SEPA para este cliente">🏦</a>
                                     <button onclick="eliminar('<?php echo $contrato['id']; ?>')" class="btn-action btn-delete" title="Eliminar">🗑️</button>
                                 </div>
                             </td>

@@ -3,13 +3,6 @@
 /**
  * API Backend - Contratos
  * Compatible PHP 7.0+ / PHP 8.x
- *
- * FIX sincronizarConCRM: usa campos reales de crm_contracts
- *   (contract_date, valid_until, note, content, public_key, etc.)
- *   El INSERT anterior usaba date_start/date_end/description que NO existen.
- *
- * FIX eliminarContrato: al eliminar del dashboard marca deleted=1
- *   en crm_contracts si el contrato tiene crm_contract_id.
  */
 
 error_reporting(E_ALL);
@@ -18,7 +11,6 @@ ini_set('log_errors', 1);
 
 require_once '../config.php';
 
-// ── Cargar TCPDF UNA SOLA VEZ al inicio ──────────────────────────
 $_tcpdfPath = BASE_PATH . '/tcpdf/tcpdf.php';
 if (file_exists($_tcpdfPath)) {
     require_once $_tcpdfPath;
@@ -26,10 +18,6 @@ if (file_exists($_tcpdfPath)) {
 } else {
     define('TCPDF_LOADED', false);
 }
-
-// ==============================================================
-// CLASE PDF — debe estar DESPUÉS de require_once tcpdf.php
-// ==============================================================
 
 class ContratoTictacPDF extends TCPDF
 {
@@ -107,6 +95,14 @@ switch ($action) {
         break;
     case 'email':
         enviarEmail($contratosFile);
+        break;
+    case 'sepa_pdf':
+    case 'sepa_email':
+        if (!TCPDF_LOADED) {
+            die('Error: TCPDF no instalado en ' . $_tcpdfPath);
+        }
+        $soloEmail = ($action === 'sepa_email');
+        generarSepaPDF($soloEmail);
         break;
     default:
         http_response_code(400);
@@ -194,6 +190,7 @@ function guardarContrato($contratosFile)
         'iva'               => floatval(isset($_POST['iva'])              ? $_POST['iva']              : 21),
         'segundo_impuesto'  => floatval(isset($_POST['segundo_impuesto']) ? $_POST['segundo_impuesto'] : 0),
         'subtotal'          => floatval(isset($_POST['subtotal'])         ? $_POST['subtotal']         : 0),
+        'descuento_global'  => floatval(isset($_POST['descuento_global'])  ? $_POST['descuento_global']  : 0),
         'total'             => floatval(isset($_POST['total'])            ? $_POST['total']            : 0),
         'notas'             => isset($_POST['notas'])             ? (string)$_POST['notas']             : '',
         'clausulas_html'             => isset($_POST['clausulas_html'])             ? (string)$_POST['clausulas_html']             : '',
@@ -204,7 +201,6 @@ function guardarContrato($contratosFile)
         'fecha_modificacion' => date('Y-m-d H:i:s')
     );
 
-    // Sincronizar con CRM (no bloquea si falla)
     $crmResult = array('success' => false);
     if (!empty($contrato['cliente_id'])) {
         try {
@@ -214,7 +210,6 @@ function guardarContrato($contratosFile)
         }
     }
 
-    // Actualizar o insertar en el array
     $encontrado = false;
     foreach ($contratos as $key => $c) {
         if (isset($c['id']) && $c['id'] === $id) {
@@ -229,7 +224,6 @@ function guardarContrato($contratosFile)
         $contratos[] = $contrato;
     }
 
-    // Guardar crm_contract_id si se creó
     if (!empty($crmResult['success']) && isset($crmResult['contract_id'])) {
         foreach ($contratos as $key => $c) {
             if (isset($c['id']) && $c['id'] === $id) {
@@ -266,16 +260,7 @@ function guardarContrato($contratosFile)
 }
 
 // ==============================================================
-// SINCRONIZAR CON CRM — VERSIÓN CORREGIDA
-//
-// Campos reales de crm_contracts (según DESCRIBE):
-//   id, title, client_id, project_id, contract_date, valid_until,
-//   note, last_email_sent_date, status, tax_id, tax_id2,
-//   discount_type, discount_amount, discount_amount_type,
-//   content, public_key, accepted_by, staff_signed_by,
-//   meta_data, files, company_id, deleted
-//
-// NOTA: los campos date_start, date_end, description NO EXISTEN.
+// SINCRONIZAR CON CRM
 // ==============================================================
 
 function sincronizarConCRM($contrato, $contratos, $id)
@@ -283,7 +268,6 @@ function sincronizarConCRM($contrato, $contratos, $id)
     $mysqli = conexionBBDD();
     if (!$mysqli) return array('success' => false, 'message' => 'Sin conexion a BBDD');
 
-    // Buscar crm_contract_id existente
     $crmId = null;
     foreach ($contratos as $c) {
         if (isset($c['id']) && $c['id'] === $id && !empty($c['crm_contract_id'])) {
@@ -298,7 +282,6 @@ function sincronizarConCRM($contrato, $contratos, $id)
     $valid_until   = !empty($contrato['valido_hasta']) ? $contrato['valido_hasta'] : date('Y-m-d', strtotime('+1 year'));
     $note          = $mysqli->real_escape_string(pdf_text_plain($contrato['notas'] ?? ''));
 
-    // Construir content HTML con tabla de items (se almacena en el campo content del CRM)
     $contentHtml  = '<meta charset="UTF-8">';
     $contentHtml .= '<p><strong>Referencia dashboard:</strong> ' . htmlspecialchars($contrato['id'] ?? '') . '</p>';
     $contentHtml .= '<p><strong>Cliente:</strong> ' . htmlspecialchars($contrato['cliente_nombre'] ?? '') . '</p>';
@@ -321,7 +304,6 @@ function sincronizarConCRM($contrato, $contratos, $id)
     $content = $mysqli->real_escape_string($contentHtml);
 
     if ($crmId) {
-        // ── ACTUALIZAR ────────────────────────────────────────────
         $sql = "UPDATE crm_contracts SET
                     title         = '$title',
                     client_id     = $client_id,
@@ -332,12 +314,10 @@ function sincronizarConCRM($contrato, $contratos, $id)
                 WHERE id = $crmId AND deleted = 0";
 
         if ($mysqli->query($sql)) {
-            error_log("CRM contratos: actualizado ID $crmId");
             return array('success' => true, 'contract_id' => $crmId, 'action' => 'updated');
         }
         return array('success' => false, 'message' => 'Error UPDATE: ' . $mysqli->error);
     } else {
-        // ── INSERTAR — todos los campos NOT NULL cubiertos ────────
         $public_key = substr(md5(uniqid(rand(), true)), 0, 10);
 
         $sql = "INSERT INTO crm_contracts
@@ -355,7 +335,6 @@ function sincronizarConCRM($contrato, $contratos, $id)
 
         if ($mysqli->query($sql)) {
             $newId = $mysqli->insert_id;
-            error_log("CRM contratos: creado ID $newId");
             return array('success' => true, 'contract_id' => $newId, 'action' => 'created');
         }
         return array('success' => false, 'message' => 'Error INSERT: ' . $mysqli->error);
@@ -364,7 +343,6 @@ function sincronizarConCRM($contrato, $contratos, $id)
 
 // ==============================================================
 // ELIMINAR CONTRATO
-// Marca deleted=1 en crm_contracts si existe crm_contract_id
 // ==============================================================
 
 function eliminarContrato($contratosFile)
@@ -379,7 +357,6 @@ function eliminarContrato($contratosFile)
         $contratos = json_decode(file_get_contents($contratosFile), true);
         if (!is_array($contratos)) $contratos = array();
 
-        // Buscar el contrato para obtener crm_contract_id antes de eliminarlo
         $contratoEliminar = null;
         foreach ($contratos as $c) {
             if (isset($c['id']) && $c['id'] === $id) {
@@ -388,15 +365,12 @@ function eliminarContrato($contratosFile)
             }
         }
 
-        // Marcar deleted=1 en CRM si procede
         if ($contratoEliminar && !empty($contratoEliminar['crm_contract_id'])) {
             $crmId = intval($contratoEliminar['crm_contract_id']);
             $mysqli = conexionBBDD();
             if ($mysqli) {
                 $mysqli->query("UPDATE crm_contracts SET deleted = 1 WHERE id = $crmId");
                 $mysqli->close();
-                error_log("CRM contratos: deleted=1 en ID $crmId (eliminado desde dashboard)");
-
                 guardarAuditoria(
                     'contrato_eliminado',
                     'exitoso',
@@ -413,7 +387,6 @@ function eliminarContrato($contratosFile)
             );
         }
 
-        // Eliminar del JSON
         $nuevos = array();
         foreach ($contratos as $c) {
             if (isset($c['id']) && $c['id'] !== $id) $nuevos[] = $c;
@@ -426,7 +399,7 @@ function eliminarContrato($contratosFile)
 }
 
 // ==============================================================
-// HELPER: dibujar tabla de items con altura dinámica
+// HELPER: dibujar tabla de items
 // ==============================================================
 
 function dibujarTablaItems($pdf, $items, $stX, $cArt, $cCant, $cTar, $cTot, $tW)
@@ -461,6 +434,10 @@ function dibujarTablaItems($pdf, $items, $stX, $cArt, $cCant, $cTar, $cTot, $tW)
         }
         if ($rowH < 7) $rowH = 7;
 
+        // Calcular descuento aquí para ajustar rowH antes del salto de página
+        $precOrig_pre = floatval(isset($item['precio_original']) ? $item['precio_original'] : 0);
+        if ($precOrig_pre > 0 && $precOrig_pre > floatval($item['precio'] ?? 0)) $rowH = max($rowH, 12);
+
         if (($pdf->GetY() + $rowH) > $pdf->getPageHeight() - 42) {
             $pdf->AddPage();
             $pdf->SetFillColor(30, 30, 30);
@@ -482,15 +459,47 @@ function dibujarTablaItems($pdf, $items, $stX, $cArt, $cCant, $cTar, $cTot, $tW)
             $pdf->Rect($stX, $rowY, $tW, $rowH, 'F');
         }
 
+        $precOrig    = floatval(isset($item['precio_original']) ? $item['precio_original'] : 0);
+        $hayDescuento = ($precOrig > 0 && $precOrig > $prec);
+
+        // Si hay precio original, la fila necesita espacio extra para la línea tachada
+        if ($hayDescuento) $rowH = max($rowH, 12);
+
         $pdf->SetXY($stX + 2, $rowY + 1);
         $pdf->SetFont('Helvetica', 'B', 8.5);
         $pdf->Cell($cArt - 2, 5, $nom, 0, 0, 'L');
 
         $pdf->SetFont('Helvetica', '', 8.5);
         $pdf->Cell($cCant, 5, number_format($cant, 2, ',', '.') . ($uni ? ' ' . $uni : ''), 0, 0, 'C');
-        $pdf->Cell($cTar,  5, number_format($prec, 2, ',', '.') . 'E', 0, 0, 'R');
+
+        if ($hayDescuento) {
+            // Precio original tachado (gris, pequeño) — encima
+            $tarifaX = $stX + $cArt + $cCant;
+            $pdf->SetFont('Helvetica', '', 7);
+            $pdf->SetTextColor(160, 160, 160);
+            $origTxt = number_format($precOrig, 2, ',', '.') . 'E';
+            $tw = $pdf->GetStringWidth($origTxt);
+            $tx = $stX + $cArt + $cCant + $cTar - $tw - 1;
+            $ty = $rowY + 0.5;
+            $pdf->SetXY($tx, $ty);
+            $pdf->Cell($tw, 4, $origTxt, 0, 0, 'L');
+            // línea tachado
+            $pdf->SetDrawColor(160, 160, 160);
+            $pdf->SetLineWidth(0.3);
+            $pdf->Line($tx, $ty + 2.2, $tx + $tw, $ty + 2.2);
+            $pdf->SetLineWidth(0.2);
+            // Precio rebajado en rosa debajo
+            $pdf->SetFont('Helvetica', 'B', 8.5);
+            $pdf->SetTextColor(233, 30, 140);
+            $pdf->SetXY($tarifaX, $rowY + 5);
+            $pdf->Cell($cTar, 5, number_format($prec, 2, ',', '.') . 'E', 0, 0, 'R');
+            $pdf->SetTextColor(51, 51, 51);
+        } else {
+            $pdf->Cell($cTar, 5, number_format($prec, 2, ',', '.') . 'E', 0, 0, 'R');
+        }
 
         $pdf->SetFont('Helvetica', 'B', 8.5);
+        $pdf->SetTextColor(51, 51, 51);
         $pdf->Cell($cTot - 2, 5, number_format($iTotal, 2, ',', '.') . 'E', 0, 1, 'R');
 
         if ($desc !== '') {
@@ -511,10 +520,10 @@ function dibujarTablaItems($pdf, $items, $stX, $cArt, $cCant, $cTar, $cTot, $tW)
 }
 
 // ==============================================================
-// HELPER: dibujar totales de tabla
+// HELPER: dibujar totales
 // ==============================================================
 
-function dibujarTotalesTabla($pdf, $stX, $tW, $cTot, $subtotal, $iva, $ivaAmt, $seg, $segAmt, $totalFinal)
+function dibujarTotalesTabla($pdf, $stX, $tW, $cTot, $subtotal, $iva, $ivaAmt, $seg, $segAmt, $totalFinal, $items = array(), $descuentoGlobal = 0)
 {
     $lW = 40;
     $vW = 28;
@@ -539,6 +548,62 @@ function dibujarTotalesTabla($pdf, $stX, $tW, $cTot, $subtotal, $iva, $ivaAmt, $
         $pdf->Cell($lW, 5, 'Impuesto 2 (' . $seg . '%)', 0, 0, 'R');
         $pdf->SetFont('Helvetica', 'B', 9);
         $pdf->Cell($vW, 5, number_format($segAmt, 2, ',', '.') . 'E', 0, 1, 'R');
+    }
+
+    // Descuento global en €
+    if ($descuentoGlobal > 0) {
+        $pdf->SetX($rightEnd - $lW - $vW);
+        $pdf->SetFont('Helvetica', '', 9);
+        $pdf->SetTextColor(233, 30, 140);
+        $pdf->Cell($lW, 5, 'Descuento', 0, 0, 'R');
+        $pdf->SetFont('Helvetica', 'B', 9);
+        $pdf->Cell($vW, 5, '-' . number_format($descuentoGlobal, 2, ',', '.') . 'E', 0, 1, 'R');
+        $pdf->SetTextColor(51, 51, 51);
+    }
+
+    // Calcular ahorro total si hay descuentos en ítems
+    $subtotalSinDescuento = 0;
+    $hayAlgunDescuento = false;
+    if (!empty($items)) {
+        foreach ($items as $it) {
+            $cant = floatval($it['cantidad'] ?? 1);
+            $prec = floatval($it['precio'] ?? 0);
+            $orig = floatval($it['precio_original'] ?? 0);
+            if ($orig > 0 && $orig > $prec) {
+                $subtotalSinDescuento += $cant * $orig;
+                $hayAlgunDescuento = true;
+            } else {
+                $subtotalSinDescuento += $cant * $prec;
+            }
+        }
+    }
+
+    if ($hayAlgunDescuento) {
+        $totalSinDesc = $subtotalSinDescuento + ($subtotalSinDescuento * $iva / 100) + ($subtotalSinDescuento * $seg / 100);
+        $ahorro = $totalSinDesc - $totalFinal;
+        // Línea precio sin descuento tachada
+        $pdf->SetX($rightEnd - $lW - $vW);
+        $pdf->SetFont('Helvetica', '', 8);
+        $pdf->SetTextColor(160, 160, 160);
+        $pdf->Cell($lW, 5, 'Sin descuento', 0, 0, 'R');
+        $xVal = $rightEnd - $vW;
+        $yVal = $pdf->GetY();
+        $pdf->SetX($xVal);
+        $origTxt = number_format($totalSinDesc, 2, ',', '.') . 'E';
+        $pdf->Cell($vW - 1, 5, $origTxt, 0, 1, 'R');
+        // Línea de tachado
+        $tw = $pdf->GetStringWidth($origTxt);
+        $pdf->SetDrawColor(160, 160, 160);
+        $pdf->SetLineWidth(0.4);
+        $pdf->Line($xVal + $vW - 1 - $tw - 1, $yVal + 3, $xVal + $vW - 1, $yVal + 3);
+        $pdf->SetLineWidth(0.2);
+        // Línea ahorro en verde
+        $pdf->SetX($rightEnd - $lW - $vW);
+        $pdf->SetFont('Helvetica', 'B', 8.5);
+        $pdf->SetTextColor(39, 174, 96);
+        $pdf->Cell($lW, 5, 'Ahorro', 0, 0, 'R');
+        $pdf->Cell($vW, 5, '-' . number_format($ahorro, 2, ',', '.') . 'E', 0, 1, 'R');
+        $pdf->SetTextColor(51, 51, 51);
     }
 
     $pdf->Ln(1);
@@ -595,12 +660,13 @@ function generarPDF($contratosFile)
     $contractToInfo = implode("\n", $toLines);
 
     $items      = isset($contrato['items']) && is_array($contrato['items']) ? $contrato['items'] : array();
-    $subtotal   = floatval(isset($contrato['subtotal']) ? $contrato['subtotal'] : 0);
-    $iva        = floatval(isset($contrato['iva'])      ? $contrato['iva']      : 21);
-    $seg        = floatval(isset($contrato['segundo_impuesto']) ? $contrato['segundo_impuesto'] : 0);
-    $ivaAmt     = $subtotal * $iva / 100;
-    $segAmt     = $subtotal * $seg / 100;
-    $totalFinal = floatval(isset($contrato['total']) ? $contrato['total'] : ($subtotal + $ivaAmt + $segAmt));
+    $subtotal      = floatval(isset($contrato['subtotal'])        ? $contrato['subtotal']        : 0);
+    $iva           = floatval(isset($contrato['iva'])             ? $contrato['iva']             : 21);
+    $seg           = floatval(isset($contrato['segundo_impuesto'])? $contrato['segundo_impuesto']: 0);
+    $descuentoGlob = floatval(isset($contrato['descuento_global'])? $contrato['descuento_global']: 0);
+    $ivaAmt        = $subtotal * $iva / 100;
+    $segAmt        = $subtotal * $seg / 100;
+    $totalFinal    = floatval(isset($contrato['total']) ? $contrato['total'] : max(0, $subtotal + $ivaAmt + $segAmt - $descuentoGlob));
     $notasTexto = tiene_contenido(isset($contrato['notas']) ? $contrato['notas'] : '') ? pdf_text_plain($contrato['notas']) : '';
 
     $cArt  = 70;
@@ -688,7 +754,7 @@ function generarPDF($contratosFile)
         $pdf->Ln(3);
     };
 
-    // Cabecera del contrato
+    // ── Cabecera del contrato ──────────────────────────────────
     $pdf->SetFillColor(30, 30, 30);
     $pdf->RoundedRect(20, $pdf->GetY(), $cW, 16, 3, '1111', 'F');
     $pdf->SetTextColor(255, 255, 255);
@@ -789,9 +855,19 @@ function generarPDF($contratosFile)
     $pdf->SetTextColor(51, 51, 51);
     $pdf->Ln(3);
 
+    // ==============================================================
+    // DECISIÓN: qué cláusulas mostrar
+    // 1) Si hay cláusulas personalizadas en el editor → esas
+    // 2) Si es Kit Digital y no hay personalizadas → cláusulas Kit Digital
+    // 3) Si es contrato normal → cláusulas estándar
+    // ==============================================================
+
     $clausulasPersonalizadas = isset($contrato['clausulas_html']) && trim(strip_tags($contrato['clausulas_html'])) !== '';
+    $esKitDigital            = !empty($contrato['kit_digital']);
 
     if ($clausulasPersonalizadas) {
+
+        // ── CLÁUSULAS PERSONALIZADAS (editor WYSIWYG) ──────────────
         $html = $contrato['clausulas_html'];
         $html = str_replace(["\r\n", "\r"], "\n", $html);
         $html = preg_replace('/<\/h[1-6]>/i', "</h_>\n", $html);
@@ -809,10 +885,9 @@ function generarPDF($contratosFile)
             $rawTextClean = html_entity_decode(strip_tags($block), ENT_QUOTES, 'UTF-8');
             $rawTextClean = trim($rawTextClean);
 
-            // Insertar tabla al llegar al punto 4.
             if (!$tablaInsertada && preg_match('/^4\.\s+/i', $rawTextClean)) {
                 dibujarTablaItems($pdf, $items, $stX, $cArt, $cCant, $cTar, $cTot, $tW);
-                dibujarTotalesTabla($pdf, $stX, $tW, $cTot, $subtotal, $iva, $ivaAmt, $seg, $segAmt, $totalFinal);
+                dibujarTotalesTabla($pdf, $stX, $tW, $cTot, $subtotal, $iva, $ivaAmt, $seg, $segAmt, $totalFinal, $items, $descuentoGlob);
                 $tablaInsertada = true;
             }
 
@@ -858,17 +933,14 @@ function generarPDF($contratosFile)
 
                 foreach ($boldMatches[0] as $idx => $match) {
                     $matchStart = $match[1];
-
                     if ($matchStart > $pos) {
                         $before = html_entity_decode(strip_tags(substr($fullText, $pos, $matchStart - $pos)), ENT_QUOTES, 'UTF-8');
                         $before = preg_replace('/[ \t]+/', ' ', str_replace("\xC2\xA0", ' ', $before));
                         if (trim($before) !== '') $segs[] = array('text' => $before, 'bold' => false);
                     }
-
                     $boldText = html_entity_decode(strip_tags($boldMatches[2][$idx][0]), ENT_QUOTES, 'UTF-8');
                     $boldText = preg_replace('/[ \t]+/', ' ', str_replace("\xC2\xA0", ' ', $boldText));
                     if (trim($boldText) !== '') $segs[] = array('text' => $boldText, 'bold' => true);
-
                     $pos = $matchStart + strlen($match[0]);
                 }
 
@@ -899,77 +971,217 @@ function generarPDF($contratosFile)
             }
         }
         $pdf->Ln(2);
-    } else {
+
+    } elseif ($esKitDigital) {
+
+        // ── CLÁUSULAS KIT DIGITAL ──────────────────────────────────
+        // Basadas en el contrato #222 (Mascobeauty) — cláusulas completas Kit Digital
+
         $sTitle('1. OBJETO');
-        $bodyBlocks("El objeto del Contrato consiste en la prestación de servicios por parte del Proveedor a cambio del pago de un precio por parte del Cliente, en los términos establecidos en el mismo.\n\nLas solicitudes de modificación del contrato se harán siempre por escrito, remitido por correo ordinario o electrónico hola@tictac-comunicacion.es. Se ejecutarán siempre que sea posible y el cliente deberá asumir los costes en los que el Proveedor haya incurrido, tras dicha modificación del contrato.\n\nEl Cliente acepta que el Proveedor pueda publicar su imagen corporativa, nombre comercial y sitio web dentro de \"casos de éxito\" o \"sección clientes\" de la web de Tic Tac Comunicación (www.tictac-comunicacion.es), así como la firma de la Empresa Tic Tac Comunicación en Footer (Pie de Página de la web del Cliente).");
+        $bodyBlocks("El objeto del Contrato consiste en la prestacion de servicios por parte del Proveedor a cambio del pago de un precio por parte del Cliente, en los terminos establecidos en el mismo.\n\nLas solicitudes de modificacion del contrato se haran siempre por escrito, remitido por correo ordinario o electronico hola@tictac-comunicacion.es. Se ejecutaran siempre que sea posible y el cliente debera asumir los costes en los que el Proveedor haya incurrido, tras dicha modificacion del contrato.\n\nEl Cliente acepta que el Proveedor pueda publicar su imagen corporativa, nombre comercial y sitio web dentro de \"casos de exito\" o \"seccion clientes\" de la web de Tic Tac Comunicacion (www.tictac-comunicacion.es), asi como la firma de la Empresa Tic Tac Comunicacion en Footer (Pie de Pagina de la web del Cliente).");
         $divider();
 
         $sTitle('2. SERVICIOS DEL PROVEEDOR');
-        $subClause('2.1.', "Los Servicios del proyecto vendrán descritos en la hoja de encargo adjunta que deberá ser firmada por el cliente y por la empresa que provee el servicio.\n\nEn relación al diseño web, si el cliente ha contratado este servicio y procede, el Proveedor presentará al cliente hasta 3 bocetos en soporte físico o digital, con el objeto de definir el diseño de forma y apariencia genérica y de estructura general del Proyecto y/o sus piezas accesorias si las hubiese.\n\nEl Cliente ha de firmar el Boceto escogido, todos los cambios a partir del momento de la firma, conllevarán costos adicionales.");
-        $subClause('2.1.1.', 'Realización de material especial tal como: tipografía no convencional, caligrafía, mapas, diagramas, gráficos, vectores o fotomontajes.');
-        $subClause('2.1.2.', 'Preparación de material existente para su reproducción tales como: redibujo parcial o total, conversión a líneas, escaneado y retoque de imágenes, tipeados, etc.');
-        $subClause('2.1.3.', 'Seguimiento de la producción.');
-        $subClause('2.1.4.', "Recuperación de información, siempre que técnicamente sea posible.\n\nTodas estas actuaciones se realizarán siempre dentro de horas hábiles de trabajo, según el calendario laboral del Proveedor. El horario de trabajo de los técnicos del Proveedor será de lunes a viernes de 9:00 a 17:00, salvo en los meses de Julio y agosto que será de 9:00 a 15:00.\n\nEl Proveedor facilitará los teléfonos y direcciones de correo electrónico necesarias para el reporte de las incidencias.");
-        $subClause('2.1.5.', 'La corrección de errores imputables a la manipulación a través de los Programas de gestión de contenidos por personal no autorizado expresamente por el Proveedor.');
-        $subClause('2.1.6.', 'Las tareas necesarias para restablecer la situación anterior derivada de operaciones incorrectas por parte del Cliente (o de sus dependientes o colaboradores) que ocasionen pérdidas de información, destrucción o desorganización de ficheros, y situaciones análogas.');
-        $subClause('2.1.7.', 'La reparación de daños causados por virus o defectos de otros programas no relacionados en el Contrato, o en anexo posterior.');
-        $subClause('2.1.8.', 'La reparación de daños y malfuncionamientos o el aumento de duración de los Servicios causados por accidentes, uso indebido, catástrofes, abusos, alteraciones, conexiones, sustitución de elementos o software no suministrado y/o recomendado por el Proveedor, o el empleo de los Equipos para trabajos distintos de los que fueron diseñados.');
+        $bodyBlocks("2.1. Los Servicios del proyecto vendran descritos en la hoja de encargo adjunta que debera ser firmada por el cliente y por la empresa que provee el servicio.");
         $divider();
 
-        $sTitle('3. VALORACIÓN DE LOS SERVICIOS, FACTURACIÓN, FORMA DE PAGO, IMPUESTOS Y GASTOS');
-        $bodyBlocks("3.1. La valoración económica será actualizada anualmente por el Proveedor, en función de las nuevas tarifas que el Proveedor establezca.\n\n3.2. El precio de los Servicios será abonado por el Cliente al Proveedor en el momento de la formalización del Contrato, con carácter previo al inicio de la prestación de los Servicios, mediante transferencia a la cuenta número que el proveedor designe para tal efecto.\n\n3.3. El precio expresado a continuación contienen los impuestos indirectos desglosados a la fecha de la firma actual:");
+        $sTitle('3. VALORACION DE LOS SERVICIOS, FACTURACION, FORMA DE PAGO, IMPUESTOS Y GASTOS');
+        $bodyBlocks("3.1. La valoracion economica sera actualizada anualmente por el Proveedor, en funcion de las nuevas tarifas que el Proveedor establezca.\n\n3.2. El precio de los Servicios sera abonado por el Cliente al Proveedor en el momento de la formalizacion del Contrato, con caracter previo al inicio de la prestacion de los Servicios, mediante transferencia a la cuenta numero que el proveedor designe para tal efecto.\n\n3.3. El precio expresado a continuacion contienen los impuestos indirectos desglosados a la fecha de la firma actual. El precio de los productos o servicios contratados vendran desglosados a continuacion:");
         dibujarTablaItems($pdf, $items, $stX, $cArt, $cCant, $cTar, $cTot, $tW);
-        dibujarTotalesTabla($pdf, $stX, $tW, $cTot, $subtotal, $iva, $ivaAmt, $seg, $segAmt, $totalFinal);
-        $bodyBlocks("3.4. Se emitirá un cobro mensual en el siguiente número de cuenta bancaria facilitado por el Cliente.\n\n3.5. Cualquier revisión o adiciones a los servicios descritos en el contrato serán facturados como Servicios Adicionales no incluidos en el presupuesto estimado arriba especificado.\n\nTales servicios adicionales incluirán, pero no se limitarán a, cambios en la dimensión (cantidad) del trabajo, cambios en la complejidad de cualquier elemento involucrado en los Proyectos, y cualquier cambio efectuado después de la aprobación de cada etapa del diseño, documentación, etc.\n\nEl Proveedor deberá mantener informado al Cliente de los servicios adicionales requeridos y solicitará la aprobación del Cliente para aquellos servicios adicionales que afecten y excedan los honorarios estimados y reflejados anteriormente.");
+        dibujarTotalesTabla($pdf, $stX, $tW, $cTot, $subtotal, $iva, $ivaAmt, $seg, $segAmt, $totalFinal, $items, $descuentoGlob);
+        $bodyBlocks("3.4. Cronograma de pago de los servicios (de no especificarse otras condiciones particulares). Se emitira un cobro mensual en el siguiente numero de cuenta bancaria facilitado por el Cliente.\n\n3.5. Cualquier revision o adiciones a los servicios descritos en el contrato seran facturados como Servicios Adicionales no incluidos en el presupuesto estimado arriba especificado. Tales servicios adicionales incluiran, pero no se limitaran a, cambios en la dimension (cantidad) del trabajo, cambios en la complejidad de cualquier elemento involucrado en los Proyectos, y cualquier cambio efectuado despues de la aprobacion de cada etapa del diseno, documentacion, etc.\n\nEl Proveedor debera mantener informado al Cliente de los servicios adicionales requeridos y solicitara la aprobacion del Cliente para aquellos servicios adicionales que afecten y excedan los honorarios estimados y reflejados anteriormente.");
         $divider();
 
         $sTitle('4. RESPONSABILIDAD DEL CLIENTE');
-        $bodyBlocks("4.1. El Cliente proveerá información fehaciente y completa y materiales al Proveedor, y será responsable de la exactitud y completitud de toda la información y los materiales provistos.\n\nEl Cliente garantiza que todo material provisto al Proveedor no afecta los derechos de autor de terceros.\n\nEl Cliente indemnizará, defenderá y mantendrá fuera de todo litigio al Proveedor de y contra cualquier reclamo, juicio, daño y perjuicio, incluyendo los gastos de defensa, que surgieren de cualquier reclamo en relación con terceros cuyos derechos hayan sido o sean violados o infringidos debido al material provisto por el Cliente.\n\n4.2. El Cliente en caso haber realizado alguna modificación por su cuenta y por ello, haber desconfigurado la web, será el mismo Cliente quien responda por el costo del arreglo que le será presupuestado por el técnico del Proveedor.\n\n4.3. Todo texto e información aportado por el Cliente se entregará al Proveedor en formato digital, preparado para su inserción en los Proyectos. Cuando algún material fuere provisto por el Cliente en otro soporte, deberá ser de calidad profesional y dispuesto para su digitalización sin más preparación o alteración. Este proceso (escaneado, OCR, tipeado, etc.) será presupuestado como un servicio suplementario.");
+        $bodyBlocks("4.1. El Cliente proveera informacion fehaciente y completa y materiales al Proveedor, y sera responsable de la exactitud y completitud de toda la informacion y los materiales provistos.\n\nEl Cliente garantiza que todo material provisto al Proveedor no afecta los derechos de autor de terceros. El Cliente indemnizara, defendera y mantendra fuera de todo litigio al Proveedor de y contra cualquier reclamo, juicio, dano y perjuicio, incluyendo los gastos de defensa, que surgieren de cualquier reclamo en relacion con terceros cuyos derechos hayan sido o sean violados o infringidos debido al material provisto por el Cliente.\n\n4.3. Todo texto e informacion aportado por el Cliente se entregara al Proveedor en formato digital, preparado para su insercion en los Proyectos. Cuando algun material fuere provisto por el Cliente en otro soporte, tal como fotografias, ilustraciones u otro material visual, textos en papel, etc. debera ser de calidad profesional y dispuesto para su digitalizacion sin mas preparacion o alteracion. Este proceso (escaneado, OCR, tipeado, etc.) sera presupuestado como un servicio suplementario. El Cliente abonara todos los gastos que surgieren en relacion con los materiales entregados que no cumplan con tales estandares.");
         $divider();
 
         $sTitle('5. DERECHOS Y PROPIEDAD');
-        $bodyBlocks("5.1. Todos los servicios provistos por el Proveedor y aprobados bajo este contrato serán para uso exclusivo del Cliente más allá de su uso promocional propio del Proveedor.\n\n5.2. El Proveedor se compromete a almacenar los originales durante 6 meses a partir de la finalización del Proyecto. Una vez concluido dicho período, no garantizará su manutención.\n\n5.3. El Dominio (dirección web) pertenecerá al Cliente, siendo éste su propietario en todo momento, por lo que podrá ser solicitado en cualquier momento.\n\n5.4. Una vez finalizado el pago total del monto acordado, el Cliente, pasará a ser propietario de la Web.");
+        $bodyBlocks("5.1. Todos los servicios provistos por el Proveedor y aprobados bajo este contrato seran para uso exclusivo del Cliente mas alla de su uso promocional propio del Proveedor.");
         $divider();
 
-        $sTitle('6. DURACIÓN DEL CONTRATO');
-        $bodyBlocks("6.1. El Contrato tendrá una vigencia mínima de un (1) año, contada a partir de la fecha de la firma del presente Contrato.\n\n6.2. El Cliente podrá rescindir el presente Contrato, notificándoselo por escrito al Proveedor con al menos treinta (30) días de antelación a la fecha de vencimiento inicial, o, en su caso, de cualquiera de sus prórrogas.\n\nEn todo caso, la prórroga del Contrato no significará que se mantenga el mismo precio por los Servicios, sino que el precio será fijado anualmente por el Proveedor, según las tarifas que el mismo establezca para cada año, que se pondrán oportunamente en conocimiento del Cliente.");
+        $sTitle('6. DURACION DEL CONTRATO');
+        $bodyBlocks("6.1. El Contrato tendra una vigencia minima de un (1) ano, contada a partir de la fecha de la firma del presente Contrato.\n\n6.2. El Cliente podra rescindir el presente Contrato, notificandoselo por escrito al Proveedor con al menos treinta (30) dias de antelacion a la fecha de vencimiento inicial, o, en su caso, de cualquiera de sus prorrogas.\n\nEn todo caso, la prorroga del Contrato no significara que se mantenga el mismo precio por los Servicios, sino que el precio sera fijado anualmente por el Proveedor, segun las tarifas que el mismo establezca para cada ano, que se pondran oportunamente en conocimiento del Cliente.");
         $divider();
 
-        $sTitle('7. EXTINCIÓN DEL CONTRATO');
-        $bodyBlocks("7.1. El Contrato se extinguirá por las causas generales establecidas en la legislación vigente.\n\n7.2. En todo caso, la extinción del Contrato antes de la finalización del período inicial o de cualquiera de sus prórrogas, no dará lugar a devolución alguna del precio abonado al Proveedor.\n\n7.3. La no acreditación del pago del precio será causa automática de resolución del Contrato, sin perjuicio de la posible reclamación de daños y perjuicios y abono de intereses, que podrá ejercitar el Proveedor si lo estima conveniente.");
+        $sTitle('7. EXTINCION DEL CONTRATO');
+        $bodyBlocks("7.1. El Contrato se extinguira por las causas generales establecidas en la legislacion vigente.\n\n7.2. En todo caso, la extincion del Contrato antes de la finalizacion del periodo inicial o de cualquiera de sus prorrogas, no dara lugar a devolucion alguna del precio abonado al Proveedor.\n\n7.3. La no acreditacion del pago del precio sera causa automatica de resolucion del Contrato, sin perjuicio de la posible reclamacion de danos y perjuicios y abono de intereses, que podra ejercitar el Proveedor si lo estima conveniente.");
         $divider();
 
-        $sTitle('8. NATURALEZA DE LA RELACIÓN');
-        $bodyBlocks("8.1. El presente Contrato tiene carácter mercantil y se regirá por sus propias cláusulas, y en lo que en ellas no estuviere previsto, por las disposiciones del Código de Comercio, leyes especiales y usos mercantiles, y en su defecto, por el Código Civil.");
+        $sTitle('8. NATURALEZA DE LA RELACION');
+        $bodyBlocks("8.1. El presente Contrato tiene caracter mercantil y se regira por sus propias clausulas, y en lo que en ellas no estuviere previsto, por las disposiciones del Codigo de Comercio, leyes especiales y usos mercantiles, y en su defecto, por el Codigo Civil.");
         $divider();
 
-        $sTitle('9. PROTECCIÓN DE DATOS DE CARÁCTER PERSONAL');
-        $bodyBlocks("9.1. Debido a la naturaleza de los Servicios, el Proveedor puede tener que realizar tratamientos automatizados de ficheros del Cliente que contengan datos de carácter personal. En cualquier caso, será el Cliente quien decida sobre la finalidad, contenido y uso del tratamiento de los datos, limitándose el Proveedor a utilizar dichos datos, única y exclusivamente para los fines que figuran en el Contrato y siempre por cuenta del Cliente.\n\n9.2. El Cliente únicamente permitirá el acceso a datos de carácter personal al Proveedor cuando sea necesario para la ejecución del objeto del Contrato.\n\n9.3. El Cliente afirma y garantiza que los datos han sido recogidos de acuerdo a lo establecido en la LOPD, así como que cumple todas las obligaciones establecidas en la LOPD. El Proveedor se exonera de toda responsabilidad que pueda surgir en caso de reclamación por incumplimiento de lo anteriormente garantizado.");
+        $sTitle('9. PROTECCION DE DATOS DE CARACTER PERSONAL');
+        $bodyBlocks("9.1. Debido a la naturaleza de los Servicios, el Proveedor puede tener que realizar tratamientos automatizados de ficheros del Cliente que contengan datos de caracter personal. En cualquier caso, sera el Cliente quien decida sobre la finalidad, contenido y uso del tratamiento de los datos, limitandose el Proveedor a utilizar dichos datos, unica y exclusivamente para los fines que figuran en el Contrato y siempre por cuenta del Cliente.\n\n9.2. El Cliente unicamente permitira el acceso a datos de caracter personal al Proveedor cuando sea necesario para la ejecucion del objeto del Contrato.\n\n9.3. El Cliente afirma y garantiza que los datos han sido recogidos de acuerdo a lo establecido en la LOPD, asi como que cumple todas las obligaciones establecidas en la LOPD. El Proveedor se exonera de toda responsabilidad que pueda surgir en caso de reclamacion por incumplimiento de lo anteriormente garantizado. En caso de que se declare la responsabilidad del Proveedor mediante un procedimiento judicial, administrativo o arbitral, el Cliente queda obligado a indemnizar al Proveedor por los danos y perjuicios que se le causen.");
         $divider();
 
         $sTitle('10. CONFIDENCIALIDAD');
-        $bodyBlocks("10.1. El Proveedor considerará confidencial toda la información relacionada con los Servicios, y que obtenga durante la prestación de los mismos, salvo que dicha información le fuera conocida previamente o hubiera sido divulgada públicamente, bien con anterioridad a la realización de los trabajos, o posteriormente a ésta.");
+        $bodyBlocks("10.1. El Proveedor considerara confidencial toda la informacion relacionada con los Servicios, y que obtenga durante la prestacion de los mismos, salvo que dicha informacion le fuera conocida previamente o hubiera sido divulgada publicamente, bien con anterioridad a la realizacion de los trabajos, o posteriormente a esta.");
         $divider();
 
         $sTitle('11. RESPONSABILIDAD DEL PROVEEDOR');
-        $bodyBlocks("11.1. Salvo en los casos de culpa grave o dolo, la responsabilidad total del Proveedor en relación con el Contrato estará sujeta a las limitaciones siguientes:\n\n- La responsabilidad total que, por cualquier concepto, pueda ser obtenida del Proveedor por el Cliente en relación con los daños directos causados al Cliente a consecuencia de los actos u omisiones realizados por el Proveedor en el ámbito del Contrato no excederá, en su conjunto, de la cantidad correspondiente al precio abonado al Proveedor por el Cliente por los Servicios durante la última anualidad.\n\n- El Proveedor no será responsable, en ningún caso, de los daños que puedan ser calificados como daños indirectos, consecuenciales, pérdida de beneficio o de resultados previstos, negocio, ingresos, clientes, datos, imagen, reputación comercial en el mercado, así como de los derivados de su imposibilidad de prestar los Servicios por causas que estuvieran fuera de su control.");
+        $bodyBlocks("11.1. Salvo en los casos de culpa grave o dolo, la responsabilidad total del Proveedor en relacion con el Contrato estara sujeta a las limitaciones siguientes:\n\n- La responsabilidad total que, por cualquier concepto, pueda ser obtenida del Proveedor por el Cliente en relacion con los danos directos causados al Cliente a consecuencia de los actos u omisiones realizados por el Proveedor en el ambito del Contrato no excedara, en su conjunto, de la cantidad correspondiente al precio abonado al Proveedor por el Cliente por los Servicios durante la ultima anualidad.\n\n- El Proveedor no sera responsable, en ningun caso, de los danos que puedan ser calificados como danos indirectos, consecuenciales, perdida de beneficio o de resultados previstos, negocio, ingresos, clientes, datos, imagen, reputacion comercial en el mercado, asi como de los derivados de su imposibilidad de prestar los Servicios por causas que estuvieran fuera de su control, como, a modo de ejemplo, equipos descatalogados y rotura de existencias de proveedores.");
         $divider();
 
-        $sTitle('12. ACTUALIZACIÓN');
-        $bodyBlocks("12.1. En el caso de que alguna o algunas de las cláusulas del Contrato pasen a ser inválidas, ilegales o inejecutables en virtud de alguna norma jurídica, se considerarán ineficaces en la medida que corresponda, pero en lo demás, este Contrato conservará su validez.\n\n12.2. Para ese caso, las Partes acuerdan sustituir la cláusula o cláusulas afectadas por otra u otras que tengan los efectos económicos más semejantes a los de las sustituidas. CONTRATO ÚNICO");
+        $sTitle('12. ACTUALIZACION');
+        $bodyBlocks("12.1. En el caso de que alguna o algunas de las clausulas del Contrato pasen a ser invalidas, ilegales o inejecutables en virtud de alguna norma juridica, se consideraran ineficaces en la medida que corresponda, pero en lo demas, este Contrato conservara su validez.\n\n12.2. Para ese caso, las Partes acuerdan sustituir la clausula o clausulas afectadas por otra u otras que tengan los efectos economicos mas semejantes a los de las sustituidas. CONTRATO UNICO");
         $divider();
 
         $sTitle('13. NOTIFICACIONES Y REQUERIMIENTOS');
-        $bodyBlocks("13.1. Toda notificación o requerimiento que traiga su causa del Contrato se deberá remitir por escrito a la otra Parte, bien por E-mail, bien personalmente, o por mensajero o correo certificado con acuse de recibo a portes pagados a las personas y direcciones que aparecen en el apartado \"Reunidos\" del presente Contrato, que actuarán de interlocutores, a estos efectos, o a cualesquiera otras que, en su caso, se determinen y comuniquen en el futuro.");
+        $bodyBlocks("13.1. Toda notificacion o requerimiento que traiga su causa del Contrato se debera remitir por escrito a la otra Parte, bien por E-mail, bien personalmente, o por mensajero o correo certificado con acuse de recibo a portes pagados a las personas y direcciones que aparecen en el apartado \"Reunidos\" del presente Contrato, que actuaran de interlocutores, a estos efectos, o a cualesquiera otras que, en su caso, se determinen y comuniquen en el futuro.");
         $divider();
 
-        $sTitle('14. JURISDICCIÓN Y COMPETENCIA');
-        $bodyBlocks("14.1. Las Partes, con renuncia expresa a cualquier otro fuero que pudiera corresponderles, se someten para cuantos asuntos litigiosos pudieran derivarse en todo lo referente a la interpretación, aplicación o cumplimiento y ejecución del presente Contrato, a la jurisdicción y competencia de los Juzgados y Tribunales de Córdoba.\n\n14.2. Y para que así conste, y en prueba de conformidad y aceptación de todo cuanto antecede, las Partes firman el presente Contrato por duplicado ejemplar y a un sólo efecto en la fecha y lugar indicados en el encabezamiento");
+        $sTitle('14. JURISDICCION Y COMPETENCIA');
+        $bodyBlocks("14.1. Las Partes, con renuncia expresa a cualquier otro fuero que pudiera corresponderles, se someten para cuantos asuntos litigiosos pudieran derivarse en todo lo referente a la interpretacion, aplicacion o cumplimiento y ejecucion del presente Contrato, a la jurisdiccion y competencia de los Juzgados y Tribunales de Cordoba.\n\n14.2. Y para que asi conste, y en prueba de conformidad y aceptacion de todo cuanto antecede, las Partes firman el presente Contrato por duplicado ejemplar y a un solo efecto en la fecha y lugar indicados en el encabezamiento");
+        $divider();
+
+        // ── NOTAS ADHERIDAS (Kit Digital) ──────────────────────────
+        $pdf->Ln(2);
+        $notaKDY = $pdf->GetY();
+        $pdf->SetFillColor(255, 248, 225);
+        $pdf->SetDrawColor(255, 248, 225);
+        $pdf->RoundedRect(20, $notaKDY, $cW, 7, 2, '1111', 'F');
+        $pdf->SetXY(22, $notaKDY + 1.5);
+        $pdf->SetFont('Helvetica', 'B', 10);
+        $pdf->SetTextColor(100, 80, 0);
+        $pdf->Cell($cW - 4, 5, 'NOTAS ADHERIDAS AL CONTRATO: DETALLES FACTURACION', 0, 1, 'L');
+        $pdf->SetTextColor(51, 51, 51);
+        $pdf->Ln(2);
+
+        $detallesFacturacion = "Para la facturacion de la tarifa de los servicios establecidas en el presente contrato se emitira remesa bancaria, con caracter mensual de la parte proporcional del total del servicio entre los meses contratados, al numero de cuenta facilitado por el Cliente previa autorizacion mediante firma de documento SEPA.\n\n" .
+            "Para la parte proporcional correspondiente a la parte fija de la tarifa establecida para el servicio, las remesas bancarias se emitiran por anticipado a partir de los dias uno de cada mes, y de manera recurrente hasta la finalizacion del presente contrato.\n\n" .
+            "Para la parte correspondiente a la parte variable de la tarifa (3% comision por venta PVP, IVA incluido) establecida para el servicio, las remesas bancarias se emitiran a mes vencido a partir de los dias uno de cada mes, y de manera recurrente hasta la finalizacion del presente contrato.";
+
+        $pdf->SetX(22);
+        $pdf->SetFont('Helvetica', '', 8.5);
+        $pdf->MultiCell($cW - 4, 4.3, $detallesFacturacion, 0, 'J');
+        $pdf->Ln(6);
+
+        // ── BLOQUE KIT DIGITAL ─────────────────────────────────────
+        if (($pdf->GetY() + 20) > $pdf->getPageHeight() - 40) $pdf->AddPage();
+
+        $kdTitleY = $pdf->GetY();
+        $pdf->SetFillColor(255, 193, 7);
+        $pdf->RoundedRect(20, $kdTitleY, $cW, 8, 2, '1111', 'F');
+        $pdf->SetXY(22, $kdTitleY + 1.5);
+        $pdf->SetFont('Helvetica', 'B', 10);
+        $pdf->SetTextColor(51, 40, 0);
+        $pdf->Cell($cW - 4, 5, 'KIT DIGITAL', 0, 1, 'L');
+        $pdf->SetTextColor(51, 51, 51);
+        $pdf->Ln(3);
+
+        // Verificar si hay cláusulas KD personalizadas
+        $kdHtml = (isset($contrato['clausulas_kit_digital_html']) && trim(strip_tags($contrato['clausulas_kit_digital_html'])) !== '')
+            ? $contrato['clausulas_kit_digital_html']
+            : null;
+
+        if ($kdHtml) {
+            $kdText = pdf_text_plain($kdHtml);
+            $pdf->SetX(20);
+            $pdf->SetFont('Helvetica', '', 8.5);
+            $pdf->MultiCell($cW, 4.5, $kdText, 0, 'J');
+        } else {
+            // Cláusulas Kit Digital estándar completas (del contrato #222)
+            $pdf->SetX(20);
+            $pdf->SetFont('Helvetica', '', 8.5);
+            $pdf->MultiCell($cW, 4.3,
+                "El cliente es beneficiario de subvencion de Kit Digital de 2000 euros que se decrementara del precio de las correspondientes partidas o soluciones digitalizadoras. El cliente esta obligado a cumplir con las premisas tributarias que genera la subvencion durante el ano siguiente para mantener la subvencion y siempre segun la Orden TDF/435/2024, de 9 de mayo, por la que se modifica la Orden ETD/1498/2021, de 29 de diciembre, por la que se aprueban las bases reguladoras de la concesion de ayudas para la digitalizacion de pequenas empresas, microempresas y personas en situacion de autoempleo, en el marco de la Agenda Espana Digital 2025, el Plan de Digitalizacion PYMEs 2021-2025 y el Plan de Recuperacion, Transformacion y Resiliencia de Espana -Financiado por la Union Europea- Next Generation EU (Programa Kit Digital), publicada en Boletin Oficial del Estado a fecha 11 de Mayo de 2024.",
+                0, 'J');
+            $pdf->Ln(3);
+
+            $pdf->SetX(20);
+            $pdf->MultiCell($cW, 4.3,
+                "No seran subvencionables el Impuesto sobre el Valor Anadido que tendra que ser abonado por el beneficiario y cuya remesa se enviara durante los tres meses siguientes a la validacion del Acuerdo de Prestacion de Soluciones.",
+                0, 'J');
+            $pdf->Ln(3);
+
+            $pdf->SetX(20);
+            $pdf->MultiCell($cW, 4.3,
+                "En caso de ser desestimada la ayuda (Kit Digital) por cualquier motivo ajeno a Proyecto Tress Azafatas sera el cliente el que asuma el obligado cumplimento del pago del servicio prestado (2000 euros, IVA no incluido). La forma de pago se establece con emision de remesa bancaria previamente autorizada mediante firma de documento SEPA por parte del cliente.",
+                0, 'J');
+            $pdf->Ln(3);
+
+            $pdf->SetX(20);
+            $pdf->MultiCell($cW, 4.3,
+                "En el caso de que el cliente decida desistir de la ayuda dentro del plazo de los 12 meses establecidos por Kit Digital como prestacion del servicio, sera el cliente el que tenga el obligado cumplimiento de hacerse cargo de la cuantia de los trabajos realizados hasta dicho momento por el agente digitalizador, PROYECTO TRESS AZAFATAS en este caso. Se calculara la parte proporcional del total del servicio que ira desde el inicio del acuerdo de prestacion hasta la fecha de comunicacion de renuncia de la ayuda. Una vez el cliente haya abonado la citada cuantia de los trabajos realizados se procedera a la aceptacion de la renuncia por parte de PROYECTO TRESS AZAFATAS como agente digitalizador.",
+                0, 'J');
+        }
+        $pdf->Ln(8);
+
+    } else {
+
+        // ── CLÁUSULAS ESTÁNDAR NORMALES ────────────────────────────
+        $sTitle('1. OBJETO');
+        $bodyBlocks("El objeto del Contrato consiste en la prestacion de servicios por parte del Proveedor a cambio del pago de un precio por parte del Cliente, en los terminos establecidos en el mismo.\n\nLas solicitudes de modificacion del contrato se haran siempre por escrito, remitido por correo ordinario o electronico hola@tictac-comunicacion.es. Se ejecutaran siempre que sea posible y el cliente debera asumir los costes en los que el Proveedor haya incurrido, tras dicha modificacion del contrato.\n\nEl Cliente acepta que el Proveedor pueda publicar su imagen corporativa, nombre comercial y sitio web dentro de \"casos de exito\" o \"seccion clientes\" de la web de Tic Tac Comunicacion (www.tictac-comunicacion.es), asi como la firma de la Empresa Tic Tac Comunicacion en Footer (Pie de Pagina de la web del Cliente).");
+        $divider();
+
+        $sTitle('2. SERVICIOS DEL PROVEEDOR');
+        $subClause('2.1.', "Los Servicios del proyecto vendran descritos en la hoja de encargo adjunta que debera ser firmada por el cliente y por la empresa que provee el servicio.\n\nEn relacion al diseno web, si el cliente ha contratado este servicio y procede, el Proveedor presentara al cliente hasta 3 bocetos en soporte fisico o digital, con el objeto de definir el diseno de forma y apariencia generica y de estructura general del Proyecto y/o sus piezas accesorias si las hubiese.\n\nEl Cliente ha de firmar el Boceto escogido, todos los cambios a partir del momento de la firma, conllevaran costos adicionales.");
+        $subClause('2.1.1.', 'Realizacion de material especial tal como: tipografia no convencional, caligrafia, mapas, diagramas, graficos, vectores o fotomontajes.');
+        $subClause('2.1.2.', 'Preparacion de material existente para su reproduccion tales como: redibujo parcial o total, conversion a lineas, escaneado y retoque de imagenes, tipeados, etc.');
+        $subClause('2.1.3.', 'Seguimiento de la produccion.');
+        $subClause('2.1.4.', "Recuperacion de informacion, siempre que tecnicamente sea posible.\n\nTodas estas actuaciones se realizaran siempre dentro de horas habiles de trabajo, segun el calendario laboral del Proveedor. El horario de trabajo de los tecnicos del Proveedor sera de lunes a viernes de 9:00 a 17:00, salvo en los meses de Julio y agosto que sera de 9:00 a 15:00.\n\nEl Proveedor facilitara los telefonos y direcciones de correo electronico necesarias para el reporte de las incidencias.");
+        $subClause('2.1.5.', 'La correccion de errores imputables a la manipulacion a traves de los Programas de gestion de contenidos por personal no autorizado expresamente por el Proveedor.');
+        $subClause('2.1.6.', 'Las tareas necesarias para restablecer la situacion anterior derivada de operaciones incorrectas por parte del Cliente (o de sus dependientes o colaboradores) que ocasionen perdidas de informacion, destruccion o desorganizacion de ficheros, y situaciones analogas.');
+        $subClause('2.1.7.', 'La reparacion de danos causados por virus o defectos de otros programas no relacionados en el Contrato, o en anexo posterior.');
+        $subClause('2.1.8.', 'La reparacion de danos y malfuncionamientos o el aumento de duracion de los Servicios causados por accidentes, uso indebido, catastrofes, abusos, alteraciones, conexiones, sustitucion de elementos o software no suministrado y/o recomendado por el Proveedor, o el empleo de los Equipos para trabajos distintos de los que fueron disenados.');
+        $divider();
+
+        $sTitle('3. VALORACION DE LOS SERVICIOS, FACTURACION, FORMA DE PAGO, IMPUESTOS Y GASTOS');
+        $bodyBlocks("3.1. La valoracion economica sera actualizada anualmente por el Proveedor, en funcion de las nuevas tarifas que el Proveedor establezca.\n\n3.2. El precio de los Servicios sera abonado por el Cliente al Proveedor en el momento de la formalizacion del Contrato, con caracter previo al inicio de la prestacion de los Servicios, mediante transferencia a la cuenta numero que el proveedor designe para tal efecto.\n\n3.3. El precio expresado a continuacion contienen los impuestos indirectos desglosados a la fecha de la firma actual:");
+        dibujarTablaItems($pdf, $items, $stX, $cArt, $cCant, $cTar, $cTot, $tW);
+        dibujarTotalesTabla($pdf, $stX, $tW, $cTot, $subtotal, $iva, $ivaAmt, $seg, $segAmt, $totalFinal, $items, $descuentoGlob);
+        $bodyBlocks("3.4. Se emitira un cobro mensual en el siguiente numero de cuenta bancaria facilitado por el Cliente.\n\n3.5. Cualquier revision o adiciones a los servicios descritos en el contrato seran facturados como Servicios Adicionales no incluidos en el presupuesto estimado arriba especificado.\n\nTales servicios adicionales incluiran, pero no se limitaran a, cambios en la dimension (cantidad) del trabajo, cambios en la complejidad de cualquier elemento involucrado en los Proyectos, y cualquier cambio efectuado despues de la aprobacion de cada etapa del diseno, documentacion, etc.\n\nEl Proveedor debera mantener informado al Cliente de los servicios adicionales requeridos y solicitara la aprobacion del Cliente para aquellos servicios adicionales que afecten y excedan los honorarios estimados y reflejados anteriormente.");
+        $divider();
+
+        $sTitle('4. RESPONSABILIDAD DEL CLIENTE');
+        $bodyBlocks("4.1. El Cliente proveera informacion fehaciente y completa y materiales al Proveedor, y sera responsable de la exactitud y completitud de toda la informacion y los materiales provistos.\n\nEl Cliente garantiza que todo material provisto al Proveedor no afecta los derechos de autor de terceros.\n\nEl Cliente indemnizara, defendera y mantendra fuera de todo litigio al Proveedor de y contra cualquier reclamo, juicio, dano y perjuicio, incluyendo los gastos de defensa, que surgieren de cualquier reclamo en relacion con terceros cuyos derechos hayan sido o sean violados o infringidos debido al material provisto por el Cliente.\n\n4.2. El Cliente en caso haber realizado alguna modificacion por su cuenta y por ello, haber desconfigurado la web, sera el mismo Cliente quien responda por el costo del arreglo que le sera presupuestado por el tecnico del Proveedor.\n\n4.3. Todo texto e informacion aportado por el Cliente se entregara al Proveedor en formato digital, preparado para su insercion en los Proyectos. Cuando algun material fuere provisto por el Cliente en otro soporte, debera ser de calidad profesional y dispuesto para su digitalizacion sin mas preparacion o alteracion. Este proceso (escaneado, OCR, tipeado, etc.) sera presupuestado como un servicio suplementario.");
+        $divider();
+
+        $sTitle('5. DERECHOS Y PROPIEDAD');
+        $bodyBlocks("5.1. Todos los servicios provistos por el Proveedor y aprobados bajo este contrato seran para uso exclusivo del Cliente mas alla de su uso promocional propio del Proveedor.\n\n5.2. El Proveedor se compromete a almacenar los originales durante 6 meses a partir de la finalizacion del Proyecto. Una vez concluido dicho periodo, no garantizara su manutension.\n\n5.3. El Dominio (direccion web) pertenecera al Cliente, siendo este su propietario en todo momento, por lo que podra ser solicitado en cualquier momento.\n\n5.4. Una vez finalizado el pago total del monto acordado, el Cliente, pasara a ser propietario de la Web.");
+        $divider();
+
+        $sTitle('6. DURACION DEL CONTRATO');
+        $bodyBlocks("6.1. El Contrato tendra una vigencia minima de un (1) ano, contada a partir de la fecha de la firma del presente Contrato.\n\n6.2. El Cliente podra rescindir el presente Contrato, notificandoselo por escrito al Proveedor con al menos treinta (30) dias de antelacion a la fecha de vencimiento inicial, o, en su caso, de cualquiera de sus prorrogas.\n\nEn todo caso, la prorroga del Contrato no significara que se mantenga el mismo precio por los Servicios, sino que el precio sera fijado anualmente por el Proveedor, segun las tarifas que el mismo establezca para cada ano, que se pondran oportunamente en conocimiento del Cliente.");
+        $divider();
+
+        $sTitle('7. EXTINCION DEL CONTRATO');
+        $bodyBlocks("7.1. El Contrato se extinguira por las causas generales establecidas en la legislacion vigente.\n\n7.2. En todo caso, la extincion del Contrato antes de la finalizacion del periodo inicial o de cualquiera de sus prorrogas, no dara lugar a devolucion alguna del precio abonado al Proveedor.\n\n7.3. La no acreditacion del pago del precio sera causa automatica de resolucion del Contrato, sin perjuicio de la posible reclamacion de danos y perjuicios y abono de intereses, que podra ejercitar el Proveedor si lo estima conveniente.");
+        $divider();
+
+        $sTitle('8. NATURALEZA DE LA RELACION');
+        $bodyBlocks("8.1. El presente Contrato tiene caracter mercantil y se regira por sus propias clausulas, y en lo que en ellas no estuviere previsto, por las disposiciones del Codigo de Comercio, leyes especiales y usos mercantiles, y en su defecto, por el Codigo Civil.");
+        $divider();
+
+        $sTitle('9. PROTECCION DE DATOS DE CARACTER PERSONAL');
+        $bodyBlocks("9.1. Debido a la naturaleza de los Servicios, el Proveedor puede tener que realizar tratamientos automatizados de ficheros del Cliente que contengan datos de caracter personal. En cualquier caso, sera el Cliente quien decida sobre la finalidad, contenido y uso del tratamiento de los datos, limitandose el Proveedor a utilizar dichos datos, unica y exclusivamente para los fines que figuran en el Contrato y siempre por cuenta del Cliente.\n\n9.2. El Cliente unicamente permitira el acceso a datos de caracter personal al Proveedor cuando sea necesario para la ejecucion del objeto del Contrato.\n\n9.3. El Cliente afirma y garantiza que los datos han sido recogidos de acuerdo a lo establecido en la LOPD, asi como que cumple todas las obligaciones establecidas en la LOPD. El Proveedor se exonera de toda responsabilidad que pueda surgir en caso de reclamacion por incumplimiento de lo anteriormente garantizado.");
+        $divider();
+
+        $sTitle('10. CONFIDENCIALIDAD');
+        $bodyBlocks("10.1. El Proveedor considerara confidencial toda la informacion relacionada con los Servicios, y que obtenga durante la prestacion de los mismos, salvo que dicha informacion le fuera conocida previamente o hubiera sido divulgada publicamente, bien con anterioridad a la realizacion de los trabajos, o posteriormente a esta.");
+        $divider();
+
+        $sTitle('11. RESPONSABILIDAD DEL PROVEEDOR');
+        $bodyBlocks("11.1. Salvo en los casos de culpa grave o dolo, la responsabilidad total del Proveedor en relacion con el Contrato estara sujeta a las limitaciones siguientes:\n\n- La responsabilidad total que, por cualquier concepto, pueda ser obtenida del Proveedor por el Cliente en relacion con los danos directos causados al Cliente a consecuencia de los actos u omisiones realizados por el Proveedor en el ambito del Contrato no excedara, en su conjunto, de la cantidad correspondiente al precio abonado al Proveedor por el Cliente por los Servicios durante la ultima anualidad.\n\n- El Proveedor no sera responsable, en ningun caso, de los danos que puedan ser calificados como danos indirectos, consecuenciales, perdida de beneficio o de resultados previstos, negocio, ingresos, clientes, datos, imagen, reputacion comercial en el mercado, asi como de los derivados de su imposibilidad de prestar los Servicios por causas que estuvieran fuera de su control.");
+        $divider();
+
+        $sTitle('12. ACTUALIZACION');
+        $bodyBlocks("12.1. En el caso de que alguna o algunas de las clausulas del Contrato pasen a ser invalidas, ilegales o inejecutables en virtud de alguna norma juridica, se consideraran ineficaces en la medida que corresponda, pero en lo demas, este Contrato conservara su validez.\n\n12.2. Para ese caso, las Partes acuerdan sustituir la clausula o clausulas afectadas por otra u otras que tengan los efectos economicos mas semejantes a los de las sustituidas. CONTRATO UNICO");
+        $divider();
+
+        $sTitle('13. NOTIFICACIONES Y REQUERIMIENTOS');
+        $bodyBlocks("13.1. Toda notificacion o requerimiento que traiga su causa del Contrato se debera remitir por escrito a la otra Parte, bien por E-mail, bien personalmente, o por mensajero o correo certificado con acuse de recibo a portes pagados a las personas y direcciones que aparecen en el apartado \"Reunidos\" del presente Contrato, que actuaran de interlocutores, a estos efectos, o a cualesquiera otras que, en su caso, se determinen y comuniquen en el futuro.");
+        $divider();
+
+        $sTitle('14. JURISDICCION Y COMPETENCIA');
+        $bodyBlocks("14.1. Las Partes, con renuncia expresa a cualquier otro fuero que pudiera corresponderles, se someten para cuantos asuntos litigiosos pudieran derivarse en todo lo referente a la interpretacion, aplicacion o cumplimiento y ejecucion del presente Contrato, a la jurisdiccion y competencia de los Juzgados y Tribunales de Cordoba.\n\n14.2. Y para que asi conste, y en prueba de conformidad y aceptacion de todo cuanto antecede, las Partes firman el presente Contrato por duplicado ejemplar y a un solo efecto en la fecha y lugar indicados en el encabezamiento");
         $divider();
     }
 
-    // Notas adheridas
-    if ($notasTexto) {
+    // ── NOTAS ADHERIDAS (solo para contratos no-Kit Digital) ──────
+    if (!$esKitDigital && $notasTexto) {
         $pdf->Ln(1);
         $notaY = $pdf->GetY();
         $pdf->SetFillColor(255, 248, 225);
@@ -987,111 +1199,7 @@ function generarPDF($contratosFile)
         $pdf->Ln(8);
     }
 
-    // ==============================================================
-    // CAMBIO 2 — SECCIÓN KIT DIGITAL (después de Notas adheridas)
-    // ==============================================================
-
-    // Cláusulas Kit Digital
-    if (!empty($contrato['kit_digital'])) {
-
-        // Si no cabe el título + primeras líneas, saltamos de página
-        if (($pdf->GetY() + 20) > $pdf->getPageHeight() - 40) $pdf->AddPage();
-
-        $kdHtml = (isset($contrato['clausulas_kit_digital_html']) && trim(strip_tags($contrato['clausulas_kit_digital_html'])) !== '')
-            ? $contrato['clausulas_kit_digital_html']
-            : null;
-
-        $pdf->Ln(2);
-        $kdTitleY = $pdf->GetY();
-        $pdf->SetFillColor(255, 193, 7);
-        $pdf->RoundedRect(20, $kdTitleY, $cW, 8, 2, '1111', 'F');
-        $pdf->SetXY(22, $kdTitleY + 1.5);
-        $pdf->SetFont('Helvetica', 'B', 10);
-        $pdf->SetTextColor(51, 40, 0);
-        $pdf->Cell($cW - 4, 5, 'CLAUSULAS KIT DIGITAL', 0, 1, 'L');
-        $pdf->SetTextColor(51, 51, 51);
-        $pdf->Ln(3);
-
-        if ($kdHtml) {
-            // Cláusulas Kit Digital personalizadas
-            $kdText = pdf_text_plain($kdHtml);
-            $pdf->SetX(20);
-            $pdf->SetFont('Helvetica', '', 8.5);
-            $pdf->MultiCell($cW, 4.5, $kdText, 0, 'J');
-        } else {
-            // Cláusulas Kit Digital estándar de Tictac
-            $pdf->SetX(20);
-            $pdf->SetFont('Helvetica', 'B', 9);
-            $pdf->SetTextColor(33, 33, 33);
-            $pdf->Cell($cW, 5, 'DETALLES DE FACTURACION', 0, 1, 'L');
-            $pdf->SetTextColor(51, 51, 51);
-            $pdf->Ln(1);
-
-            $pdf->SetFont('Helvetica', '', 8.5);
-            $pdf->SetX(20);
-            $pdf->MultiCell(
-                $cW,
-                4.3,
-                'El cobro de la cuota mensual se realizara a traves de domiciliacion bancaria SEPA, ' .
-                'por el importe proporcional del servicio contratado. En el caso de tarifa fija, el ' .
-                'cobro se realizara por adelantado el dia 1 de cada mes. En el caso de tarifa variable ' .
-                '(comision del 3% sobre las ventas), el cobro se realizara a final del mes por las ventas ' .
-                'realizadas. Para formalizar la domiciliacion sera necesaria la firma de la Orden de ' .
-                'Domiciliacion SEPA.',
-                0,
-                'J'
-            );
-            $pdf->Ln(4);
-
-            $pdf->SetX(20);
-            $pdf->SetFont('Helvetica', 'B', 9);
-            $pdf->SetTextColor(33, 33, 33);
-            $pdf->Cell($cW, 5, 'SUBVENCION KIT DIGITAL', 0, 1, 'L');
-            $pdf->SetTextColor(51, 51, 51);
-            $pdf->Ln(1);
-
-            $pdf->SetFont('Helvetica', '', 8.5);
-
-            $kdParrafos = array(
-                'El cliente es beneficiario de una subvencion Kit Digital de 2.000 E concedida por Red.es. ' .
-                'Dicho importe sera descontado del precio de la solucion de digitalizacion objeto del presente contrato.',
-
-                'El cliente debera mantener sus obligaciones tributarias al corriente durante los 12 meses ' .
-                'de vigencia del servicio subvencionado.',
-
-                'El IVA no es subvencionable y debera ser abonado por el beneficiario mediante domiciliacion ' .
-                'bancaria en los 3 meses siguientes a la validacion del agente digitalizador.',
-
-                'En el supuesto de que la subvencion sea denegada por causas ajenas al agente digitalizador, ' .
-                'el cliente abonara la totalidad del importe (2.000 E + IVA correspondiente).',
-
-                'Si el cliente desiste del servicio antes de completar los 12 meses de vigencia, debera abonar ' .
-                'el importe proporcional al trabajo ejecutado hasta la aceptacion formal del desistimiento.',
-            );
-
-            foreach ($kdParrafos as $p) {
-                $pdf->SetX(20);
-                $pdf->MultiCell($cW, 4.3, $p, 0, 'J');
-                $pdf->Ln(2);
-            }
-
-            $pdf->SetX(20);
-            $pdf->SetFont('Helvetica', 'I', 7.5);
-            $pdf->SetTextColor(100, 100, 100);
-            $pdf->MultiCell(
-                $cW,
-                4,
-                'Normativa aplicable: Orden TDF/435/2024, de 9 de mayo; Orden ETD/1498/2021, de 29 de diciembre; ' .
-                'Agenda Espana Digital 2025; Plan de Digitalizacion de PYMEs 2021-2025.',
-                0,
-                'J'
-            );
-            $pdf->SetTextColor(51, 51, 51);
-        }
-        $pdf->Ln(8);
-    }
-
-    // Firmas
+    // ── FIRMAS ─────────────────────────────────────────────────────
     if (($pdf->GetY() + 45) > $pdf->getPageHeight() - 40) $pdf->AddPage();
 
     $pdf->SetDrawColor(200, 200, 200);
@@ -1236,5 +1344,293 @@ function enviarEmail($contratosFile)
         guardarAuditoria('contrato_enviado', 'error', 'Error enviando: ' . $id, array('cliente_email' => $to));
         header('Location: index.php?error=email_no_enviado');
     }
+    exit;
+}
+
+// ==============================================================
+// GENERADOR PDF SEPA
+// ==============================================================
+
+// ==============================================================
+// GENERADOR PDF SEPA
+// ==============================================================
+function generarSepaPDF($enviarPorEmail = false)
+{
+    // Solo recogemos los datos mínimos que sí podemos tener
+    $deudorCif    = isset($_POST['deudor_cif'])    ? trim($_POST['deudor_cif'])    : '';
+    $deudorNombre = isset($_POST['deudor_nombre']) ? trim($_POST['deudor_nombre']) : '';
+
+    // Colores
+    $rRosa = 233; $gRosa = 30; $bRosa = 140;
+    $rGris = 245; $gGris = 245; $bGris = 245;
+
+    $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+    $pdf->SetCreator('Tictac Comunicacion Digital SL');
+    $pdf->SetTitle('Orden de Domiciliacion SEPA');
+    $pdf->setPrintHeader(false);
+    $pdf->setPrintFooter(false);
+    $pdf->SetAutoPageBreak(false);
+    $pdf->SetMargins(0, 0, 0);
+    $pdf->AddPage();
+
+    $W = $pdf->getPageWidth();
+    $H = $pdf->getPageHeight();
+    $ml = 15; $mr = 15; $cw = $W - $ml - $mr;
+
+    // ─── CABECERA ROSA ────────────────────────────────────────
+    $pdf->SetFillColor($rRosa, $gRosa, $bRosa);
+    $pdf->RoundedRect(0, 0, $W, 28, 3, '0011', 'F');
+
+    $pdf->SetTextColor(255, 255, 255);
+    $pdf->SetFont('Helvetica', 'B', 17);
+    $pdf->SetXY($ml, 4);
+    $pdf->Cell(120, 9, 'Orden de Domiciliacion de', 0, 1, 'L');
+    $pdf->SetX($ml);
+    $pdf->Cell(120, 8, 'Adeudo Directo SEPA', 0, 0, 'L');
+
+    $logoPath = defined('BASE_PATH') ? BASE_PATH . '/assets/img/logoblanco.png' : '';
+    if ($logoPath && file_exists($logoPath)) {
+        $pdf->Image($logoPath, $W - 58, 5, 42, 0, '', '', '', false, 300);
+    }
+
+    $pdf->SetTextColor(51, 51, 51);
+
+    // ─── BLOQUE ACREEDOR ──────────────────────────────────────
+    $yB1 = 34;
+    $hB1 = 57;
+
+    $pdf->SetFillColor($rGris, $gGris, $bGris);
+    $pdf->RoundedRect($ml, $yB1, $cw, $hB1, 3, '1111', 'F');
+
+    // Barra cabecera rosa
+    $pdf->SetFillColor($rRosa, $gRosa, $bRosa);
+    $pdf->RoundedRect($ml, $yB1, $cw, 9, 2, '1100', 'F');
+    $pdf->SetTextColor(255, 255, 255);
+    $pdf->SetFont('Helvetica', 'B', 8.5);
+    $pdf->SetXY($ml + 5, $yB1 + 1.8);
+    $pdf->Cell($cw - 20, 5.5, 'INFORMACION CUMPLIMENTADA POR EL ACREEDOR', 0, 0, 'L');
+    // Icono flecha/check a la derecha
+    $pdf->SetFont('Helvetica', '', 11);
+    $pdf->SetXY($W - $mr - 12, $yB1 + 1);
+    $pdf->Cell(10, 7, chr(118), 0, 0, 'C'); // v como check
+
+    $pdf->SetTextColor(51, 51, 51);
+
+    $camposAcreedor = array(
+        array('IDENTIFICADOR DEL ACREEDOR CIF:', 'B09912478'),
+        array('NOMBRE DEL ACREEDOR:', 'TIC TAC COMUNICACION'),
+        array('DIRECCION:', 'Plaza de los Carrillos No 5'),
+        array('CODIGO POSTAL - POBLACION - PROVINCIA:', '14007 - Cordoba'),
+        array('PAIS:', 'Espana'),
+    );
+
+    $yFila = $yB1 + 11;
+    $xBullet = $ml + 7;
+    $xLabel  = $ml + 12;
+    $xValue  = $ml + 82;
+
+    foreach ($camposAcreedor as $campo) {
+        $pdf->SetFillColor($rRosa, $gRosa, $bRosa);
+        $pdf->Circle($xBullet, $yFila + 2.2, 1.3, 0, 360, 'F');
+        $pdf->SetFont('Helvetica', 'B', 8);
+        $pdf->SetTextColor(40, 40, 40);
+        $pdf->SetXY($xLabel, $yFila);
+        $pdf->Cell(72, 5, $campo[0], 0, 0, 'L');
+        $pdf->SetFont('Helvetica', '', 8);
+        $pdf->SetXY($xValue, $yFila);
+        $pdf->Cell(90, 5, $campo[1], 0, 0, 'L');
+        $yFila += 8.5;
+    }
+
+    // ─── TEXTO LEGAL ──────────────────────────────────────────
+    $yTexto = $yB1 + $hB1 + 5;
+    $pdf->SetFont('Helvetica', '', 7.5);
+    $pdf->SetTextColor(70, 70, 70);
+    $pdf->SetXY($ml, $yTexto);
+    $pdf->MultiCell($cw, 4.5,
+        'Mediante la firma de esta orden de domiciliacion, el deudor autoriza (A) al acreedor a enviar instrucciones a la entidad del deudor para adeudar su cuenta y (B) a la entidad para efectuar los adeudos en su cuenta siguiendo las instrucciones del acreedor. Como parte de sus derechos, el deudor esta legitimado al reembolso por su entidad en los terminos y condiciones del contrato suscrito con la misma.',
+        0, 'J');
+
+    // ─── BLOQUE DEUDOR — campos EN BLANCO ─────────────────────
+    $yB2 = $pdf->GetY() + 5;
+    $hB2 = 115;
+
+    $pdf->SetFillColor($rGris, $gGris, $bGris);
+    $pdf->RoundedRect($ml, $yB2, $cw, $hB2, 3, '1111', 'F');
+
+    $pdf->SetFillColor($rRosa, $gRosa, $bRosa);
+    $pdf->RoundedRect($ml, $yB2, $cw, 9, 2, '1100', 'F');
+    $pdf->SetTextColor(255, 255, 255);
+    $pdf->SetFont('Helvetica', 'B', 8.5);
+    $pdf->SetXY($ml + 5, $yB2 + 1.8);
+    $pdf->Cell($cw - 20, 5.5, 'A CUMPLIMENTAR POR EL DEUDOR', 0, 0, 'L');
+    $pdf->SetFont('Helvetica', '', 11);
+    $pdf->SetXY($W - $mr - 12, $yB2 + 1);
+    $pdf->Cell(10, 7, chr(118), 0, 0, 'C');
+
+    $pdf->SetTextColor(51, 51, 51);
+
+    // Campos del deudor — valor en blanco o con dato mínimo si lo tenemos
+    // Línea de relleno = campo editable visual
+    $camposDeudor = array(
+        array('IDENTIFICADOR DEL ACREEDOR CIF:', $deudorCif),
+        array('NOMBRE DEL DEUDOR/ES:', $deudorNombre),
+        array('DIRECCION DEL DEUDOR:', ''),
+        array('CODIGO POSTAL - POBLACION - PROVINCIA:', ''),
+        array('PAIS DEL DEUDOR:', ''),
+        array('SWIFT BIC:', ''),  // hint en gris
+        array('NUMERO DE CUENTA:', ''),
+    );
+
+    $hints = array(
+        5 => 'Puede contener 8 u 11 posiciones',
+        6 => 'En Espana consta de 24 posiciones comenzando siempre por ES',
+    );
+
+    $yFila = $yB2 + 11;
+    foreach ($camposDeudor as $idx => $campo) {
+        $pdf->SetFillColor($rRosa, $gRosa, $bRosa);
+        $pdf->Circle($xBullet, $yFila + 2.2, 1.3, 0, 360, 'F');
+
+        $pdf->SetFont('Helvetica', 'B', 8);
+        $pdf->SetTextColor(40, 40, 40);
+        $pdf->SetXY($xLabel, $yFila);
+        $pdf->Cell(72, 5, $campo[0], 0, 0, 'L');
+
+        // Si tiene valor → escribe en negro; si no → dibuja línea + hint en gris
+        if (!empty($campo[1])) {
+            $pdf->SetFont('Helvetica', '', 8);
+            $pdf->SetTextColor(51, 51, 51);
+            $pdf->SetXY($xValue, $yFila);
+            $pdf->Cell(100, 5, $campo[1], 0, 0, 'L');
+        } else {
+            // Línea de relleno + hint opcional
+            $lineX1 = $xValue;
+            $lineX2 = $W - $mr - 3;
+            $lineY  = $yFila + 4.5;
+            $pdf->SetDrawColor(200, 100, 160);
+            $pdf->SetLineWidth(0.25);
+            $pdf->Line($lineX1, $lineY, $lineX2, $lineY);
+
+            if (isset($hints[$idx])) {
+                $pdf->SetFont('Helvetica', 'I', 7);
+                $pdf->SetTextColor(190, 130, 165);
+                $pdf->SetXY($xValue, $yFila);
+                $pdf->Cell(100, 4.5, $hints[$idx], 0, 0, 'L');
+            }
+        }
+
+        $pdf->SetTextColor(51, 51, 51);
+        $yFila += 8.5;
+    }
+
+    // TIPO DE PAGO con checkbox marcado
+    $pdf->SetFillColor($rRosa, $gRosa, $bRosa);
+    $pdf->Circle($xBullet, $yFila + 2.2, 1.3, 0, 360, 'F');
+    $pdf->SetFont('Helvetica', 'B', 8);
+    $pdf->SetTextColor(40, 40, 40);
+    $pdf->SetXY($xLabel, $yFila);
+    $pdf->Cell(28, 5, 'TIPO DE PAGO:', 0, 0, 'L');
+
+    // Checkbox marcado
+    $cbX = $xLabel + 30; $cbY = $yFila + 0.3;
+    $pdf->SetDrawColor($rRosa, $gRosa, $bRosa);
+    $pdf->SetFillColor(255, 255, 255);
+    $pdf->RoundedRect($cbX, $cbY, 5.5, 5, 0.8, '1111', 'DF');
+    $pdf->SetDrawColor($rRosa, $gRosa, $bRosa);
+    $pdf->SetLineWidth(0.9);
+    $pdf->Line($cbX + 1,   $cbY + 2.8, $cbX + 2.3, $cbY + 4.0);
+    $pdf->Line($cbX + 2.3, $cbY + 4.0, $cbX + 4.5, $cbY + 1.2);
+    $pdf->SetLineWidth(0.2);
+    $pdf->SetFont('Helvetica', 'B', 8.5);
+    $pdf->SetTextColor(40, 40, 40);
+    $pdf->SetXY($cbX + 8, $yFila);
+    $pdf->Cell(50, 5, 'TIPO  RECURRENTE', 0, 0, 'L');
+
+    $yFila += 13;
+
+    // FECHA y LOCALIDAD
+    $pdf->SetFont('Helvetica', 'B', 8.5);
+    $pdf->SetTextColor(40, 40, 40);
+    $pdf->SetXY($ml + 10, $yFila);
+    $pdf->Cell(22, 5, 'FECHA:', 0, 0, 'L');
+    $pdf->SetDrawColor(200, 100, 160); $pdf->SetLineWidth(0.25);
+    $pdf->Line($ml + 33, $yFila + 4.5, $ml + 80, $yFila + 4.5);
+
+    $pdf->SetXY($W / 2 - 5, $yFila);
+    $pdf->Cell(28, 5, 'LOCALIDAD:', 0, 0, 'L');
+    $pdf->Line($W / 2 + 23, $yFila + 4.5, $W - $mr - 5, $yFila + 4.5);
+
+    $yFila += 18;
+
+    // FIRMA DEL DEUDOR
+    $pdf->SetFont('Helvetica', 'B', 9);
+    $pdf->SetTextColor(40, 40, 40);
+    $pdf->SetXY(0, $yFila);
+    $pdf->Cell($W, 5, 'FIRMA DEL DEUDOR:', 0, 1, 'C');
+
+    // ─── NOTA FINAL ───────────────────────────────────────────
+    $yNota = $yB2 + $hB2 + 5;
+    $pdf->SetFont('Helvetica', 'B', 7.5);
+    $pdf->SetTextColor($rRosa, $gRosa, $bRosa);
+    $pdf->SetXY($ml, $yNota);
+    $pdf->MultiCell($cw, 4.5,
+        '* TODOS LOS CAMPOS HAN DE SER CUMPLIMENTADOS OBLIGATORIAMENTE. UNA VEZ FIRMADA ESTA ORDEN DE DOMICILIACION DEBE SER ENVIADA AL ACREEDOR PARA SU CUSTODIA.',
+        0, 'L');
+
+    // ─── PIE ──────────────────────────────────────────────────
+    $yPie = $H - 14;
+    $pdf->SetDrawColor($rRosa, $gRosa, $bRosa);
+    $pdf->SetLineWidth(0.4);
+    $pdf->Line($ml, $yPie, $W - $mr, $yPie);
+    $pdf->SetFont('Helvetica', '', 7);
+    $pdf->SetTextColor(140, 140, 140);
+    $pdf->SetXY(0, $yPie + 2);
+    $pdf->Cell($W, 4, 'Tictac Comunicacion Digital SL  ·  C/ Escultor Ramon Barba, 1 - Bloque F - 1-2  ·  14012 Cordoba  ·  hola@tictac-comunicacion.es', 0, 0, 'C');
+
+    // ─── OUTPUT ───────────────────────────────────────────────
+    $nombre    = preg_replace('/[^A-Za-z0-9_\-]/', '_', $deudorNombre ?: 'cliente');
+    $pdfNombre = 'SEPA_' . $nombre . '.pdf';
+
+    if ($enviarPorEmail) {
+        // Guardar PDF temporal y enviar por email
+        $tmpFile = sys_get_temp_dir() . '/' . $pdfNombre;
+        $pdf->Output($tmpFile, 'F');
+
+        $clienteEmail = isset($_POST['cliente_email']) ? trim($_POST['cliente_email']) : '';
+        $emailsRaw    = array_map('trim', explode(',', $clienteEmail));
+        $emailsOk     = array();
+        foreach ($emailsRaw as $em) {
+            if (filter_var($em, FILTER_VALIDATE_EMAIL)) $emailsOk[] = $em;
+        }
+
+        if (!empty($emailsOk)) {
+            $gmailPath = BASE_PATH . '/presupuestos/gmail_send.php';
+            if (file_exists($gmailPath)) {
+                require_once $gmailPath;
+                $subject = 'Orden de Domiciliacion SEPA - Tictac Comunicacion';
+                $nombreCliente = $deudorNombre ?: 'cliente';
+                $message = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;background:#f5f5f5;margin:0;}.w{max-width:600px;margin:20px auto;background:white;border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.1);}.h{background:#E91E8C;padding:35px 30px;text-align:center;color:white;}.h img{max-width:150px;margin-bottom:12px;}.h h1{margin:0;font-size:20px;}.b{padding:35px 30px;}.box{background:#fff5f9;border-left:4px solid #E91E8C;padding:18px;margin:20px 0;border-radius:5px;}.f{background:#1a1a1a;color:white;padding:22px 30px;text-align:center;font-size:13px;}.f a{color:#E91E8C;text-decoration:none;}</style></head><body><div class="w"><div class="h"><img src="https://tictac-comunicacion.es/wp-content/uploads/2026/02/LOGO-1-2.png" alt="Tictac"><h1>Orden de Domiciliacion SEPA</h1></div><div class="b"><p>Estimado/a <strong>' . htmlspecialchars($nombreCliente) . '</strong>,</p><p>Adjunto encontraras la Orden de Domiciliacion de Adeudo Directo SEPA para que la cumplimentes con tus datos bancarios, la firmes y nos la devuelvas a <strong>hola@tictac-comunicacion.es</strong>.</p><div class="box">Por favor rellena todos los campos del documento, firmalo y envialo de vuelta lo antes posible para activar la domiciliacion bancaria de tus pagos.</div><p>Si tienes cualquier duda no dudes en contactar con nosotros.</p></div><div class="f"><strong>Tictac Comunicacion Digital SL</strong><br>C/ Escultor Ramon Barba, 1 - Bloque F - 1-2  14012 Cordoba<br><a href="tel:+34957048147">957 048 147</a> &nbsp; <a href="mailto:hola@tictac-comunicacion.es">hola@tictac-comunicacion.es</a></div></div></body></html>';
+                $enviadoOk = false;
+                foreach ($emailsOk as $emailDest) {
+                    $res = enviarEmailGmailAPI($emailDest, $subject, $message, array(array('file_path' => $tmpFile)));
+                    if ($res) $enviadoOk = true;
+                }
+                @unlink($tmpFile);
+                if ($enviadoOk) {
+                    echo json_encode(array('success' => true, 'message' => 'SEPA enviado a ' . implode(', ', $emailsOk)));
+                } else {
+                    echo json_encode(array('success' => false, 'message' => 'Error al enviar el email'));
+                }
+                exit;
+            }
+        }
+        @unlink($tmpFile);
+        echo json_encode(array('success' => false, 'message' => 'No hay email valido para enviar'));
+        exit;
+    }
+
+    // Descarga directa
+    $pdf->Output($pdfNombre, 'D');
     exit;
 }
