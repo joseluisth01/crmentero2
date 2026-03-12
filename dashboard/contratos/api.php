@@ -24,8 +24,8 @@ class ContratoTictacPDF extends TCPDF
     public function Header()
     {
         $w = $this->getPageWidth();
-        $this->SetFillColor(233, 30, 140);
-        $this->RoundedRect(0, 0, $w, 38, 4, '1111', 'F');
+        $this->SetFillColor(215, 33, 115);
+        $this->Rect(0, 0, $w, 38, 'F');
         $logoLocal = defined('BASE_PATH') ? BASE_PATH . '/assets/img/logoblanco.png' : '';
         if ($logoLocal && file_exists($logoLocal)) {
             $lw = 36;
@@ -35,7 +35,7 @@ class ContratoTictacPDF extends TCPDF
         $this->SetFont('Helvetica', 'B', 15);
         $this->SetXY(0, 20);
         $this->Cell($w, 10, 'Contrato de Servicios', 0, 1, 'C');
-        $this->SetDrawColor(233, 30, 140);
+        $this->SetDrawColor(215, 33, 115);
         $this->SetLineWidth(0.3);
         $this->Line(15, 40, $w - 15, 40);
         $this->SetTextColor(51, 51, 51);
@@ -46,7 +46,7 @@ class ContratoTictacPDF extends TCPDF
     {
         $w = $this->getPageWidth();
         $this->SetY(-32);
-        $this->SetDrawColor(233, 30, 140);
+        $this->SetDrawColor(215, 33, 115);
         $this->SetLineWidth(0.4);
         $this->Line(15, $this->GetY(), $w - 15, $this->GetY());
         $this->Ln(3);
@@ -434,7 +434,6 @@ function dibujarTablaItems($pdf, $items, $stX, $cArt, $cCant, $cTar, $cTot, $tW)
         }
         if ($rowH < 7) $rowH = 7;
 
-        // Calcular descuento aquí para ajustar rowH antes del salto de página
         $precOrig_pre = floatval(isset($item['precio_original']) ? $item['precio_original'] : 0);
         if ($precOrig_pre > 0 && $precOrig_pre > floatval($item['precio'] ?? 0)) $rowH = max($rowH, 12);
 
@@ -462,7 +461,6 @@ function dibujarTablaItems($pdf, $items, $stX, $cArt, $cCant, $cTar, $cTot, $tW)
         $precOrig    = floatval(isset($item['precio_original']) ? $item['precio_original'] : 0);
         $hayDescuento = ($precOrig > 0 && $precOrig > $prec);
 
-        // Si hay precio original, la fila necesita espacio extra para la línea tachada
         if ($hayDescuento) $rowH = max($rowH, 12);
 
         $pdf->SetXY($stX + 2, $rowY + 1);
@@ -473,7 +471,6 @@ function dibujarTablaItems($pdf, $items, $stX, $cArt, $cCant, $cTar, $cTot, $tW)
         $pdf->Cell($cCant, 5, number_format($cant, 2, ',', '.') . ($uni ? ' ' . $uni : ''), 0, 0, 'C');
 
         if ($hayDescuento) {
-            // Precio original tachado (gris, pequeño) — encima
             $tarifaX = $stX + $cArt + $cCant;
             $pdf->SetFont('Helvetica', '', 7);
             $pdf->SetTextColor(160, 160, 160);
@@ -483,14 +480,12 @@ function dibujarTablaItems($pdf, $items, $stX, $cArt, $cCant, $cTar, $cTot, $tW)
             $ty = $rowY + 0.5;
             $pdf->SetXY($tx, $ty);
             $pdf->Cell($tw, 4, $origTxt, 0, 0, 'L');
-            // línea tachado
             $pdf->SetDrawColor(160, 160, 160);
             $pdf->SetLineWidth(0.3);
             $pdf->Line($tx, $ty + 2.2, $tx + $tw, $ty + 2.2);
             $pdf->SetLineWidth(0.2);
-            // Precio rebajado en rosa debajo
             $pdf->SetFont('Helvetica', 'B', 8.5);
-            $pdf->SetTextColor(233, 30, 140);
+            $pdf->SetTextColor(215, 33, 115);
             $pdf->SetXY($tarifaX, $rowY + 5);
             $pdf->Cell($cTar, 5, number_format($prec, 2, ',', '.') . 'E', 0, 0, 'R');
             $pdf->SetTextColor(51, 51, 51);
@@ -550,18 +545,16 @@ function dibujarTotalesTabla($pdf, $stX, $tW, $cTot, $subtotal, $iva, $ivaAmt, $
         $pdf->Cell($vW, 5, number_format($segAmt, 2, ',', '.') . 'E', 0, 1, 'R');
     }
 
-    // Descuento global en €
     if ($descuentoGlobal > 0) {
         $pdf->SetX($rightEnd - $lW - $vW);
         $pdf->SetFont('Helvetica', '', 9);
-        $pdf->SetTextColor(233, 30, 140);
+        $pdf->SetTextColor(215, 33, 115);
         $pdf->Cell($lW, 5, 'Descuento', 0, 0, 'R');
         $pdf->SetFont('Helvetica', 'B', 9);
         $pdf->Cell($vW, 5, '-' . number_format($descuentoGlobal, 2, ',', '.') . 'E', 0, 1, 'R');
         $pdf->SetTextColor(51, 51, 51);
     }
 
-    // Calcular ahorro total si hay descuentos en ítems
     $subtotalSinDescuento = 0;
     $hayAlgunDescuento = false;
     if (!empty($items)) {
@@ -581,7 +574,6 @@ function dibujarTotalesTabla($pdf, $stX, $tW, $cTot, $subtotal, $iva, $ivaAmt, $
     if ($hayAlgunDescuento) {
         $totalSinDesc = $subtotalSinDescuento + ($subtotalSinDescuento * $iva / 100) + ($subtotalSinDescuento * $seg / 100);
         $ahorro = $totalSinDesc - $totalFinal;
-        // Línea precio sin descuento tachada
         $pdf->SetX($rightEnd - $lW - $vW);
         $pdf->SetFont('Helvetica', '', 8);
         $pdf->SetTextColor(160, 160, 160);
@@ -591,13 +583,11 @@ function dibujarTotalesTabla($pdf, $stX, $tW, $cTot, $subtotal, $iva, $ivaAmt, $
         $pdf->SetX($xVal);
         $origTxt = number_format($totalSinDesc, 2, ',', '.') . 'E';
         $pdf->Cell($vW - 1, 5, $origTxt, 0, 1, 'R');
-        // Línea de tachado
         $tw = $pdf->GetStringWidth($origTxt);
         $pdf->SetDrawColor(160, 160, 160);
         $pdf->SetLineWidth(0.4);
         $pdf->Line($xVal + $vW - 1 - $tw - 1, $yVal + 3, $xVal + $vW - 1, $yVal + 3);
         $pdf->SetLineWidth(0.2);
-        // Línea ahorro en verde
         $pdf->SetX($rightEnd - $lW - $vW);
         $pdf->SetFont('Helvetica', 'B', 8.5);
         $pdf->SetTextColor(39, 174, 96);
@@ -659,15 +649,18 @@ function generarPDF($contratosFile)
     if (!empty($contrato['cliente_email'])) $toLines[] = 'Correo: ' . $contrato['cliente_email'];
     $contractToInfo = implode("\n", $toLines);
 
-    $items      = isset($contrato['items']) && is_array($contrato['items']) ? $contrato['items'] : array();
-    $subtotal      = floatval(isset($contrato['subtotal'])        ? $contrato['subtotal']        : 0);
-    $iva           = floatval(isset($contrato['iva'])             ? $contrato['iva']             : 21);
-    $seg           = floatval(isset($contrato['segundo_impuesto'])? $contrato['segundo_impuesto']: 0);
-    $descuentoGlob = floatval(isset($contrato['descuento_global'])? $contrato['descuento_global']: 0);
+    $items         = isset($contrato['items']) && is_array($contrato['items']) ? $contrato['items'] : array();
+    $subtotal      = floatval(isset($contrato['subtotal'])         ? $contrato['subtotal']         : 0);
+    $iva           = floatval(isset($contrato['iva'])              ? $contrato['iva']              : 21);
+    $seg           = floatval(isset($contrato['segundo_impuesto']) ? $contrato['segundo_impuesto'] : 0);
+    $descuentoGlob = floatval(isset($contrato['descuento_global']) ? $contrato['descuento_global'] : 0);
     $ivaAmt        = $subtotal * $iva / 100;
     $segAmt        = $subtotal * $seg / 100;
     $totalFinal    = floatval(isset($contrato['total']) ? $contrato['total'] : max(0, $subtotal + $ivaAmt + $segAmt - $descuentoGlob));
-    $notasTexto = tiene_contenido(isset($contrato['notas']) ? $contrato['notas'] : '') ? pdf_text_plain($contrato['notas']) : '';
+    $notasTexto    = tiene_contenido(isset($contrato['notas']) ? $contrato['notas'] : '') ? pdf_text_plain($contrato['notas']) : '';
+
+    $clausulasPersonalizadas = isset($contrato['clausulas_html']) && trim(strip_tags($contrato['clausulas_html'])) !== '';
+    $esKitDigital            = !empty($contrato['kit_digital']);
 
     $cArt  = 70;
     $cCant = 25;
@@ -690,7 +683,7 @@ function generarPDF($contratosFile)
 
     $sTitle = function ($text) use ($pdf, $cW) {
         $pdf->SetFont('Helvetica', 'B', 10);
-        $pdf->SetTextColor(233, 30, 140);
+        $pdf->SetTextColor(215, 33, 115);
         $pdf->SetFillColor(255, 240, 247);
         $pdf->SetDrawColor(255, 240, 247);
         $pdf->RoundedRect(20, $pdf->GetY(), $cW, 7, 2, '1111', 'F');
@@ -775,9 +768,9 @@ function generarPDF($contratosFile)
     $pdf->RoundedRect(20, $startY, $half, 26, 2, '1111', 'DF');
     $pdf->SetXY(23, $startY + 3);
     $pdf->SetFont('Helvetica', 'B', 8.5);
-    $pdf->SetTextColor(233, 30, 140);
+    $pdf->SetTextColor(215, 33, 115);
     $pdf->Cell($half - 6, 4, 'DATOS DEL CONTRATO', 0, 1, 'L');
-    $pdf->SetDrawColor(233, 30, 140);
+    $pdf->SetDrawColor(215, 33, 115);
     $pdf->SetLineWidth(0.3);
     $pdf->Line(23, $pdf->GetY(), 23 + $half - 6, $pdf->GetY());
     $pdf->Ln(2);
@@ -807,9 +800,9 @@ function generarPDF($contratosFile)
     $pdf->RoundedRect($rightX, $startY, $half, 26, 2, '1111', 'DF');
     $pdf->SetXY($rightX + 3, $startY + 3);
     $pdf->SetFont('Helvetica', 'B', 8.5);
-    $pdf->SetTextColor(233, 30, 140);
+    $pdf->SetTextColor(215, 33, 115);
     $pdf->Cell($half - 6, 4, 'EL CLIENTE', 0, 1, 'L');
-    $pdf->SetDrawColor(233, 30, 140);
+    $pdf->SetDrawColor(215, 33, 115);
     $pdf->SetLineWidth(0.3);
     $pdf->Line($rightX + 3, $pdf->GetY(), $rightX + 3 + $half - 6, $pdf->GetY());
     $pdf->Ln(2);
@@ -826,12 +819,25 @@ function generarPDF($contratosFile)
     $pdf->SetY($startY + 30);
     $pdf->Ln(4);
 
+    // ── Datos del proveedor según tipo de contrato ─────────────
+    if ($esKitDigital) {
+        $provNombre    = 'PROYECTO TRESS AZAFATAS, S.L.';
+        $provNif       = 'B56028293';
+        $provDomicilio = 'C/ Conquistador Benito de Banos, 13 3 2. 14007, Cordoba.';
+        $provEmail     = 'hola@tictac-comunicacion.es';
+    } else {
+        $provNombre    = 'TIC TAC COMUNICACION DIGITAL, S.L.';
+        $provNif       = 'B09912478';
+        $provDomicilio = 'C/ Escultor Ramon Barba, N 1 - Bloque F - 1-2  14012 (Cordoba)';
+        $provEmail     = 'hola@tictac-comunicacion.es';
+    }
+
     $introText  = "De una parte, \"El Proveedor\", actualmente y sin perjuicio de otras actividades que ahora o en el futuro pudiera acometer por si o a traves de empresas filiales o participadas, se dedica a la prestacion de servicios relacionados con las tecnologias de la informacion y la informatica.\n\n";
     $introText .= "Sus datos identificativos son los siguientes:\n\n";
-    $introText .= "  Denominacion social: TIC TAC COMUNICACION DIGITAL, S.L.\n";
-    $introText .= "  NIF: B09912478\n";
-    $introText .= "  Domicilio: C/ Escultor Ramon Barba, N 1 - Bloque F - 1-2  14012 (Cordoba)\n";
-    $introText .= "  Correo: hola@tictac-comunicacion.es\n\n";
+    $introText .= "  Denominacion social: " . $provNombre . "\n";
+    $introText .= "  NIF: " . $provNif . "\n";
+    $introText .= "  Domicilio: " . $provDomicilio . "\n";
+    $introText .= "  Correo: " . $provEmail . "\n\n";
     $introText .= "De otra parte, de ahora en adelante (El Cliente):\n\n";
     $introText .= $contractToInfo . "\n\n";
     $introText .= "EXPONEN\n\n";
@@ -857,13 +863,7 @@ function generarPDF($contratosFile)
 
     // ==============================================================
     // DECISIÓN: qué cláusulas mostrar
-    // 1) Si hay cláusulas personalizadas en el editor → esas
-    // 2) Si es Kit Digital y no hay personalizadas → cláusulas Kit Digital
-    // 3) Si es contrato normal → cláusulas estándar
     // ==============================================================
-
-    $clausulasPersonalizadas = isset($contrato['clausulas_html']) && trim(strip_tags($contrato['clausulas_html'])) !== '';
-    $esKitDigital            = !empty($contrato['kit_digital']);
 
     if ($clausulasPersonalizadas) {
 
@@ -975,7 +975,6 @@ function generarPDF($contratosFile)
     } elseif ($esKitDigital) {
 
         // ── CLÁUSULAS KIT DIGITAL ──────────────────────────────────
-        // Basadas en el contrato #222 (Mascobeauty) — cláusulas completas Kit Digital
 
         $sTitle('1. OBJETO');
         $bodyBlocks("El objeto del Contrato consiste en la prestacion de servicios por parte del Proveedor a cambio del pago de un precio por parte del Cliente, en los terminos establecidos en el mismo.\n\nLas solicitudes de modificacion del contrato se haran siempre por escrito, remitido por correo ordinario o electronico hola@tictac-comunicacion.es. Se ejecutaran siempre que sea posible y el cliente debera asumir los costes en los que el Proveedor haya incurrido, tras dicha modificacion del contrato.\n\nEl Cliente acepta que el Proveedor pueda publicar su imagen corporativa, nombre comercial y sitio web dentro de \"casos de exito\" o \"seccion clientes\" de la web de Tic Tac Comunicacion (www.tictac-comunicacion.es), asi como la firma de la Empresa Tic Tac Comunicacion en Footer (Pie de Pagina de la web del Cliente).");
@@ -1071,7 +1070,6 @@ function generarPDF($contratosFile)
         $pdf->SetTextColor(51, 51, 51);
         $pdf->Ln(3);
 
-        // Verificar si hay cláusulas KD personalizadas
         $kdHtml = (isset($contrato['clausulas_kit_digital_html']) && trim(strip_tags($contrato['clausulas_kit_digital_html'])) !== '')
             ? $contrato['clausulas_kit_digital_html']
             : null;
@@ -1082,7 +1080,6 @@ function generarPDF($contratosFile)
             $pdf->SetFont('Helvetica', '', 8.5);
             $pdf->MultiCell($cW, 4.5, $kdText, 0, 'J');
         } else {
-            // Cláusulas Kit Digital estándar completas (del contrato #222)
             $pdf->SetX(20);
             $pdf->SetFont('Helvetica', '', 8.5);
             $pdf->MultiCell($cW, 4.3,
@@ -1211,7 +1208,7 @@ function generarPDF($contratosFile)
     $firmaY = $pdf->GetY();
 
     $pdf->SetFont('Helvetica', 'B', 9);
-    $pdf->SetTextColor(233, 30, 140);
+    $pdf->SetTextColor(215, 33, 115);
     $pdf->SetX(20);
     $pdf->Cell($half2, 5, 'FIRMA Y SELLO DEL PROVEEDOR', 0, 1, 'C');
     $pdf->SetTextColor(51, 51, 51);
@@ -1226,7 +1223,7 @@ function generarPDF($contratosFile)
 
     $pdf->SetY($firmaY);
     $pdf->SetFont('Helvetica', 'B', 9);
-    $pdf->SetTextColor(233, 30, 140);
+    $pdf->SetTextColor(215, 33, 115);
     $pdf->SetX(20 + $half2 + 5);
     $pdf->Cell($half2, 5, 'FIRMA Y SELLO DEL CLIENTE', 0, 1, 'C');
     $pdf->SetTextColor(51, 51, 51);
@@ -1310,7 +1307,7 @@ function enviarEmail($contratosFile)
         exit;
     }
 
-    $message = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;background:#f5f5f5;margin:0;}.w{max-width:600px;margin:20px auto;background:white;border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.1);}.h{background:#E91E8C;padding:35px 30px;text-align:center;color:white;}.h img{max-width:150px;margin-bottom:12px;}.h h1{margin:0;font-size:20px;}.b{padding:35px 30px;}.box{background:#fff5f9;border-left:4px solid #E91E8C;padding:18px;margin:20px 0;border-radius:5px;}.box strong{color:#E91E8C;}.tot{font-size:20px;color:#E91E8C;font-weight:bold;margin-top:8px;}.f{background:#1a1a1a;color:white;padding:22px 30px;text-align:center;font-size:13px;}.f a{color:#E91E8C;text-decoration:none;}</style></head><body>
+    $message = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;background:#f5f5f5;margin:0;}.w{max-width:600px;margin:20px auto;background:white;border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.1);}.h{background:#a8005a;padding:35px 30px;text-align:center;color:white;}.h img{max-width:150px;margin-bottom:12px;}.h h1{margin:0;font-size:20px;}.b{padding:35px 30px;}.box{background:#fff5f9;border-left:4px solid #a8005a;padding:18px;margin:20px 0;border-radius:5px;}.box strong{color:#a8005a;}.tot{font-size:20px;color:#a8005a;font-weight:bold;margin-top:8px;}.f{background:#1a1a1a;color:white;padding:22px 30px;text-align:center;font-size:13px;}.f a{color:#a8005a;text-decoration:none;}</style></head><body>
 <div class="w"><div class="h"><img src="https://tictac-comunicacion.es/wp-content/uploads/2026/02/LOGO-1-2.png" alt="Tictac"><h1>Contrato de Servicios</h1></div>
 <div class="b"><p>Estimado/a <strong>' . htmlspecialchars($nombre) . '</strong>,</p><p>Adjunto encontraras el contrato de servicios para tu revision y firma. Por favor leelo detenidamente y contacta con nosotros si tienes cualquier pregunta.</p>
 <div class="box"><strong>Resumen del Contrato</strong><br><br><strong>Contrato:</strong> ' . htmlspecialchars($titulo) . '<br><strong>Fecha:</strong> ' . $fecha_fmt . '<br><strong>Valido hasta:</strong> ' . $valid_fmt . '<br><div class="tot">Total: ' . $total_fmt . ' E</div></div>
@@ -1351,17 +1348,12 @@ function enviarEmail($contratosFile)
 // GENERADOR PDF SEPA
 // ==============================================================
 
-// ==============================================================
-// GENERADOR PDF SEPA
-// ==============================================================
 function generarSepaPDF($enviarPorEmail = false)
 {
-    // Solo recogemos los datos mínimos que sí podemos tener
     $deudorCif    = isset($_POST['deudor_cif'])    ? trim($_POST['deudor_cif'])    : '';
     $deudorNombre = isset($_POST['deudor_nombre']) ? trim($_POST['deudor_nombre']) : '';
 
-    // Colores
-    $rRosa = 233; $gRosa = 30; $bRosa = 140;
+    $rRosa = 168; $gRosa = 0; $bRosa = 90;
     $rGris = 245; $gGris = 245; $bGris = 245;
 
     $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
@@ -1377,7 +1369,7 @@ function generarSepaPDF($enviarPorEmail = false)
     $H = $pdf->getPageHeight();
     $ml = 15; $mr = 15; $cw = $W - $ml - $mr;
 
-    // ─── CABECERA ROSA ────────────────────────────────────────
+    // ─── CABECERA ────────────────────────────────────────────────
     $pdf->SetFillColor($rRosa, $gRosa, $bRosa);
     $pdf->RoundedRect(0, 0, $W, 28, 3, '0011', 'F');
 
@@ -1395,24 +1387,22 @@ function generarSepaPDF($enviarPorEmail = false)
 
     $pdf->SetTextColor(51, 51, 51);
 
-    // ─── BLOQUE ACREEDOR ──────────────────────────────────────
+    // ─── BLOQUE ACREEDOR ──────────────────────────────────────────
     $yB1 = 34;
     $hB1 = 57;
 
     $pdf->SetFillColor($rGris, $gGris, $bGris);
     $pdf->RoundedRect($ml, $yB1, $cw, $hB1, 3, '1111', 'F');
 
-    // Barra cabecera rosa
     $pdf->SetFillColor($rRosa, $gRosa, $bRosa);
     $pdf->RoundedRect($ml, $yB1, $cw, 9, 2, '1100', 'F');
     $pdf->SetTextColor(255, 255, 255);
     $pdf->SetFont('Helvetica', 'B', 8.5);
     $pdf->SetXY($ml + 5, $yB1 + 1.8);
     $pdf->Cell($cw - 20, 5.5, 'INFORMACION CUMPLIMENTADA POR EL ACREEDOR', 0, 0, 'L');
-    // Icono flecha/check a la derecha
     $pdf->SetFont('Helvetica', '', 11);
     $pdf->SetXY($W - $mr - 12, $yB1 + 1);
-    $pdf->Cell(10, 7, chr(118), 0, 0, 'C'); // v como check
+    $pdf->Cell(10, 7, chr(118), 0, 0, 'C');
 
     $pdf->SetTextColor(51, 51, 51);
 
@@ -1442,7 +1432,7 @@ function generarSepaPDF($enviarPorEmail = false)
         $yFila += 8.5;
     }
 
-    // ─── TEXTO LEGAL ──────────────────────────────────────────
+    // ─── TEXTO LEGAL ──────────────────────────────────────────────
     $yTexto = $yB1 + $hB1 + 5;
     $pdf->SetFont('Helvetica', '', 7.5);
     $pdf->SetTextColor(70, 70, 70);
@@ -1451,7 +1441,7 @@ function generarSepaPDF($enviarPorEmail = false)
         'Mediante la firma de esta orden de domiciliacion, el deudor autoriza (A) al acreedor a enviar instrucciones a la entidad del deudor para adeudar su cuenta y (B) a la entidad para efectuar los adeudos en su cuenta siguiendo las instrucciones del acreedor. Como parte de sus derechos, el deudor esta legitimado al reembolso por su entidad en los terminos y condiciones del contrato suscrito con la misma.',
         0, 'J');
 
-    // ─── BLOQUE DEUDOR — campos EN BLANCO ─────────────────────
+    // ─── BLOQUE DEUDOR ────────────────────────────────────────────
     $yB2 = $pdf->GetY() + 5;
     $hB2 = 115;
 
@@ -1470,15 +1460,13 @@ function generarSepaPDF($enviarPorEmail = false)
 
     $pdf->SetTextColor(51, 51, 51);
 
-    // Campos del deudor — valor en blanco o con dato mínimo si lo tenemos
-    // Línea de relleno = campo editable visual
     $camposDeudor = array(
         array('IDENTIFICADOR DEL ACREEDOR CIF:', $deudorCif),
         array('NOMBRE DEL DEUDOR/ES:', $deudorNombre),
         array('DIRECCION DEL DEUDOR:', ''),
         array('CODIGO POSTAL - POBLACION - PROVINCIA:', ''),
         array('PAIS DEL DEUDOR:', ''),
-        array('SWIFT BIC:', ''),  // hint en gris
+        array('SWIFT BIC:', ''),
         array('NUMERO DE CUENTA:', ''),
     );
 
@@ -1497,14 +1485,12 @@ function generarSepaPDF($enviarPorEmail = false)
         $pdf->SetXY($xLabel, $yFila);
         $pdf->Cell(72, 5, $campo[0], 0, 0, 'L');
 
-        // Si tiene valor → escribe en negro; si no → dibuja línea + hint en gris
         if (!empty($campo[1])) {
             $pdf->SetFont('Helvetica', '', 8);
             $pdf->SetTextColor(51, 51, 51);
             $pdf->SetXY($xValue, $yFila);
             $pdf->Cell(100, 5, $campo[1], 0, 0, 'L');
         } else {
-            // Línea de relleno + hint opcional
             $lineX1 = $xValue;
             $lineX2 = $W - $mr - 3;
             $lineY  = $yFila + 4.5;
@@ -1524,7 +1510,7 @@ function generarSepaPDF($enviarPorEmail = false)
         $yFila += 8.5;
     }
 
-    // TIPO DE PAGO con checkbox marcado
+    // TIPO DE PAGO con checkbox
     $pdf->SetFillColor($rRosa, $gRosa, $bRosa);
     $pdf->Circle($xBullet, $yFila + 2.2, 1.3, 0, 360, 'F');
     $pdf->SetFont('Helvetica', 'B', 8);
@@ -1532,7 +1518,6 @@ function generarSepaPDF($enviarPorEmail = false)
     $pdf->SetXY($xLabel, $yFila);
     $pdf->Cell(28, 5, 'TIPO DE PAGO:', 0, 0, 'L');
 
-    // Checkbox marcado
     $cbX = $xLabel + 30; $cbY = $yFila + 0.3;
     $pdf->SetDrawColor($rRosa, $gRosa, $bRosa);
     $pdf->SetFillColor(255, 255, 255);
@@ -1569,7 +1554,7 @@ function generarSepaPDF($enviarPorEmail = false)
     $pdf->SetXY(0, $yFila);
     $pdf->Cell($W, 5, 'FIRMA DEL DEUDOR:', 0, 1, 'C');
 
-    // ─── NOTA FINAL ───────────────────────────────────────────
+    // ─── NOTA FINAL ───────────────────────────────────────────────
     $yNota = $yB2 + $hB2 + 5;
     $pdf->SetFont('Helvetica', 'B', 7.5);
     $pdf->SetTextColor($rRosa, $gRosa, $bRosa);
@@ -1578,7 +1563,7 @@ function generarSepaPDF($enviarPorEmail = false)
         '* TODOS LOS CAMPOS HAN DE SER CUMPLIMENTADOS OBLIGATORIAMENTE. UNA VEZ FIRMADA ESTA ORDEN DE DOMICILIACION DEBE SER ENVIADA AL ACREEDOR PARA SU CUSTODIA.',
         0, 'L');
 
-    // ─── PIE ──────────────────────────────────────────────────
+    // ─── PIE ──────────────────────────────────────────────────────
     $yPie = $H - 14;
     $pdf->SetDrawColor($rRosa, $gRosa, $bRosa);
     $pdf->SetLineWidth(0.4);
@@ -1588,12 +1573,11 @@ function generarSepaPDF($enviarPorEmail = false)
     $pdf->SetXY(0, $yPie + 2);
     $pdf->Cell($W, 4, 'Tictac Comunicacion Digital SL  ·  C/ Escultor Ramon Barba, 1 - Bloque F - 1-2  ·  14012 Cordoba  ·  hola@tictac-comunicacion.es', 0, 0, 'C');
 
-    // ─── OUTPUT ───────────────────────────────────────────────
+    // ─── OUTPUT ───────────────────────────────────────────────────
     $nombre    = preg_replace('/[^A-Za-z0-9_\-]/', '_', $deudorNombre ?: 'cliente');
     $pdfNombre = 'SEPA_' . $nombre . '.pdf';
 
     if ($enviarPorEmail) {
-        // Guardar PDF temporal y enviar por email
         $tmpFile = sys_get_temp_dir() . '/' . $pdfNombre;
         $pdf->Output($tmpFile, 'F');
 
@@ -1610,7 +1594,7 @@ function generarSepaPDF($enviarPorEmail = false)
                 require_once $gmailPath;
                 $subject = 'Orden de Domiciliacion SEPA - Tictac Comunicacion';
                 $nombreCliente = $deudorNombre ?: 'cliente';
-                $message = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;background:#f5f5f5;margin:0;}.w{max-width:600px;margin:20px auto;background:white;border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.1);}.h{background:#E91E8C;padding:35px 30px;text-align:center;color:white;}.h img{max-width:150px;margin-bottom:12px;}.h h1{margin:0;font-size:20px;}.b{padding:35px 30px;}.box{background:#fff5f9;border-left:4px solid #E91E8C;padding:18px;margin:20px 0;border-radius:5px;}.f{background:#1a1a1a;color:white;padding:22px 30px;text-align:center;font-size:13px;}.f a{color:#E91E8C;text-decoration:none;}</style></head><body><div class="w"><div class="h"><img src="https://tictac-comunicacion.es/wp-content/uploads/2026/02/LOGO-1-2.png" alt="Tictac"><h1>Orden de Domiciliacion SEPA</h1></div><div class="b"><p>Estimado/a <strong>' . htmlspecialchars($nombreCliente) . '</strong>,</p><p>Adjunto encontraras la Orden de Domiciliacion de Adeudo Directo SEPA para que la cumplimentes con tus datos bancarios, la firmes y nos la devuelvas a <strong>hola@tictac-comunicacion.es</strong>.</p><div class="box">Por favor rellena todos los campos del documento, firmalo y envialo de vuelta lo antes posible para activar la domiciliacion bancaria de tus pagos.</div><p>Si tienes cualquier duda no dudes en contactar con nosotros.</p></div><div class="f"><strong>Tictac Comunicacion Digital SL</strong><br>C/ Escultor Ramon Barba, 1 - Bloque F - 1-2  14012 Cordoba<br><a href="tel:+34957048147">957 048 147</a> &nbsp; <a href="mailto:hola@tictac-comunicacion.es">hola@tictac-comunicacion.es</a></div></div></body></html>';
+                $message = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;background:#f5f5f5;margin:0;}.w{max-width:600px;margin:20px auto;background:white;border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.1);}.h{background:#a8005a;padding:35px 30px;text-align:center;color:white;}.h img{max-width:150px;margin-bottom:12px;}.h h1{margin:0;font-size:20px;}.b{padding:35px 30px;}.box{background:#fff5f9;border-left:4px solid #a8005a;padding:18px;margin:20px 0;border-radius:5px;}.f{background:#1a1a1a;color:white;padding:22px 30px;text-align:center;font-size:13px;}.f a{color:#a8005a;text-decoration:none;}</style></head><body><div class="w"><div class="h"><img src="https://tictac-comunicacion.es/wp-content/uploads/2026/02/LOGO-1-2.png" alt="Tictac"><h1>Orden de Domiciliacion SEPA</h1></div><div class="b"><p>Estimado/a <strong>' . htmlspecialchars($nombreCliente) . '</strong>,</p><p>Adjunto encontraras la Orden de Domiciliacion de Adeudo Directo SEPA para que la cumplimentes con tus datos bancarios, la firmes y nos la devuelvas a <strong>hola@tictac-comunicacion.es</strong>.</p><div class="box">Por favor rellena todos los campos del documento, firmalo y envialo de vuelta lo antes posible para activar la domiciliacion bancaria de tus pagos.</div><p>Si tienes cualquier duda no dudes en contactar con nosotros.</p></div><div class="f"><strong>Tictac Comunicacion Digital SL</strong><br>C/ Escultor Ramon Barba, 1 - Bloque F - 1-2  14012 Cordoba<br><a href="tel:+34957048147">957 048 147</a> &nbsp; <a href="mailto:hola@tictac-comunicacion.es">hola@tictac-comunicacion.es</a></div></div></body></html>';
                 $enviadoOk = false;
                 foreach ($emailsOk as $emailDest) {
                     $res = enviarEmailGmailAPI($emailDest, $subject, $message, array(array('file_path' => $tmpFile)));
@@ -1630,7 +1614,6 @@ function generarSepaPDF($enviarPorEmail = false)
         exit;
     }
 
-    // Descarga directa
     $pdf->Output($pdfNombre, 'D');
     exit;
 }

@@ -8,6 +8,9 @@
  *   - Secciones opcionales (no aparecen si están vacías)
  *   - Múltiples emails separados por comas
  *   - Precio original (sin rebajar) tachado en PDF
+ *   - Color corporativo actualizado a #d72173
+ *   - Sección de firmas al final del PDF
+ *   - Texto cliente con MultiCell para evitar desbordamiento
  */
 
 require_once '../config.php';
@@ -257,7 +260,7 @@ function guardarPresupuesto() {
         'valido_hasta' => $_POST['valido_hasta'],
         'cliente_id' => $_POST['cliente_id'] ?? '',
         'cliente_nombre' => $_POST['cliente_nombre'],
-        'cliente_email' => $_POST['cliente_email'], // Puede ser "a@x.com,b@x.com"
+        'cliente_email' => $_POST['cliente_email'],
         'cliente_telefono' => $_POST['cliente_telefono'] ?? '',
         'cliente_direccion' => $_POST['cliente_direccion'] ?? '',
         'cliente_ciudad' => $_POST['cliente_ciudad'] ?? '',
@@ -293,7 +296,6 @@ function guardarPresupuesto() {
         $presupuestos[] = $presupuesto;
     }
 
-    // Sincronizar con CRM
     $crmResult = ['success' => false, 'message' => 'No sincronizado'];
     
     if (!empty($presupuesto['cliente_id']) && $presupuesto['cliente_id'] !== '') {
@@ -447,7 +449,7 @@ function eliminarPresupuesto() {
 
 /**
  * Generar PDF - DISEÑO PROFESIONAL
- * ACTUALIZADO: Precio original tachado, múltiples emails
+ * ACTUALIZADO: Color #d72173, MultiCell para cliente, sección firmas
  */
 function generarPDF() {
     global $presupuestosFile;
@@ -472,7 +474,14 @@ function generarPDF() {
 
     require_once(BASE_PATH . '/tcpdf/tcpdf.php');
 
-    // Clase PDF personalizada
+    // =====================================================
+    // Color corporativo actualizado
+    // #d72173 → R:215, G:33, B:115
+    // =====================================================
+    define('BRAND_R', 215);
+    define('BRAND_G', 33);
+    define('BRAND_B', 115);
+
     class TictacPDF extends TCPDF {
         public $bgEnabled = false;
         public $bgColor = array(240, 248, 255);
@@ -481,7 +490,7 @@ function generarPDF() {
         
         public function header() {
             $pageW = $this->getPageWidth();
-            $this->SetFillColor(233, 30, 140);
+            $this->SetFillColor(BRAND_R, BRAND_G, BRAND_B);
             $this->RoundedRect(0, 0, $pageW, 42, 5, 5, 'F');
             $logo = defined('LOGO_BLANCO') ? LOGO_BLANCO : '';
             if ($logo) {
@@ -502,7 +511,7 @@ function generarPDF() {
             $this->SetFont('Helvetica', 'B', 20);
             $this->SetXY(0, 24);
             $this->Cell($pageW, 10, 'Presupuesto', 0, 1, 'C');
-            $this->SetDrawColor(233, 30, 140);
+            $this->SetDrawColor(BRAND_R, BRAND_G, BRAND_B);
             $this->SetLineWidth(0.3);
             $this->Line(15, 44, $pageW - 15, 44);
             $this->SetTextColor(51, 51, 51);
@@ -517,10 +526,11 @@ function generarPDF() {
                 $this->SetTextColor(51, 51, 51);
             }
         }
+
         public function footer() {
             $pageW = $this->getPageWidth();
             $this->SetY(-38);
-            $this->SetDrawColor(233, 30, 140);
+            $this->SetDrawColor(BRAND_R, BRAND_G, BRAND_B);
             $this->SetLineWidth(0.5);
             $this->Line(15, $this->GetY(), $pageW - 15, $this->GetY());
             $this->Ln(4);
@@ -541,13 +551,9 @@ function generarPDF() {
             $this->Cell($pageW, 4, 'Página ' . $this->PageNo() . ' / ' . $this->getNumPages(), 0, 1, 'C');
         }
 
-        /**
-         * Dibuja texto tachado manualmente (TCPDF no soporta strikethrough nativo de forma fiable)
-         */
         public function CellStrikethrough($x, $y, $w, $h, $txt, $fontSize) {
             $this->SetXY($x, $y);
             $this->Cell($w, $h, $txt, 0, 0, 'L');
-            // Línea de tachado: a mitad del texto
             $strikeY = $y + ($h / 2) + 0.3;
             $txtW = $this->GetStringWidth($txt);
             $this->SetLineWidth(0.3);
@@ -570,16 +576,18 @@ function generarPDF() {
     $startX = 15;
     $startY = $pdf->GetY();
 
-    // Columna izquierda: Datos de la Propuesta
+    // =====================================================
+    // COLUMNA IZQUIERDA: Datos de la Propuesta
+    // =====================================================
     $pdf->SetXY($startX, $startY);
     $pdf->SetDrawColor(220, 220, 220);
     $pdf->SetFillColor(255, 255, 255);
     $pdf->RoundedRect($startX, $startY, $colW, 48, 3, 3, 'DF');
     $pdf->SetXY($startX + 5, $startY + 4);
-    $pdf->SetTextColor(233, 30, 140);
+    $pdf->SetTextColor(BRAND_R, BRAND_G, BRAND_B);
     $pdf->SetFont('Helvetica', 'B', 11);
     $pdf->Cell($colW - 10, 6, 'DATOS DE LA PROPUESTA', 0, 1, 'L');
-    $pdf->SetDrawColor(233, 30, 140);
+    $pdf->SetDrawColor(BRAND_R, BRAND_G, BRAND_B);
     $pdf->SetLineWidth(0.4);
     $pdf->Line($startX + 5, $pdf->GetY() + 1, $startX + $colW - 5, $pdf->GetY() + 1);
     $pdf->Ln(4);
@@ -600,65 +608,85 @@ function generarPDF() {
     $pdf->SetFont('Helvetica', '', 9);
     $pdf->Cell(0, 5, !empty($presupuesto['valido_hasta']) ? date('d-m-Y', strtotime($presupuesto['valido_hasta'])) : '', 0, 1, 'L');
 
-    // Columna derecha: Info Cliente
+    // =====================================================
+    // COLUMNA DERECHA: Info Cliente — con MultiCell para evitar desbordamiento
+    // =====================================================
     $rightX = $startX + $colW + 5;
-    $pdf->SetXY($rightX, $startY);
-    $pdf->SetDrawColor(220, 220, 220);
-    $pdf->SetFillColor(255, 255, 255);
-    $pdf->RoundedRect($rightX, $startY, $colW, 48, 3, 3, 'DF');
-    $pdf->SetXY($rightX + 5, $startY + 4);
-    $pdf->SetTextColor(233, 30, 140);
-    $pdf->SetFont('Helvetica', 'B', 11);
-    $pdf->Cell($colW - 10, 6, 'INFORMACIÓN DEL CLIENTE', 0, 1, 'L');
-    $pdf->SetDrawColor(233, 30, 140);
-    $pdf->SetLineWidth(0.4);
-    $pdf->Line($rightX + 5, $pdf->GetY() + 1, $rightX + $colW - 5, $pdf->GetY() + 1);
-    $pdf->Ln(4);
+    $rightColW = $colW; // mismo ancho que la columna izquierda
+    $labelW = 22;
+    $valueW = $rightColW - $labelW - 10; // ancho disponible para el valor
 
-    $campos_cliente = [
-        ['Cliente:', $presupuesto['cliente_nombre'] ?? ''],
-        ['Contacto:', $presupuesto['cliente_nombre'] ?? ''],
-    ];
+    // Calcular altura dinámica de la caja del cliente
+    $campos_cliente_raw = [];
+    $campos_cliente_raw[] = ['Cliente:', $presupuesto['cliente_nombre'] ?? ''];
+    $campos_cliente_raw[] = ['Contacto:', $presupuesto['cliente_nombre'] ?? ''];
     
     $direccion = trim($presupuesto['cliente_direccion'] ?? '');
-    if ($direccion !== '') {
-        $campos_cliente[] = ['Dirección:', $direccion];
-    }
+    if ($direccion !== '') $campos_cliente_raw[] = ['Dirección:', $direccion];
     
     $ciudad = trim($presupuesto['cliente_ciudad'] ?? '');
     $cp = trim($presupuesto['cliente_cp'] ?? '');
     $ciudadCompleta = $ciudad . ($cp !== '' ? ', ' . $cp : '');
-    if (trim($ciudadCompleta) !== '' && trim($ciudadCompleta) !== ',') {
-        $campos_cliente[] = ['Ciudad:', $ciudadCompleta];
-    }
+    if (trim($ciudadCompleta, ', ') !== '') $campos_cliente_raw[] = ['Ciudad:', $ciudadCompleta];
     
     $pais = trim($presupuesto['cliente_pais'] ?? '');
-    if ($pais !== '') {
-        $campos_cliente[] = ['País:', $pais];
-    }
+    if ($pais !== '') $campos_cliente_raw[] = ['País:', $pais];
     
     $cif = trim($presupuesto['cliente_cif'] ?? '');
-    if ($cif !== '') {
-        $campos_cliente[] = ['CIF/NIF:', $cif];
-    }
+    if ($cif !== '') $campos_cliente_raw[] = ['CIF/NIF:', $cif];
 
-    foreach ($campos_cliente as $campo) {
-        $pdf->SetX($rightX + 5);
+    // Calcular la altura total necesaria para la caja
+    $pdf->SetFont('Helvetica', '', 9);
+    $totalClienteH = 14; // cabecera + línea + padding top
+    foreach ($campos_cliente_raw as $campo) {
+        $lineas = ceil($pdf->GetStringWidth($campo[1]) / $valueW);
+        if ($lineas < 1) $lineas = 1;
+        $totalClienteH += $lineas * 5;
+    }
+    $totalClienteH += 4; // padding bottom
+    $cajaClienteH = max(48, $totalClienteH);
+
+    $pdf->SetXY($rightX, $startY);
+    $pdf->SetDrawColor(220, 220, 220);
+    $pdf->SetFillColor(255, 255, 255);
+    $pdf->RoundedRect($rightX, $startY, $rightColW, $cajaClienteH, 3, 3, 'DF');
+    $pdf->SetXY($rightX + 5, $startY + 4);
+    $pdf->SetTextColor(BRAND_R, BRAND_G, BRAND_B);
+    $pdf->SetFont('Helvetica', 'B', 11);
+    $pdf->Cell($rightColW - 10, 6, 'INFORMACIÓN DEL CLIENTE', 0, 1, 'L');
+    $pdf->SetDrawColor(BRAND_R, BRAND_G, BRAND_B);
+    $pdf->SetLineWidth(0.4);
+    $pdf->Line($rightX + 5, $pdf->GetY() + 1, $rightX + $rightColW - 5, $pdf->GetY() + 1);
+    $pdf->Ln(4);
+
+    foreach ($campos_cliente_raw as $campo) {
+        $curY = $pdf->GetY();
+        $pdf->SetXY($rightX + 5, $curY);
         $pdf->SetTextColor(51, 51, 51);
         $pdf->SetFont('Helvetica', 'B', 9);
-        $pdf->Cell(25, 5, $campo[0], 0, 0, 'L');
+        $pdf->Cell($labelW, 5, $campo[0], 0, 0, 'L');
+        
+        // MultiCell para el valor — evita desbordamiento
         $pdf->SetFont('Helvetica', '', 9);
-        $pdf->Cell(0, 5, $campo[1] ?? '', 0, 1, 'L');
+        $pdf->SetXY($rightX + 5 + $labelW, $curY);
+        $pdf->MultiCell($valueW, 5, $campo[1] ?? '', 0, 'L', false, 1);
     }
 
+    // Ajustar Y al máximo de ambas columnas
+    $afterClienteY = $pdf->GetY();
+    $afterDatosY = $startY + 48;
+    $pdf->SetY(max($afterClienteY, $afterDatosY));
+
+    // =====================================================
     // Sección "Sobre Nosotros"
-    $pdf->SetY($startY + 55);
+    // =====================================================
+    $pdf->SetY($pdf->GetY() + 7);
     $sobreY = $pdf->GetY();
     $pdf->SetFillColor(255, 240, 247);
     $pdf->SetDrawColor(255, 240, 247);
     $pdf->RoundedRect(15, $sobreY, $contentW, 28, 3, 3, 'F');
     $pdf->SetXY(20, $sobreY + 4);
-    $pdf->SetTextColor(233, 30, 140);
+    $pdf->SetTextColor(BRAND_R, BRAND_G, BRAND_B);
     $pdf->SetFont('Helvetica', 'B', 11);
     $pdf->Cell($contentW - 10, 6, 'Sobre Nosotros', 0, 1, 'L');
     $pdf->SetX(20);
@@ -667,7 +695,9 @@ function generarPDF() {
     $sobreTexto = 'En Tictac Comunicación Digital SL desarrollamos estrategias digitales orientadas a conversión, visibilidad y crecimiento real. Cada propuesta se diseña a medida, alineada con los objetivos del cliente y basada en criterios técnicos, creativos y estratégicos.';
     $pdf->MultiCell($contentW - 10, 3.5, $sobreTexto, 0, 'J');
 
+    // =====================================================
     // Título "Propuesta Económica"
+    // =====================================================
     $pdf->Ln(12);
     $pdf->SetTextColor(51, 51, 51);
     $pdf->SetFont('Helvetica', 'B', 16);
@@ -689,7 +719,9 @@ function generarPDF() {
     $pdf->SetX(20);
     $pdf->Cell($contentW - 10, 4, '** El presupuesto tendrá validez hasta dos semanas después de su fecha de emisión indicada en la parte superior.', 0, 1, 'L');
 
+    // =====================================================
     // Tabla de artículos
+    // =====================================================
     $pdf->Ln(5);
     $pdf->SetTextColor(51, 51, 51);
     $cArticulo = 75;
@@ -725,7 +757,6 @@ function generarPDF() {
         $nombre = pdf_text_plain($item['nombre'] ?? '');
         $desc   = pdf_text_plain($item['descripcion'] ?? '');
         
-        // Precio original (sin rebajar) — si existe, ocupa línea extra en la tarifa
         $precioOriginal = isset($item['precio_original']) && $item['precio_original'] !== null && $item['precio_original'] > 0
             ? floatval($item['precio_original'])
             : null;
@@ -735,7 +766,6 @@ function generarPDF() {
         if ($desc !== '') {
             $descH = $pdf->getStringHeight($cArticulo - 2, $desc, false, true, '', 1);
         }
-        // Si hay descuento, la columna tarifa necesita una línea extra para el precio tachado
         $extraTarifaH = $hayDescuento ? 5 : 0;
         $rowH = ($desc !== '') ? (6 + $descH + 2 + $extraTarifaH) : (7 + $extraTarifaH);
         if ($rowH < 7) $rowH = 7;
@@ -751,47 +781,39 @@ function generarPDF() {
             $pdf->Rect(15, $rowY, $tableW, $rowH, 'F');
         }
 
-        // Nombre artículo
         $pdf->SetXY(17, $rowY + 1);
         $pdf->SetFont('Helvetica', 'B', 8.5);
         $pdf->Cell($cArticulo - 2, 5, $nombre, 0, 0, 'L');
 
-        // Cantidad
         $cantTexto = number_format($cantidad, 2, ',', '.') . ($unidad ? ' ' . $unidad : '');
         $pdf->SetFont('Helvetica', '', 8.5);
         $pdf->Cell($cCantidad, 5, $cantTexto, 0, 0, 'C');
 
-        // Tarifa — con precio original tachado encima si hay descuento
         $tarifaX = 15 + $cArticulo + $cCantidad;
         if ($hayDescuento) {
-            // Precio original tachado — alineado a la derecha de la columna, encima del rebajado
             $origTxt = number_format($precioOriginal, 2, ',', '.') . '€';
             $pdf->SetFont('Helvetica', '', 7.5);
             $pdf->SetTextColor(160, 160, 160);
             $origTxtW = $pdf->GetStringWidth($origTxt);
-            // Posición X: pegado al borde derecho de la columna Tarifa
             $origX = $tarifaX + $cTarifa - $origTxtW;
             $pdf->SetXY($origX, $rowY + 1);
             $pdf->Cell($origTxtW, 4, $origTxt, 0, 0, 'L');
-            // Línea de tachado centrada verticalmente en el texto
             $strikeY = $rowY + 1 + 2.0;
             $pdf->SetLineWidth(0.3);
             $pdf->SetDrawColor(160, 160, 160);
             $pdf->Line($origX, $strikeY, $origX + $origTxtW, $strikeY);
 
-            // Precio con descuento (rosa/brand, negrita, justo debajo)
             $pdf->SetFont('Helvetica', 'B', 8.5);
-            $pdf->SetTextColor(233, 30, 140);
+            $pdf->SetTextColor(BRAND_R, BRAND_G, BRAND_B);
             $pdf->SetXY($tarifaX, $rowY + 5);
             $pdf->Cell($cTarifa, 5, number_format($precio, 2, ',', '.') . '€', 0, 0, 'R');
             $pdf->SetTextColor(51, 51, 51);
-            $pdf->SetDrawColor(230, 230, 230); // restaurar color de líneas
+            $pdf->SetDrawColor(230, 230, 230);
         } else {
             $pdf->SetFont('Helvetica', '', 8.5);
             $pdf->Cell($cTarifa, 5, number_format($precio, 2, ',', '.') . '€', 0, 0, 'R');
         }
 
-        // Total
         $totalX = 15 + $cArticulo + $cCantidad + $cTarifa;
         $pdf->SetXY($totalX, $rowY + 1);
         $pdf->SetFont('Helvetica', 'B', 8.5);
@@ -813,7 +835,9 @@ function generarPDF() {
         $rowAlternate = !$rowAlternate;
     }
 
+    // =====================================================
     // Totales
+    // =====================================================
     $pdf->Ln(4);
     $pdf->SetFont('Helvetica', '', 10);
     $pdf->SetTextColor(51, 51, 51);
@@ -827,7 +851,6 @@ function generarPDF() {
     $labelW = 40;
     $valW   = 25;
 
-    // Calcular ahorro total si hay precios originales en los items
     $subtotalSinDescuento = 0;
     $hayDescuentoGlobal   = false;
     foreach (($presupuesto['items'] ?? []) as $it) {
@@ -843,14 +866,12 @@ function generarPDF() {
     $totalSinDescuento = $subtotalSinDescuento + $ivaAmountOrig + $segAmountOrig;
     $ahorroTotal     = $totalSinDescuento - $totalFinal;
 
-    // Sub Total
     $pdf->SetX($rightMargin - $labelW - $valW);
     $pdf->SetFont('Helvetica', '', 9);
     $pdf->Cell($labelW, 5, 'Sub Total', 0, 0, 'R');
     $pdf->SetFont('Helvetica', 'B', 9);
     $pdf->Cell($valW, 5, number_format($subtotal, 2, ',', '.') . '€', 0, 1, 'R');
 
-    // IVA
     $pdf->SetX($rightMargin - $labelW - $valW);
     $pdf->SetFont('Helvetica', '', 9);
     $pdf->Cell($labelW, 5, 'IVA', 0, 0, 'R');
@@ -865,14 +886,12 @@ function generarPDF() {
         $pdf->Cell($valW, 5, number_format($segAmount, 2, ',', '.') . '€', 0, 1, 'R');
     }
 
-    // Fila de ahorro (solo si hay descuentos)
     if ($hayDescuentoGlobal) {
         $pdf->Ln(1);
         $pdf->SetX($rightMargin - $labelW - $valW);
         $pdf->SetFont('Helvetica', '', 8);
         $pdf->SetTextColor(180, 180, 180);
         $pdf->Cell($labelW, 4, 'Precio sin descuento', 0, 0, 'R');
-        // Precio total sin descuento tachado
         $origTotalTxt = number_format($totalSinDescuento, 2, ',', '.') . '€';
         $origTotalW = $pdf->GetStringWidth($origTotalTxt);
         $origX = $rightMargin - $origTotalW;
@@ -880,14 +899,12 @@ function generarPDF() {
         $pdf->SetFont('Helvetica', '', 8);
         $pdf->SetXY($origX, $origY);
         $pdf->Cell($origTotalW, 4, $origTotalTxt, 0, 1, 'L');
-        // Línea de tachado
         $strikeY = $origY + 2.2;
         $pdf->SetLineWidth(0.3);
         $pdf->SetDrawColor(180, 180, 180);
         $pdf->Line($origX, $strikeY, $origX + $origTotalW, $strikeY);
         $pdf->SetDrawColor(230, 230, 230);
 
-        // Fila ahorro en verde
         $pdf->SetX($rightMargin - $labelW - $valW);
         $pdf->SetFont('Helvetica', 'B', 8);
         $pdf->SetTextColor(34, 139, 34);
@@ -907,9 +924,9 @@ function generarPDF() {
     $pdf->Cell($valW, 8, number_format($totalFinal, 2, ',', '.') . '€', 0, 1, 'R');
     $pdf->SetTextColor(51, 51, 51);
 
-    // ============================================
+    // =====================================================
     // DETALLES DE LA PROPUESTA
-    // ============================================
+    // =====================================================
     $detallesHtml = $presupuesto['detalles_propuesta'] ?? '';
     $hayDetalles = tiene_contenido($detallesHtml);
     
@@ -920,14 +937,12 @@ function generarPDF() {
         $pdf->Ln(6);
         $pdf->bgEnabled = false;
 
-        // Usar startTransaction para medir sin dejar rastro, luego hacer rollback y redibujar
         $pageAntes  = $pdf->PageNo();
         $yAntes     = $pdf->GetY();
         $bottomLimit = $pdf->getPageHeight() - 45;
 
-        // -- Transaccion de medicion --
         $pdf->startTransaction();
-        $pdf->SetAutoPageBreak(false, 0); // Desactivar salto automatico durante medicion
+        $pdf->SetAutoPageBreak(false, 0);
         $pdf->SetXY(20, $yAntes + 10);
         $pdf->SetTextColor(51, 51, 51);
         $pdf->SetFont('Helvetica', '', 8);
@@ -938,11 +953,10 @@ function generarPDF() {
             $pdf->MultiCell($contentW - 10, 3.5, $detallesTexto, 0, 'L');
         }
         $yDespues = $pdf->GetY();
-        $alturaContenido = $yDespues - $yAntes; // cuanto ocupa en total (titulo + contenido)
-        $pdf->rollbackTransaction(true); // deshacer completamente
-        $pdf->SetAutoPageBreak(true, 40); // restaurar salto automatico
+        $alturaContenido = $yDespues - $yAntes;
+        $pdf->rollbackTransaction(true);
+        $pdf->SetAutoPageBreak(true, 40);
 
-        // Decidir: cabe en la pagina actual o hay que saltar?
         $espacioDisponible = $bottomLimit - $yAntes;
         if ($alturaContenido > $espacioDisponible) {
             $pdf->AddPage();
@@ -950,7 +964,6 @@ function generarPDF() {
 
         $detallesStartY = $pdf->GetY();
 
-        // -- Escritura real: primero medir endY --
         $pdf->SetXY(20, $detallesStartY + 10);
         $pdf->SetTextColor(51, 51, 51);
         $pdf->SetFont('Helvetica', '', 8);
@@ -963,14 +976,12 @@ function generarPDF() {
         $detallesEndY = $pdf->GetY();
         $detallesH    = $detallesEndY - $detallesStartY + 6;
 
-        // Pintar fondo ajustado al contenido real
         $pdf->SetFillColor(240, 248, 255);
         $pdf->SetDrawColor(240, 248, 255);
         $pdf->Rect(15, $detallesStartY, $contentW, $detallesH, 'F');
 
-        // Reescribir titulo y contenido encima del fondo
         $pdf->SetXY(20, $detallesStartY + 4);
-        $pdf->SetTextColor(233, 30, 140);
+        $pdf->SetTextColor(BRAND_R, BRAND_G, BRAND_B);
         $pdf->SetFont('Helvetica', 'B', 11);
         $pdf->Cell($contentW - 10, 5, 'Detalles de la Propuesta', 0, 1, 'L');
 
@@ -987,9 +998,9 @@ function generarPDF() {
         $pdf->Ln(4);
     }
 
-    // ============================================
+    // =====================================================
     // NOTAS ADICIONALES
-    // ============================================
+    // =====================================================
     $notasHtml = $presupuesto['notas'] ?? '';
     $hayNotas = tiene_contenido($notasHtml);
     
@@ -1002,7 +1013,6 @@ function generarPDF() {
         $yAntesNotas    = $pdf->GetY();
         $bottomLimit2   = $pdf->getPageHeight() - 45;
 
-        // Medir sin dejar rastro usando transaccion
         $pdf->startTransaction();
         $pdf->SetAutoPageBreak(false, 0);
         $pdf->SetXY(20, $yAntesNotas + 10);
@@ -1018,7 +1028,6 @@ function generarPDF() {
         $pdf->rollbackTransaction(true);
         $pdf->SetAutoPageBreak(true, 40);
 
-        // Saltar pagina solo si no cabe
         $espacioNotas = $bottomLimit2 - $yAntesNotas;
         if ($alturaNotas > $espacioNotas) {
             $pdf->AddPage();
@@ -1026,7 +1035,6 @@ function generarPDF() {
 
         $notasStartY = $pdf->GetY();
 
-        // Escritura real
         $pdf->SetXY(20, $notasStartY + 10);
         $pdf->SetTextColor(51, 51, 51);
         $pdf->SetFont('Helvetica', '', 8);
@@ -1039,14 +1047,12 @@ function generarPDF() {
         $notasEndY = $pdf->GetY();
         $notasH    = $notasEndY - $notasStartY + 6;
 
-        // Pintar fondo rosa ajustado
         $pdf->SetFillColor(255, 240, 247);
         $pdf->SetDrawColor(255, 240, 247);
         $pdf->Rect(15, $notasStartY, $contentW, $notasH, 'F');
 
-        // Reescribir titulo y contenido encima del fondo
         $pdf->SetXY(20, $notasStartY + 4);
-        $pdf->SetTextColor(233, 30, 140);
+        $pdf->SetTextColor(BRAND_R, BRAND_G, BRAND_B);
         $pdf->SetFont('Helvetica', 'B', 11);
         $pdf->Cell($contentW - 10, 5, 'Notas Adicionales', 0, 1, 'L');
 
@@ -1064,7 +1070,62 @@ function generarPDF() {
         $pdf->Ln(4);
     }
 
-    // Determinar modo
+    // =====================================================
+    // SECCIÓN DE FIRMAS
+    // =====================================================
+    $pdf->Ln(10);
+
+    // Comprobar si cabe en la página actual (necesitamos ~55mm para la sección de firmas)
+    $firmasH = 55;
+    $bottomLimitFirmas = $pdf->getPageHeight() - 45;
+    if (($pdf->GetY() + $firmasH) > $bottomLimitFirmas) {
+        $pdf->AddPage();
+    }
+
+    $firmasStartY = $pdf->GetY();
+    $firmaColW = ($contentW - 10) / 2; // dos columnas iguales con separación
+
+    // Línea separadora superior
+    $pdf->SetDrawColor(BRAND_R, BRAND_G, BRAND_B);
+    $pdf->SetLineWidth(0.5);
+    $pdf->Line(15, $firmasStartY, 15 + $contentW, $firmasStartY);
+    $pdf->Ln(5);
+
+    // Títulos de columnas
+    $pdf->SetFont('Helvetica', 'B', 9);
+    $pdf->SetTextColor(BRAND_R, BRAND_G, BRAND_B);
+    $pdf->SetX(15);
+    $pdf->Cell($firmaColW, 5, 'FIRMA Y SELLO DEL PROVEEDOR', 0, 0, 'C');
+    $pdf->SetX(15 + $firmaColW + 10);
+    $pdf->Cell($firmaColW, 5, 'FIRMA Y SELLO DEL CLIENTE', 0, 1, 'C');
+
+    $pdf->Ln(18); // espacio para la firma manuscrita
+
+    // Líneas de firma
+    $firmaLineY = $pdf->GetY();
+    $pdf->SetDrawColor(180, 180, 180);
+    $pdf->SetLineWidth(0.4);
+    // Línea proveedor
+    $pdf->Line(15 + 5, $firmaLineY, 15 + $firmaColW - 5, $firmaLineY);
+    // Línea cliente
+    $pdf->Line(15 + $firmaColW + 15, $firmaLineY, 15 + $contentW - 5, $firmaLineY);
+
+    $pdf->Ln(4);
+
+    // Nombres bajo las líneas
+    $pdf->SetFont('Helvetica', '', 9);
+    $pdf->SetTextColor(51, 51, 51);
+    $pdf->SetX(15);
+    $pdf->Cell($firmaColW, 5, 'Tictac Comunicacion Digital SL', 0, 0, 'C');
+
+    // Nombre del cliente (extraer solo el nombre sin empresa si es posible)
+    $nombreCliente = $presupuesto['cliente_nombre'] ?? '';
+    $pdf->SetX(15 + $firmaColW + 10);
+    $pdf->Cell($firmaColW, 5, $nombreCliente, 0, 1, 'C');
+
+    // =====================================================
+    // Determinar modo output
+    // =====================================================
     $mode = $_GET['mode'] ?? 'download';
     $filename = 'Presupuesto_' . ($presupuesto['id'] ?? 'SIN_ID') . '.pdf';
 
@@ -1080,7 +1141,6 @@ function generarPDF() {
 
 /**
  * Enviar email con PDF adjunto
- * ACTUALIZADO: Soporta múltiples destinatarios separados por comas
  */
 function enviarEmail() {
     global $presupuestosFile;
@@ -1113,7 +1173,6 @@ function enviarEmail() {
         exit; 
     }
 
-    // Generar PDF
     $_GET['mode'] = 'save';
     $tmpFile = generarPDF();
     
@@ -1122,7 +1181,6 @@ function enviarEmail() {
         exit;
     }
 
-    // Preparar destinatarios — puede ser "a@a.com,b@b.com"
     $emailRaw = $presupuesto['cliente_email'] ?? '';
     $destinatarios = array_filter(array_map('trim', explode(',', $emailRaw)));
     
@@ -1139,75 +1197,19 @@ function enviarEmail() {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            margin: 0;
-            padding: 0;
-            background-color: #f5f5f5;
-        }
-        .email-container {
-            max-width: 600px;
-            margin: 20px auto;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .header {
-            background: #D72072;
-            color: white;
-            padding: 40px 30px;
-            text-align: center;
-        }
-        .header img {
-            max-width: 180px;
-            height: auto;
-            margin-bottom: 15px;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: 600;
-        }
-        .content {
-            padding: 40px 30px;
-        }
-        .content p {
-            margin: 0 0 15px 0;
-        }
-        .resumen-box {
-            background: #fff5f9;
-            border-left: 4px solid #D72072;
-            padding: 20px;
-            margin: 25px 0;
-            border-radius: 5px;
-        }
-        .resumen-box strong {
-            color: #D72072;
-        }
-        .total-destacado {
-            font-size: 24px;
-            color: #D72072;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-        .footer {
-            background: #1a1a1a;
-            color: white;
-            padding: 30px;
-            text-align: center;
-            font-size: 13px;
-        }
-        .footer a {
-            color: #D72072;
-            text-decoration: none;
-        }
-        .contacto-info {
-            margin-top: 15px;
-            line-height: 1.8;
-        }
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5; }
+        .email-container { max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { background: #d72173; color: white; padding: 40px 30px; text-align: center; }
+        .header img { max-width: 180px; height: auto; margin-bottom: 15px; }
+        .header h1 { margin: 0; font-size: 24px; font-weight: 600; }
+        .content { padding: 40px 30px; }
+        .content p { margin: 0 0 15px 0; }
+        .resumen-box { background: #fff5f9; border-left: 4px solid #d72173; padding: 20px; margin: 25px 0; border-radius: 5px; }
+        .resumen-box strong { color: #d72173; }
+        .total-destacado { font-size: 24px; color: #d72173; font-weight: bold; margin-top: 10px; }
+        .footer { background: #1a1a1a; color: white; padding: 30px; text-align: center; font-size: 13px; }
+        .footer a { color: #d72173; text-decoration: none; }
+        .contacto-info { margin-top: 15px; line-height: 1.8; }
     </style>
 </head>
 <body>
@@ -1216,25 +1218,18 @@ function enviarEmail() {
             <img src="https://tictac-comunicacion.es/wp-content/uploads/2026/02/LOGO-1-2.png" alt="Tictac Comunicación">
             <h1>Tu Presupuesto Está Listo</h1>
         </div>
-        
         <div class="content">
             <p>Estimado/a <strong>' . htmlspecialchars($presupuesto['cliente_nombre'] ?? '') . '</strong>,</p>
-            
             <p>Gracias por confiar en Tictac Comunicación Digital. Adjunto encontrarás el presupuesto detallado para tu proyecto con todos los servicios propuestos.</p>
-            
             <div class="resumen-box">
                 <strong>📋 Resumen del Presupuesto</strong><br><br>
                 <strong>Fecha de emisión:</strong> ' . (!empty($presupuesto['fecha_propuesta']) ? date('d/m/Y', strtotime($presupuesto['fecha_propuesta'])) : '') . '<br>
                 <strong>Válido hasta:</strong> ' . (!empty($presupuesto['valido_hasta']) ? date('d/m/Y', strtotime($presupuesto['valido_hasta'])) : '') . '<br>
                 <div class="total-destacado">Total: ' . number_format(floatval($presupuesto['total'] ?? 0), 2, ',', '.') . ' €</div>
             </div>
-            
             <p>Hemos diseñado esta propuesta pensando específicamente en tus necesidades y objetivos. Si tienes alguna duda o quieres comentar cualquier aspecto del presupuesto, estaremos encantados de atenderte.</p>
-            
-            <p><strong>¿Necesitas más información?</strong><br>
-            No dudes en contactarnos. Estamos aquí para ayudarte.</p>
+            <p><strong>¿Necesitas más información?</strong><br>No dudes en contactarnos. Estamos aquí para ayudarte.</p>
         </div>
-        
         <div class="footer">
             <strong>Tictac Comunicación Digital SL</strong>
             <div class="contacto-info">
@@ -1254,7 +1249,6 @@ function enviarEmail() {
         array("file_path" => $tmpFile)
     );
 
-    // Enviar a cada destinatario
     $todosEnviados = true;
     $errores = [];
 
@@ -1308,7 +1302,7 @@ function generarHTMLPresupuestoSimple($presupuesto) {
         small { color: #666; }
         .precio-tachado { text-decoration: line-through; color: #aaa; font-size: 9px; }
     </style>
-    <h2 style="color:#D72072; text-align:center;">PRESUPUESTO - ' . htmlspecialchars($presupuesto['id'] ?? '') . '</h2>
+    <h2 style="color:#d72173; text-align:center;">PRESUPUESTO - ' . htmlspecialchars($presupuesto['id'] ?? '') . '</h2>
     <p><strong>Cliente:</strong> ' . htmlspecialchars($presupuesto['cliente_nombre'] ?? '') . '</p>
     <p><strong>Fecha:</strong> ' . (!empty($presupuesto['fecha_propuesta']) ? date('d/m/Y', strtotime($presupuesto['fecha_propuesta'])) : '') . ' | <strong>Válido hasta:</strong> ' . (!empty($presupuesto['valido_hasta']) ? date('d/m/Y', strtotime($presupuesto['valido_hasta'])) : '') . '</p>
     <table>
@@ -1327,7 +1321,7 @@ function generarHTMLPresupuestoSimple($presupuesto) {
 
         $tarifaHtml = '';
         if ($precioOriginal && $precioOriginal > $precio) {
-            $tarifaHtml = '<span class="precio-tachado">' . number_format($precioOriginal, 2, ',', '.') . '€</span><br><strong style="color:#D72072;">' . number_format($precio, 2, ',', '.') . '€</strong>';
+            $tarifaHtml = '<span class="precio-tachado">' . number_format($precioOriginal, 2, ',', '.') . '€</span><br><strong style="color:#d72173;">' . number_format($precio, 2, ',', '.') . '€</strong>';
         } else {
             $tarifaHtml = number_format($precio, 2, ',', '.') . '€';
         }

@@ -1571,6 +1571,18 @@ class Projects extends Security_Controller
         }
 
         $this->Timesheets_model->process_timer($data);
+        // AUTO: Cambiar tarea de "To Do" (1) a "In Progress" (2) al iniciar timer
+        if ($timer_status === "start" && $task_id) {
+            $task_info = $this->Tasks_model->get_one($task_id);
+            if ($task_info && $task_info->status_id == 1) {
+                $task_update = array(
+                    "status_id" => 2,
+                    "status_changed_at" => get_current_utc_time()
+                );
+                $task_update = clean_data($task_update);
+                $this->Tasks_model->ci_save($task_update, $task_id);
+            }
+        }
         if ($timer_status === "start") {
             if ($this->request->getPost("task_timer")) {
                 echo modal_anchor(get_uri("projects/stop_timer_modal_form/" . $project_id), "<i data-feather='clock' class='icon-16'></i> " . app_lang('stop_timer'), array("class" => "btn btn-danger", "title" => app_lang('stop_timer'), "data-post-task_id" => $task_id));
