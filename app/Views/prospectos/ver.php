@@ -30,7 +30,7 @@
             </div>
 
             <div class="modal-body" style="padding:0;background:#f8f9fa;">
-                <div style="display:flex;">
+                <div style="display:flex;min-height:520px;">
 
                     <!-- COLUMNA IZQUIERDA: datos -->
                     <div style="padding:24px;border-right:1px solid #e9ecef;background:#fff;min-width:0;">
@@ -62,6 +62,15 @@
                                 </span>
                             </div>
                             <?php endforeach; ?>
+                            <?php if ($p->mensaje): ?>
+                            <div style="padding:12px 0;border-bottom:1px solid #f0f0f0;">
+                                <div style="display:flex;align-items:flex-start;gap:0;">
+                                    <span style="width:28px;font-size:15px;flex-shrink:0;">💬</span>
+                                    <span style="width:80px;font-size:12px;color:#aaa;text-transform:uppercase;letter-spacing:.5px;flex-shrink:0;padding-top:2px;">Mensaje</span>
+                                    <span style="flex:1;font-size:14px;color:#333;line-height:1.6;white-space:pre-wrap;" id="display-mensaje"><?php echo clean_data($p->mensaje); ?></span>
+                                </div>
+                            </div>
+                            <?php endif; ?>
                         </div>
 
                         <div id="campos-edit" style="display:none;">
@@ -205,7 +214,10 @@
                 </div>
             </div>
 
-            <div class="modal-footer" style="background:#fff;border-top:1px solid #f0f0f0;padding:12px 24px;">
+            <div class="modal-footer" style="background:#fff;border-top:1px solid #f0f0f0;padding:12px 24px;justify-content:space-between;">
+                <button type="button" id="btn-eliminar-prospecto" class="btn btn-sm" style="background:#fff;border:1px solid #e74c3c;color:#e74c3c;border-radius:8px;padding:6px 14px;">
+                    <i data-feather="trash-2" class="icon-14"></i> Eliminar lead
+                </button>
                 <button type="button" class="btn btn-default" data-bs-dismiss="modal" style="border-radius:8px;">Cerrar</button>
             </div>
 
@@ -413,6 +425,21 @@
         if (!confirm('¿Borrar esta nota?')) return;
         $.post(_baseUrl + 'prospectos/delete_nota', {id: notaId}, function(r){
             if (r.success) $item.fadeOut(300, function(){ $(this).remove(); });
+        }, 'json');
+    });
+
+    // ── Borrar prospecto ─────────────────────────────────────────────────────
+    $('#btn-eliminar-prospecto').on('click', function(){
+        if (!confirm('¿Eliminar este lead? Esta acción no se puede deshacer.')) return;
+        $.post(_baseUrl + 'prospectos/delete', {id: prospectoId}, function(r){
+            if (r.success) {
+                $('#modal-ver-prospecto').modal('hide');
+                appAlert.success('Lead eliminado.', {duration: 3000});
+                if (typeof cargarKanban === 'function') cargarKanban();
+                if (typeof _tablaIniciada !== 'undefined' && _tablaIniciada) {
+                    $('#prospectos-table').appTable({reload: true});
+                }
+            }
         }, 'json');
     });
 

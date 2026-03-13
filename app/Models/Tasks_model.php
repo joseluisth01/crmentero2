@@ -807,7 +807,7 @@ class Tasks_model extends Crud_model {
         $extra_left_join
         WHERE $tasks_table.deleted=0 $where $custom_fields_where 
         GROUP BY $tasks_table.id
-        ORDER BY $tasks_table.sort ASC $limit_sql";
+        ORDER BY ISNULL($tasks_table.deadline) ASC, $tasks_table.deadline ASC $limit_sql";
         }
 
         return $this->db->query($sql);
