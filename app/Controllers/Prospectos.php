@@ -56,10 +56,11 @@ class Prospectos extends Security_Controller {
 
     private function _make_row($row) {
         $estado_labels = array(
-            'nuevo'       => "<span class='badge' style='background-color:#d72173;'>Nuevo</span>",
-            'en_contacto' => "<span class='badge' style='background-color:#C6D617;color:#333;'>En contacto</span>",
-            'perdido'     => "<span class='badge' style='background-color:#e74c3c;'>Perdido</span>",
-            'convertido'  => "<span class='badge' style='background-color:#27ae60;'>Convertido</span>",
+            'nuevo'             => "<span class='badge' style='background-color:#d72173;'>Nuevo</span>",
+            'en_contacto'       => "<span class='badge' style='background-color:#C6D617;color:#333;'>En contacto</span>",
+            'propuesta_enviada' => "<span class='badge' style='background-color:#7c3aed;'>Propuesta enviada</span>",
+            'convertido'        => "<span class='badge' style='background-color:#27ae60;'>Convertido</span>",
+            'perdido'           => "<span class='badge' style='background-color:#e74c3c;'>Perdido</span>",
         );
 
         $estado_badge    = isset($estado_labels[$row->estado]) ? $estado_labels[$row->estado] : $row->estado;
@@ -179,7 +180,7 @@ class Prospectos extends Security_Controller {
             return;
         }
 
-        $estados_validos = array('nuevo', 'en_contacto', 'perdido', 'convertido');
+        $estados_validos = array('nuevo', 'en_contacto', 'propuesta_enviada', 'convertido', 'perdido');
         if (!in_array($estado, $estados_validos)) $estado = 'nuevo';
 
         $db    = \Config\Database::connect();
@@ -215,7 +216,7 @@ class Prospectos extends Security_Controller {
         validate_numeric_value($id);
 
         $campos_permitidos = array('nombre', 'email', 'telefono', 'web', 'mensaje', 'estado');
-        $estados_validos   = array('nuevo', 'en_contacto', 'perdido', 'convertido');
+        $estados_validos   = array('nuevo', 'en_contacto', 'propuesta_enviada', 'convertido', 'perdido');
 
         $db     = \Config\Database::connect();
         $table  = $db->prefixTable('prospectos');
@@ -250,7 +251,7 @@ class Prospectos extends Security_Controller {
 
         validate_numeric_value($id);
 
-        $estados_validos = array('nuevo', 'en_contacto', 'perdido', 'convertido');
+        $estados_validos = array('nuevo', 'en_contacto', 'propuesta_enviada', 'convertido', 'perdido');
         if (!in_array($estado, $estados_validos)) {
             echo json_encode(array("success" => false, "message" => "Estado no válido"));
             return;

@@ -15,10 +15,11 @@
                         <div style="color:rgba(255,255,255,0.75);font-size:13px;margin-top:2px;">
                             <?php
                             $estados_header = array(
-                                'nuevo'       => '🔴 Nuevo',
-                                'en_contacto' => '🟡 En contacto',
-                                'perdido'     => '🔴 Perdido',
-                                'convertido'  => '🟢 Convertido',
+                                'nuevo'             => '🔴 Nuevo',
+                                'en_contacto'       => '🟡 En contacto',
+                                'propuesta_enviada' => '🟣 Propuesta enviada',
+                                'convertido'        => '🟢 Convertido',
+                                'perdido'           => '🔴 Perdido',
                             );
                             echo isset($estados_header[$prospecto->estado]) ? $estados_header[$prospecto->estado] : $prospecto->estado;
                             ?>
@@ -89,10 +90,11 @@
                             <div style="margin-bottom:12px;">
                                 <label style="font-size:12px;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;display:block;">🏷 Estado</label>
                                 <select class="form-control form-control-sm edit-campo" data-campo="estado" style="border-radius:8px;">
-                                    <option value="nuevo"       <?php echo $p->estado == 'nuevo'       ? 'selected' : ''; ?>>Nuevo</option>
-                                    <option value="en_contacto" <?php echo $p->estado == 'en_contacto' ? 'selected' : ''; ?>>En contacto</option>
-                                    <option value="perdido"     <?php echo $p->estado == 'perdido'     ? 'selected' : ''; ?>>Perdido</option>
-                                    <option value="convertido"  <?php echo $p->estado == 'convertido'  ? 'selected' : ''; ?>>Convertido</option>
+                                    <option value="nuevo"             <?php echo $p->estado == 'nuevo'             ? 'selected' : ''; ?>>Nuevo</option>
+                                    <option value="en_contacto"       <?php echo $p->estado == 'en_contacto'       ? 'selected' : ''; ?>>En contacto</option>
+                                    <option value="propuesta_enviada" <?php echo $p->estado == 'propuesta_enviada' ? 'selected' : ''; ?>>Propuesta enviada</option>
+                                    <option value="convertido"        <?php echo $p->estado == 'convertido'        ? 'selected' : ''; ?>>Convertido</option>
+                                    <option value="perdido"           <?php echo $p->estado == 'perdido'           ? 'selected' : ''; ?>>Perdido</option>
                                 </select>
                             </div>
                             <div style="margin-bottom:12px;">

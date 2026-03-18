@@ -84,6 +84,8 @@ _verificarSesionCRM();
 define('CRM_URL', 'https://gestion-tictac-comunicacion.es/index.php/dashboard');
 define('API_TOKEN', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJ1c2VyIjoicHJvZHVjY2lvbkB0aWN0YWMtY29tdW5pY2FjaW9uLmVzIiwibmFtZSI6IlByb2R1Y2Npb24iLCJBUElfVElNRSI6MTc2OTUwMjU3MX0.4RoKiYv6z8sBE5MdchSE8iQ7wJnXGOIAlW52Mjn5oZvdRJsAWG3l-VmVIMlj3DawwtDl21e26_twU77usBjuGw');
 
+
+define('TICTAC_INTERNAL_KEY', 'ea088539d42bf7e87dc7d4b171dfdcf7be3416322cb88eec6a504f701c4bd7dc');
 // ============================================
 // RUTAS DEL SISTEMA
 // ============================================

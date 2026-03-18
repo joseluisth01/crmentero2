@@ -33,14 +33,14 @@
                 <div class="kanban-cards" data-estado="en_contacto" style="min-height:80px;"></div>
             </div>
 
-            <div class="kanban-col" data-estado="perdido" style="flex:0 0 260px;min-width:260px;background:#f7f7f9;border-radius:12px;padding:12px;">
+            <div class="kanban-col" data-estado="propuesta_enviada" style="flex:0 0 260px;min-width:260px;background:#f7f7f9;border-radius:12px;padding:12px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:0 4px;">
-                    <span style="font-weight:700;font-size:13px;color:#c0392b;letter-spacing:.5px;text-transform:uppercase;">
-                        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#e74c3c;margin-right:6px;"></span>Perdido
+                    <span style="font-weight:700;font-size:13px;color:#5b21b6;letter-spacing:.5px;text-transform:uppercase;">
+                        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#7c3aed;margin-right:6px;"></span>Propuesta enviada
                     </span>
-                    <span class="kanban-count badge" style="background:#e74c3c;font-size:11px;">0</span>
+                    <span class="kanban-count badge" style="background:#7c3aed;font-size:11px;">0</span>
                 </div>
-                <div class="kanban-cards" data-estado="perdido" style="min-height:80px;"></div>
+                <div class="kanban-cards" data-estado="propuesta_enviada" style="min-height:80px;"></div>
             </div>
 
             <div class="kanban-col" data-estado="convertido" style="flex:0 0 260px;min-width:260px;background:#f7f7f9;border-radius:12px;padding:12px;">
@@ -51,6 +51,16 @@
                     <span class="kanban-count badge" style="background:#27ae60;font-size:11px;">0</span>
                 </div>
                 <div class="kanban-cards" data-estado="convertido" style="min-height:80px;"></div>
+            </div>
+
+            <div class="kanban-col" data-estado="perdido" style="flex:0 0 260px;min-width:260px;background:#f7f7f9;border-radius:12px;padding:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:0 4px;">
+                    <span style="font-weight:700;font-size:13px;color:#c0392b;letter-spacing:.5px;text-transform:uppercase;">
+                        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#e74c3c;margin-right:6px;"></span>Perdido
+                    </span>
+                    <span class="kanban-count badge" style="background:#e74c3c;font-size:11px;">0</span>
+                </div>
+                <div class="kanban-cards" data-estado="perdido" style="min-height:80px;"></div>
             </div>
 
         </div>
@@ -127,8 +137,9 @@
                     <select id="np-estado" class="form-control">
                         <option value="nuevo">Nuevo</option>
                         <option value="en_contacto">En contacto</option>
-                        <option value="perdido">Perdido</option>
+                        <option value="propuesta_enviada">Propuesta enviada</option>
                         <option value="convertido">Convertido</option>
+                        <option value="perdido">Perdido</option>
                     </select>
                 </div>
             </div>
@@ -165,10 +176,11 @@ function actualizarBadgeMenu() {
 $(document).ready(function () {
 
     var ESTADOS = {
-        nuevo:       { color: '#d72173' },
-        en_contacto: { color: '#C6D617' },
-        perdido:     { color: '#e74c3c' },
-        convertido:  { color: '#27ae60' },
+        nuevo:             { color: '#d72173' },
+        en_contacto:       { color: '#C6D617' },
+        propuesta_enviada: { color: '#7c3aed' },
+        convertido:        { color: '#27ae60' },
+        perdido:           { color: '#e74c3c' },
     };
 
     // ── Toggle listado ───────────────────────────────────────────────────────
@@ -189,11 +201,12 @@ $(document).ready(function () {
                 filterDropdown: [{
                     name: 'estado', class: 'w200',
                     options: [
-                        {id: '',            text: '- Estado -'},
-                        {id: 'nuevo',       text: 'Nuevo'},
-                        {id: 'en_contacto', text: 'En contacto'},
-                        {id: 'perdido',     text: 'Perdido'},
-                        {id: 'convertido',  text: 'Convertido'},
+                        {id: '',                   text: '- Estado -'},
+                        {id: 'nuevo',              text: 'Nuevo'},
+                        {id: 'en_contacto',        text: 'En contacto'},
+                        {id: 'propuesta_enviada',  text: 'Propuesta enviada'},
+                        {id: 'convertido',         text: 'Convertido'},
+                        {id: 'perdido',            text: 'Perdido'},
                     ]
                 }],
                 columns: [
@@ -221,10 +234,11 @@ $(document).ready(function () {
             postData:  {id: $btn.attr('data-id')},
             select2Option: {
                 data: [
-                    {id: 'nuevo',       text: 'Nuevo'},
-                    {id: 'en_contacto', text: 'En contacto'},
-                    {id: 'perdido',     text: 'Perdido'},
-                    {id: 'convertido',  text: 'Convertido'},
+                    {id: 'nuevo',             text: 'Nuevo'},
+                    {id: 'en_contacto',       text: 'En contacto'},
+                    {id: 'propuesta_enviada', text: 'Propuesta enviada'},
+                    {id: 'convertido',        text: 'Convertido'},
+                    {id: 'perdido',           text: 'Perdido'},
                 ]
             },
             onSuccess: function (response) {

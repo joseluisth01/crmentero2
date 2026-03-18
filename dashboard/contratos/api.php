@@ -96,6 +96,15 @@ switch ($action) {
     case 'email':
         enviarEmail($contratosFile);
         break;
+    case 'pdf_by_crm_id':
+        generarPdfPorCrmId($contratosFile);
+        break;
+    case 'preview_by_crm_id':
+        previewPorCrmId($contratosFile);
+        break;
+    case 'sync_from_crm':
+        sincronizarDesdeCRM($contratosFile);
+        break;
     case 'sepa_pdf':
     case 'sepa_email':
         if (!TCPDF_LOADED) {
@@ -1343,6 +1352,322 @@ function enviarEmail($contratosFile)
     }
     exit;
 }
+
+
+// ==============================================================
+// PDF POR CRM ID (llamado desde Contracts.php del CRM)
+// ==============================================================
+
+function generarPdfPorCrmId($contratosFile)
+{
+    // Verificar clave interna
+    $key = isset($_GET['key']) ? $_GET['key'] : '';
+    if ($key !== TICTAC_INTERNAL_KEY) {
+        http_response_code(403);
+        die('Acceso no autorizado');
+    }
+
+    if (!TCPDF_LOADED) {
+        http_response_code(500);
+        die('Error: TCPDF no disponible');
+    }
+
+    $crmId = isset($_GET['crm_id']) ? intval($_GET['crm_id']) : 0;
+    if (!$crmId) {
+        http_response_code(400);
+        die('crm_id no valido');
+    }
+
+    // Buscar el contrato en contratos.json por crm_contract_id
+    if (!file_exists($contratosFile)) {
+        http_response_code(404);
+        die('No hay contratos');
+    }
+
+    $contratos = json_decode(file_get_contents($contratosFile), true);
+    $localId = null;
+    foreach ($contratos as $c) {
+        if (isset($c['crm_contract_id']) && intval($c['crm_contract_id']) === $crmId) {
+            $localId = $c['id'];
+            break;
+        }
+    }
+
+    if (!$localId) {
+        http_response_code(404);
+        die('Contrato no encontrado para crm_id=' . $crmId);
+    }
+
+    // Reutilizar generarPDF() exactamente igual que siempre
+    // Solo hay que simular que $_GET['id'] es el id local
+    $_GET['id'] = $localId;
+    // El mode viene del CRM: 'download' o 'save'
+    // $_GET['mode'] ya viene en la URL, no hay que tocarlo
+
+    generarPDF($contratosFile);
+    // generarPDF() hace exit() internamente, no llega aquí
+}
+
+// ==============================================================
+// PREVIEW HTML POR CRM ID (llamado desde Contracts.php del CRM)
+// ==============================================================
+
+function previewPorCrmId($contratosFile)
+{
+    $key = isset($_GET['key']) ? $_GET['key'] : '';
+    if ($key !== TICTAC_INTERNAL_KEY) {
+        http_response_code(403);
+        die('Acceso no autorizado');
+    }
+
+    $crmId = isset($_GET['crm_id']) ? intval($_GET['crm_id']) : 0;
+    if (!$crmId) {
+        http_response_code(400);
+        echo '<p>crm_id no valido</p>';
+        exit;
+    }
+
+    if (!file_exists($contratosFile)) {
+        http_response_code(404);
+        echo '<p>No hay contratos</p>';
+        exit;
+    }
+
+    $contratos = json_decode(file_get_contents($contratosFile), true);
+    $contrato = null;
+    foreach ($contratos as $c) {
+        if (isset($c['crm_contract_id']) && intval($c['crm_contract_id']) === $crmId) {
+            $contrato = $c;
+            break;
+        }
+    }
+
+    if (!$contrato) {
+        http_response_code(404);
+        echo '<p style="color:red">Contrato no encontrado para crm_id=' . intval($crmId) . '. 
+              Puede que este contrato no tenga version en el dashboard.</p>';
+        exit;
+    }
+
+    // Generar HTML de preview
+    header('Content-Type: text/html; charset=utf-8');
+    echo generarPreviewHTML($contrato);
+    exit;
+}
+
+// ==============================================================
+// SINCRONIZAR DESDE CRM → contratos.json
+// ==============================================================
+
+function sincronizarDesdeCRM($contratosFile)
+{
+    header('Content-Type: application/json; charset=utf-8');
+
+    $key = isset($_GET['key']) ? $_GET['key'] : '';
+    if ($key !== TICTAC_INTERNAL_KEY) {
+        http_response_code(403);
+        echo json_encode(array('success' => false, 'message' => 'No autorizado'));
+        exit;
+    }
+
+    $crmId = isset($_GET['crm_id']) ? intval($_GET['crm_id']) : 0;
+    if (!$crmId) {
+        echo json_encode(array('success' => false, 'message' => 'crm_id no valido'));
+        exit;
+    }
+
+    if (!file_exists($contratosFile)) {
+        echo json_encode(array('success' => false, 'message' => 'No hay contratos'));
+        exit;
+    }
+
+    $contratos = json_decode(file_get_contents($contratosFile), true);
+    if (!is_array($contratos)) {
+        echo json_encode(array('success' => false, 'message' => 'Error leyendo contratos.json'));
+        exit;
+    }
+
+    $encontrado = false;
+    foreach ($contratos as $key_idx => $c) {
+        if (isset($c['crm_contract_id']) && intval($c['crm_contract_id']) === $crmId) {
+            // Actualizar solo los campos que pueden cambiar desde el CRM
+            if (!empty($_GET['titulo']))         $contratos[$key_idx]['titulo']         = (string)$_GET['titulo'];
+            if (!empty($_GET['fecha_contrato'])) $contratos[$key_idx]['fecha_contrato'] = (string)$_GET['fecha_contrato'];
+            if (!empty($_GET['valido_hasta']))   $contratos[$key_idx]['valido_hasta']   = (string)$_GET['valido_hasta'];
+            $contratos[$key_idx]['fecha_modificacion'] = date('Y-m-d H:i:s');
+            $encontrado = true;
+            break;
+        }
+    }
+
+    if (!$encontrado) {
+        echo json_encode(array('success' => false, 'message' => 'Contrato no encontrado para crm_id=' . $crmId));
+        exit;
+    }
+
+    $written = file_put_contents(
+        $contratosFile,
+        json_encode($contratos, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+    );
+
+    if ($written === false) {
+        echo json_encode(array('success' => false, 'message' => 'Error al escribir contratos.json'));
+        exit;
+    }
+
+    echo json_encode(array('success' => true, 'message' => 'Sincronizado correctamente', 'crm_id' => $crmId));
+    exit;
+}
+
+// ==============================================================
+// HELPER: generar HTML de preview del contrato
+// ==============================================================
+
+function generarPreviewHTML($contrato)
+{
+    $titulo        = htmlspecialchars($contrato['titulo'] ?? 'Contrato de Servicios');
+    $id            = htmlspecialchars($contrato['id'] ?? '');
+    $fecha         = !empty($contrato['fecha_contrato']) ? date('d/m/Y', strtotime($contrato['fecha_contrato'])) : '';
+    $valido        = !empty($contrato['valido_hasta'])   ? date('d/m/Y', strtotime($contrato['valido_hasta']))   : '';
+    $clienteNombre = htmlspecialchars($contrato['cliente_nombre'] ?? '');
+    $clienteEmail  = htmlspecialchars($contrato['cliente_email']  ?? '');
+    $clienteCif    = htmlspecialchars($contrato['cliente_cif']    ?? '');
+    $clienteDir    = htmlspecialchars($contrato['cliente_direccion'] ?? '');
+    $total         = number_format(floatval($contrato['total'] ?? 0), 2, ',', '.');
+    $subtotal      = number_format(floatval($contrato['subtotal'] ?? 0), 2, ',', '.');
+    $iva           = floatval($contrato['iva'] ?? 21);
+    $ivaAmt        = number_format(floatval($contrato['subtotal'] ?? 0) * $iva / 100, 2, ',', '.');
+    $esKitDigital  = !empty($contrato['kit_digital']);
+    $items         = $contrato['items'] ?? array();
+    $estado        = htmlspecialchars($contrato['estado'] ?? 'borrador');
+
+    $estadoColor = '#6c757d';
+    if ($estado === 'enviado')   $estadoColor = '#0d6efd';
+    if ($estado === 'aceptado')  $estadoColor = '#198754';
+    if ($estado === 'rechazado') $estadoColor = '#dc3545';
+
+    $html = '<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 13px; color: #333; background: #f8f8f8; padding: 20px; }
+  .contrato-wrap { max-width: 820px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.1); }
+  .header { background: #d72173; color: white; padding: 20px 30px; text-align: center; }
+  .header h1 { font-size: 18px; margin-bottom: 4px; }
+  .header p { font-size: 12px; opacity: .85; }
+  .meta-bar { display: flex; gap: 16px; padding: 16px 30px; background: #fafafa; border-bottom: 1px solid #eee; flex-wrap: wrap; align-items: center; }
+  .meta-bar .badge { background: ' . $estadoColor . '; color: white; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+  .meta-bar .ref { font-size: 12px; color: #888; }
+  .meta-bar .ref strong { color: #333; }
+  .body { padding: 24px 30px; }
+  .two-col { display: flex; gap: 16px; margin-bottom: 20px; }
+  .box { flex: 1; border: 1px solid #e0e0e0; border-radius: 6px; padding: 14px; }
+  .box-title { font-size: 11px; font-weight: bold; color: #d72173; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #d72173; }
+  .box p { font-size: 12px; margin-bottom: 4px; color: #555; }
+  .box p strong { color: #333; }
+  table.items { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 12px; }
+  table.items thead tr { background: #1e1e1e; color: white; }
+  table.items thead th { padding: 7px 10px; text-align: left; font-weight: bold; }
+  table.items thead th:last-child, table.items tbody td:last-child { text-align: right; }
+  table.items tbody tr:nth-child(even) { background: #fafafa; }
+  table.items tbody td { padding: 7px 10px; border-bottom: 1px solid #eee; }
+  .totales { text-align: right; margin-top: 8px; }
+  .totales table { display: inline-table; }
+  .totales td { padding: 3px 8px; font-size: 12px; }
+  .totales td:first-child { color: #666; }
+  .totales td:last-child { font-weight: bold; min-width: 80px; }
+  .total-final { background: #1e1e1e; color: white; }
+  .total-final td { padding: 6px 8px; font-size: 14px; }
+  .kit-badge { display: inline-block; background: #ffc107; color: #333; font-size: 11px; font-weight: bold; padding: 3px 10px; border-radius: 4px; margin-bottom: 12px; }
+  .dashboard-link { display: block; text-align: center; margin-top: 16px; padding: 10px; background: #fff0f7; border: 1px dashed #d72173; border-radius: 6px; font-size: 12px; color: #d72173; text-decoration: none; }
+  .dashboard-link:hover { background: #ffe0f0; }
+</style>
+</head>
+<body>
+<div class="contrato-wrap">
+  <div class="header">
+    <h1>' . $titulo . '</h1>
+    <p>Tictac Comunicacion Digital SL &mdash; Hacemos el Marketing que funciona</p>
+  </div>
+  <div class="meta-bar">
+    <span class="badge">' . $estado . '</span>
+    <span class="ref"><strong>Ref:</strong> ' . $id . '</span>
+    <span class="ref"><strong>Fecha:</strong> ' . $fecha . '</span>
+    <span class="ref"><strong>V&aacute;lido hasta:</strong> ' . $valido . '</span>';
+
+    if ($esKitDigital) {
+        $html .= '<span class="kit-badge">KIT DIGITAL</span>';
+    }
+
+    $html .= '
+  </div>
+  <div class="body">
+    <div class="two-col">
+      <div class="box">
+        <div class="box-title">Datos del Contrato</div>
+        <p><strong>N&ordm; Contrato:</strong> ' . $id . '</p>
+        <p><strong>Fecha:</strong> En C&oacute;rdoba a ' . $fecha . '</p>
+        <p><strong>V&aacute;lido hasta:</strong> ' . $valido . '</p>
+      </div>
+      <div class="box">
+        <div class="box-title">El Cliente</div>
+        <p><strong>' . $clienteNombre . '</strong></p>';
+
+    if ($clienteCif)   $html .= '<p>NIF/CIF: ' . $clienteCif . '</p>';
+    if ($clienteDir)   $html .= '<p>' . $clienteDir . '</p>';
+    if ($clienteEmail) $html .= '<p>' . $clienteEmail . '</p>';
+
+    $html .= '
+      </div>
+    </div>';
+
+    // Tabla de items
+    if (!empty($items)) {
+        $html .= '<table class="items">
+          <thead><tr>
+            <th>Artículo</th>
+            <th style="text-align:center">Cantidad</th>
+            <th style="text-align:right">Tarifa</th>
+            <th style="text-align:right">Total</th>
+          </tr></thead>
+          <tbody>';
+        foreach ($items as $item) {
+            $cant  = floatval($item['cantidad'] ?? 0);
+            $prec  = floatval($item['precio'] ?? 0);
+            $html .= '<tr>
+              <td>' . htmlspecialchars($item['nombre'] ?? '') . '</td>
+              <td style="text-align:center">' . number_format($cant, 2, ',', '.') . ($item['unidad'] ? ' ' . htmlspecialchars($item['unidad']) : '') . '</td>
+              <td style="text-align:right">' . number_format($prec, 2, ',', '.') . ' &euro;</td>
+              <td style="text-align:right">' . number_format($cant * $prec, 2, ',', '.') . ' &euro;</td>
+            </tr>';
+        }
+        $html .= '</tbody></table>
+        <div class="totales">
+          <table>
+            <tr><td>Subtotal</td><td>' . $subtotal . ' &euro;</td></tr>
+            <tr><td>IVA (' . $iva . '%)</td><td>' . $ivaAmt . ' &euro;</td></tr>
+            <tr class="total-final"><td>TOTAL</td><td>' . $total . ' &euro;</td></tr>
+          </table>
+        </div>';
+    }
+
+    $dashboardUrl = 'https://gestion-tictac-comunicacion.es/dashboard/contratos/index.php?edit=' . urlencode($contrato['id'] ?? '');
+    $html .= '
+    <a href="' . $dashboardUrl . '" target="_blank" class="dashboard-link">
+      ✏️ Editar este contrato en el Dashboard
+    </a>
+  </div>
+</div>
+</body>
+</html>';
+
+    return $html;
+}
+
+
 
 // ==============================================================
 // GENERADOR PDF SEPA

@@ -155,112 +155,115 @@ class Contracts extends Security_Controller {
 
     /* add, edit or clone an contract */
 
-    function save() {
-        $id = $this->request->getPost('id');
+function save() {
+    $id = $this->request->getPost('id');
 
-        if (!$this->can_edit_contracts($id)) {
-            app_redirect("forbidden");
-        }
+    if (!$this->can_edit_contracts($id)) {
+        app_redirect("forbidden");
+    }
 
-        $this->validate_submitted_data(array(
-            "id" => "numeric",
-            "contract_project_id" => "numeric",
-            "title" => "required",
-            "contract_client_id" => "required|numeric",
-            "contract_date" => "required",
-            "valid_until" => "required"
-        ));
+    $this->validate_submitted_data(array(
+        "id" => "numeric",
+        "contract_project_id" => "numeric",
+        "title" => "required",
+        "contract_client_id" => "required|numeric",
+        "contract_date" => "required",
+        "valid_until" => "required"
+    ));
 
-        $client_id = $this->request->getPost('contract_client_id');
-        $is_clone = $this->request->getPost('is_clone');
+    $client_id = $this->request->getPost('contract_client_id');
+    $is_clone = $this->request->getPost('is_clone');
 
-        if (!$this->_is_contract_editable($id, $is_clone)) {
-            app_redirect("forbidden");
-        }
+    if (!$this->_is_contract_editable($id, $is_clone)) {
+        app_redirect("forbidden");
+    }
 
-        $target_path = get_setting("timeline_file_path");
-        $files_data = move_files_from_temp_dir_to_permanent_dir($target_path, "contract");
-        $new_files = unserialize($files_data);
+    $target_path = get_setting("timeline_file_path");
+    $files_data = move_files_from_temp_dir_to_permanent_dir($target_path, "contract");
+    $new_files = unserialize($files_data);
 
-        $contract_data = array(
-            "client_id" => $client_id,
-            "title" => $this->request->getPost('title'),
-            "project_id" => $this->request->getPost('contract_project_id') ? $this->request->getPost('contract_project_id') : 0,
-            "contract_date" => $this->request->getPost('contract_date'),
-            "valid_until" => $this->request->getPost('valid_until'),
-            "tax_id" => $this->request->getPost('tax_id') ? $this->request->getPost('tax_id') : 0,
-            "tax_id2" => $this->request->getPost('tax_id2') ? $this->request->getPost('tax_id2') : 0,
-            "company_id" => $this->request->getPost('company_id') ? $this->request->getPost('company_id') : get_default_company_id(),
-            "note" => $this->request->getPost('contract_note')
-        );
+    $contract_data = array(
+        "client_id" => $client_id,
+        "title" => $this->request->getPost('title'),
+        "project_id" => $this->request->getPost('contract_project_id') ? $this->request->getPost('contract_project_id') : 0,
+        "contract_date" => $this->request->getPost('contract_date'),
+        "valid_until" => $this->request->getPost('valid_until'),
+        "tax_id" => $this->request->getPost('tax_id') ? $this->request->getPost('tax_id') : 0,
+        "tax_id2" => $this->request->getPost('tax_id2') ? $this->request->getPost('tax_id2') : 0,
+        "company_id" => $this->request->getPost('company_id') ? $this->request->getPost('company_id') : get_default_company_id(),
+        "note" => $this->request->getPost('contract_note')
+    );
 
-        if ($id) {
-            $contract_info = $this->Contracts_model->get_one($id);
-            $timeline_file_path = get_setting("timeline_file_path");
+    if ($id) {
+        $contract_info = $this->Contracts_model->get_one($id);
+        $timeline_file_path = get_setting("timeline_file_path");
+        $new_files = update_saved_files($timeline_file_path, $contract_info->files, $new_files);
+    }
 
-            $new_files = update_saved_files($timeline_file_path, $contract_info->files, $new_files);
-        }
+    $contract_data["files"] = serialize($new_files);
 
-        $contract_data["files"] = serialize($new_files);
+    if (!$id) {
+        $contract_data["public_key"] = make_random_string();
 
-        if (!$id) {
-            $contract_data["public_key"] = make_random_string();
-
-            //add default template
-            if (get_setting("default_contract_template")) {
-                $Contract_templates_model = model("App\Models\Contract_templates_model");
-                $contract_data["content"] = $Contract_templates_model->get_one(get_setting("default_contract_template"))->template;
-            }
-        }
-
-        $proposal_id = $this->request->getPost('proposal_id');
-
-        $main_contract_id = "";
-        if (($is_clone && $id) || $proposal_id) {
-            if ($is_clone && $id) {
-                $main_contract_id = $id; //store main contract id to get items later
-                $id = ""; //on cloning contract, save as new
-            }
-
-            //save discount when cloning and creating from proposal
-            $contract_data["discount_amount"] = $this->request->getPost('discount_amount') ? $this->request->getPost('discount_amount') : 0;
-            $contract_data["discount_amount_type"] = $this->request->getPost('discount_amount_type') ? $this->request->getPost('discount_amount_type') : "percentage";
-            $contract_data["discount_type"] = $this->request->getPost('discount_type') ? $this->request->getPost('discount_type') : "before_tax";
-            $contract_data["content"] = $this->request->getPost('content') ?  $this->request->getPost('content') : "";
-            $contract_data["public_key"] = make_random_string();
-        }
-
-        $contract_id = $this->Contracts_model->ci_save($contract_data, $id);
-        if ($contract_id) {
-
-            if ($is_clone && $main_contract_id) {
-                //add contract items
-
-                save_custom_fields("contracts", $contract_id, 1, "staff"); //we have to keep this regarding as an admin user because non-admin user also can acquire the access to clone a contract
-
-                $contract_items = $this->Contract_items_model->get_all_where(array("contract_id" => $main_contract_id, "deleted" => 0))->getResult();
-
-                foreach ($contract_items as $contract_item) {
-                    //prepare new contract item data
-                    $contract_item_data = (array) $contract_item;
-                    unset($contract_item_data["id"]);
-                    $contract_item_data['contract_id'] = $contract_id;
-
-                    $contract_item = $this->Contract_items_model->ci_save($contract_item_data);
-                }
-            } else {
-                save_custom_fields("contracts", $contract_id, $this->login_user->is_admin, $this->login_user->user_type);
-            }
-
-            //submitted copy_items_from_proposal? copy all items from the associated one
-            $copy_items_from_proposal = $this->request->getPost("copy_items_from_proposal");
-            $this->_copy_related_items_to_contract($copy_items_from_proposal, $contract_id);
-
-            echo json_encode(array("success" => true, "data" => $this->_row_data($contract_id), 'id' => $contract_id, 'message' => app_lang('record_saved')));
-        } else {
-            echo json_encode(array("success" => false, 'message' => app_lang('error_occurred')));
+        if (get_setting("default_contract_template")) {
+            $Contract_templates_model = model("App\Models\Contract_templates_model");
+            $contract_data["content"] = $Contract_templates_model->get_one(get_setting("default_contract_template"))->template;
         }
     }
+
+    $proposal_id = $this->request->getPost('proposal_id');
+
+    $main_contract_id = "";
+    if (($is_clone && $id) || $proposal_id) {
+        if ($is_clone && $id) {
+            $main_contract_id = $id;
+            $id = "";
+        }
+
+        $contract_data["discount_amount"] = $this->request->getPost('discount_amount') ? $this->request->getPost('discount_amount') : 0;
+        $contract_data["discount_amount_type"] = $this->request->getPost('discount_amount_type') ? $this->request->getPost('discount_amount_type') : "percentage";
+        $contract_data["discount_type"] = $this->request->getPost('discount_type') ? $this->request->getPost('discount_type') : "before_tax";
+        $contract_data["content"] = $this->request->getPost('content') ? $this->request->getPost('content') : "";
+        $contract_data["public_key"] = make_random_string();
+    }
+
+    $contract_id = $this->Contracts_model->ci_save($contract_data, $id);
+    if ($contract_id) {
+
+        if ($is_clone && $main_contract_id) {
+            save_custom_fields("contracts", $contract_id, 1, "staff");
+
+            $contract_items = $this->Contract_items_model->get_all_where(array("contract_id" => $main_contract_id, "deleted" => 0))->getResult();
+
+            foreach ($contract_items as $contract_item) {
+                $contract_item_data = (array) $contract_item;
+                unset($contract_item_data["id"]);
+                $contract_item_data['contract_id'] = $contract_id;
+                $contract_item = $this->Contract_items_model->ci_save($contract_item_data);
+            }
+        } else {
+            save_custom_fields("contracts", $contract_id, $this->login_user->is_admin, $this->login_user->user_type);
+        }
+
+        $copy_items_from_proposal = $this->request->getPost("copy_items_from_proposal");
+        $this->_copy_related_items_to_contract($copy_items_from_proposal, $contract_id);
+
+        // ── Notificar al dashboard (sincronización CRM → dashboard) ──
+        // Solo si NO es un clon nuevo (los clones no tienen versión en el dashboard)
+        if (!$is_clone) {
+            $this->_notify_dashboard_contract_change(
+                $contract_id,
+                $this->request->getPost('title'),
+                $this->request->getPost('contract_date'),
+                $this->request->getPost('valid_until')
+            );
+        }
+
+        echo json_encode(array("success" => true, "data" => $this->_row_data($contract_id), 'id' => $contract_id, 'message' => app_lang('record_saved')));
+    } else {
+        echo json_encode(array("success" => false, 'message' => app_lang('error_occurred')));
+    }
+}
 
     //update contract status
     function update_contract_status($contract_id, $status) {
@@ -872,38 +875,59 @@ class Contracts extends Security_Controller {
 
     //view html is accessable to client only.
     function preview($contract_id = 0, $show_close_preview = false, $is_editor_preview = false) {
-        validate_numeric_value($contract_id);
+    validate_numeric_value($contract_id);
 
-        $view_data = array();
+    $view_data = array();
 
-        if ($contract_id) {
+    if ($contract_id) {
 
-            $contract_data = get_contract_making_data($contract_id);
-            $this->_check_contract_access_permission($contract_data);
+        $contract_data = get_contract_making_data($contract_id);
+        $this->_check_contract_access_permission($contract_data);
 
-            //get the label of the contract
-            $contract_info = get_array_value($contract_data, "contract_info");
-            $contract_data['contract_status_label'] = $this->_get_contract_status_label($contract_info);
+        $contract_info = get_array_value($contract_data, "contract_info");
+        $contract_data['contract_status_label'] = $this->_get_contract_status_label($contract_info);
 
-            $view_data['contract_preview'] = prepare_contract_view($contract_data);
-            $view_data['has_pdf_access'] = $this->check_contract_pdf_access_for_clients($this->login_user->user_type);
+        // ── Intentar preview del dashboard ──────────────────────
+        $dashboard_url = 'https://gestion-tictac-comunicacion.es/dashboard/contratos/api.php'
+            . '?action=preview_by_crm_id'
+            . '&crm_id=' . intval($contract_id)
+            . '&key=ea088539d42bf7e87dc7d4b171dfdcf7be3416322cb88eec6a504f701c4bd7dc';
 
-            //show a back button
-            $view_data['show_close_preview'] = $show_close_preview && $this->login_user->user_type === "staff" ? true : false;
+        $ch = curl_init($dashboard_url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+        $dashboard_html = curl_exec($ch);
+        $http_code      = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
 
-            $view_data['contract_id'] = $contract_id;
-            $view_data['can_edit_contracts'] = $this->can_edit_contracts($contract_id, true);
-
-            if ($is_editor_preview) {
-                $view_data["is_editor_preview"] = true;
-                return $this->template->view("contracts/contract_preview", $view_data);
-            } else {
-                return $this->template->rander("contracts/contract_preview", $view_data);
-            }
+        if ($http_code === 200 && $dashboard_html && strlen(trim($dashboard_html)) > 100) {
+            // Preview del dashboard — inyectar el HTML directamente
+            $view_data['contract_preview'] = $dashboard_html;
+            $view_data['is_dashboard_preview'] = true;
         } else {
-            show_404();
+            // Fallback: preview nativa del CRM
+            $view_data['contract_preview'] = prepare_contract_view($contract_data);
+            $view_data['is_dashboard_preview'] = false;
         }
+
+        $view_data['has_pdf_access'] = $this->check_contract_pdf_access_for_clients($this->login_user->user_type);
+        $view_data['show_close_preview'] = $show_close_preview && $this->login_user->user_type === "staff" ? true : false;
+        $view_data['contract_id'] = $contract_id;
+        $view_data['can_edit_contracts'] = $this->can_edit_contracts($contract_id, true);
+
+        if ($is_editor_preview) {
+            $view_data["is_editor_preview"] = true;
+            return $this->template->view("contracts/contract_preview", $view_data);
+        } else {
+            return $this->template->rander("contracts/contract_preview", $view_data);
+        }
+
+    } else {
+        show_404();
     }
+}
 
     private function _check_contract_access_permission($contract_data) {
         //check for valid contract
@@ -1193,38 +1217,63 @@ class Contracts extends Security_Controller {
     }
 
     function download_pdf($contract_id = 0, $mode = "download", $user_language = "") {
-        if (!$contract_id) {
-            show_404();
-        }
-
-        if (!$this->check_contract_pdf_access_for_clients($this->login_user->user_type)) {
-            show_404();
-        }
-
-        validate_numeric_value($contract_id);
-        $contract_data = get_contract_making_data($contract_id);
-        $contract_data['contract_preview'] = prepare_contract_view($contract_data);
-        $this->_check_contract_access_permission($contract_data);
-
-        if ($user_language) {
-            $language = service('language');
-
-            $active_locale = $language->getLocale();
-
-            if ($user_language && $user_language !== $active_locale) {
-                $language->setLocale($user_language);
-            }
-
-            prepare_contract_pdf($contract_data, $mode);
-
-            if ($user_language && $user_language !== $active_locale) {
-                // Reset to active locale
-                $language->setLocale($active_locale);
-            }
-        } else {
-            prepare_contract_pdf($contract_data, $mode);
-        }
+    if (!$contract_id) {
+        show_404();
     }
+
+    if (!$this->check_contract_pdf_access_for_clients($this->login_user->user_type)) {
+        show_404();
+    }
+
+    validate_numeric_value($contract_id);
+    $contract_data = get_contract_making_data($contract_id);
+    $this->_check_contract_access_permission($contract_data);
+
+    // ── Intentar PDF del dashboard ──────────────────────────────
+    $dashboard_url = 'https://gestion-tictac-comunicacion.es/dashboard/contratos/api.php'
+        . '?action=pdf_by_crm_id'
+        . '&crm_id=' . intval($contract_id)
+        . '&mode=' . urlencode($mode)
+        . '&key=ea088539d42bf7e87dc7d4b171dfdcf7be3416322cb88eec6a504f701c4bd7dc';
+
+    $ch = curl_init($dashboard_url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+    $pdf_content = curl_exec($ch);
+    $http_code   = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $content_type = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+    curl_close($ch);
+
+    if ($http_code === 200 && $pdf_content && strpos($content_type, 'application/pdf') !== false) {
+        // El dashboard devolvió un PDF válido — enviarlo al navegador
+        $filename = 'Contrato_' . $contract_id . '.pdf';
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Length: ' . strlen($pdf_content));
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        echo $pdf_content;
+        exit();
+    }
+
+    // ── Fallback: PDF nativo del CRM ────────────────────────────
+    $contract_data['contract_preview'] = prepare_contract_view($contract_data);
+
+    if ($user_language) {
+        $language = service('language');
+        $active_locale = $language->getLocale();
+        if ($user_language !== $active_locale) {
+            $language->setLocale($user_language);
+        }
+        prepare_contract_pdf($contract_data, $mode);
+        if ($user_language !== $active_locale) {
+            $language->setLocale($active_locale);
+        }
+    } else {
+        prepare_contract_pdf($contract_data, $mode);
+    }
+}
 
     private function _copy_related_items_to_contract($copy_items_from_proposal, $contract_id) {
         if (!$copy_items_from_proposal) {
@@ -1254,6 +1303,27 @@ class Contracts extends Security_Controller {
             $this->Contract_items_model->ci_save($contract_item_data);
         }
     }
+
+    private function _notify_dashboard_contract_change($crm_id, $titulo = '', $fecha_contrato = '', $valido_hasta = '') {
+    $params = http_build_query(array(
+        'action'         => 'sync_from_crm',
+        'crm_id'         => intval($crm_id),
+        'titulo'         => $titulo,
+        'fecha_contrato' => $fecha_contrato,
+        'valido_hasta'   => $valido_hasta,
+        'key'            => 'ea088539d42bf7e87dc7d4b171dfdcf7be3416322cb88eec6a504f701c4bd7dc'
+    ));
+
+    $url = 'https://gestion-tictac-comunicacion.es/dashboard/contratos/api.php?' . $params;
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);       // Timeout corto — no bloquea la respuesta al usuario
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+    curl_exec($ch);   // Ignoramos la respuesta — si falla, no es crítico
+    curl_close($ch);
+}
 
     function compact_view($contract_id = 0) {
         validate_numeric_value($contract_id);
