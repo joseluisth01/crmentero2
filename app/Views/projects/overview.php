@@ -16,6 +16,12 @@
                     </div>
                 <?php } ?>
 
+                <?php if (get_setting('module_project_timesheet') && ($project_info->max_hours_monthly || $project_info->max_hours_total)) { ?>
+                    <div class="col-md-12 col-sm-12">
+                        <?php echo view("projects/widgets/hours_limit_widget"); ?>
+                    </div>
+                <?php } ?>
+
                 <div class="col-md-12 col-sm-12 project-custom-fields">
                     <?php echo view('projects/custom_fields_list', array("custom_fields_list" => $custom_fields_list)); ?>
                 </div>

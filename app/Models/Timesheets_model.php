@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
-class Timesheets_model extends Crud_model {
+class Timesheets_model extends Crud_model
+{
 
     protected $table = null;
 
-    function __construct() {
+    function __construct()
+    {
         $this->table = 'project_time';
         parent::__construct($this->table);
     }
 
-    function get_details($options = array()) {
+    function get_details($options = array())
+    {
         $timesheet_table = $this->db->prefixTable('project_time');
         $tasks_table = $this->db->prefixTable('tasks');
         $projects_table = $this->db->prefixTable('projects');
@@ -158,7 +161,8 @@ class Timesheets_model extends Crud_model {
         }
     }
 
-    function get_summary_details($options = array()) {
+    function get_summary_details($options = array())
+    {
         $timesheet_table = $this->db->prefixTable('project_time');
         $tasks_table = $this->db->prefixTable('tasks');
         $projects_table = $this->db->prefixTable('projects');
@@ -248,15 +252,18 @@ class Timesheets_model extends Crud_model {
         return $this->db->query($sql);
     }
 
-    function get_timer_info($project_id, $user_id) {
+    function get_timer_info($project_id, $user_id)
+    {
         return parent::get_all_where(array("project_id" => $project_id, "user_id" => $user_id, "status" => "open", "deleted" => 0));
     }
 
-    function get_task_timer_info($task_id, $user_id) {
+    function get_task_timer_info($task_id, $user_id)
+    {
         return parent::get_all_where(array("task_id" => $task_id, "user_id" => $user_id, "status" => "open", "deleted" => 0));
     }
 
-    function process_timer($data) {
+    function process_timer($data)
+    {
         $status = $this->_get_clean_value($data, "status"); //user wants to set this status
         $project_id = $this->_get_clean_value($data, "project_id");
         $user_id = $this->_get_clean_value($data, "user_id");
@@ -301,7 +308,8 @@ class Timesheets_model extends Crud_model {
         }
     }
 
-    function get_open_timers($user_id = 0) {
+    function get_open_timers($user_id = 0)
+    {
         $timesheet_table = $this->db->prefixTable('project_time');
         $projects_table = $this->db->prefixTable('projects');
         $tasks_table = $this->db->prefixTable('tasks');
@@ -315,7 +323,8 @@ class Timesheets_model extends Crud_model {
         return $this->db->query($sql);
     }
 
-    function get_timesheet_statistics($options = array()) {
+    function get_timesheet_statistics($options = array())
+    {
         $timesheet_table = $this->db->prefixTable('project_time');
         $users_table = $this->db->prefixTable('users');
 
@@ -389,7 +398,8 @@ class Timesheets_model extends Crud_model {
         return $info;
     }
 
-    function active_members_on_projects() {
+    function active_members_on_projects()
+    {
         $users_table = $this->db->prefixTable('users');
         $projects_table = $this->db->prefixTable('projects');
         $project_time_table = $this->db->prefixTable('project_time');
@@ -410,7 +420,8 @@ class Timesheets_model extends Crud_model {
         return $this->db->query($sql);
     }
 
-    function user_has_any_timer_except_this_project($project_id, $user_id) {
+    function user_has_any_timer_except_this_project($project_id, $user_id)
+    {
         $timesheet_table = $this->db->prefixTable('project_time');
         $project_id = $this->_get_clean_value($project_id);
         $user_id = $this->_get_clean_value($user_id);
@@ -420,7 +431,8 @@ class Timesheets_model extends Crud_model {
         return $this->db->query($sql)->getRow()->total_timers;
     }
 
-    function user_has_any_timer($user_id) {
+    function user_has_any_timer($user_id)
+    {
         $timesheet_table = $this->db->prefixTable('project_time');
         $user_id = $this->_get_clean_value($user_id);
 
@@ -429,7 +441,8 @@ class Timesheets_model extends Crud_model {
         return $this->db->query($sql)->getRow()->total_timers;
     }
 
-    function count_total_time($options = array()) {
+    function count_total_time($options = array())
+    {
         $attendnace_table = $this->db->prefixTable('attendance');
         $timesheet_table = $this->db->prefixTable('project_time');
 
@@ -445,8 +458,7 @@ class Timesheets_model extends Crud_model {
         $project_id = $this->_get_clean_value($options, "project_id");
         $allowed_members = $this->_get_clean_value($options, "allowed_members");
         if ($project_id) {
-            $timesheet_where .= " AND $timesheet_table.project_id=$project_id";
-
+            // NO añadimos project_id al where aquí — se filtra via JOIN con tasks
             if (is_array($allowed_members) && count($allowed_members)) {
                 $allowed_members = join(",", $allowed_members);
                 $timesheet_where .= " AND $timesheet_table.user_id IN($allowed_members)";
@@ -462,21 +474,45 @@ class Timesheets_model extends Crud_model {
 
         $info = new \stdClass();
 
-        $attendance_sql = "SELECT  SUM(TIME_TO_SEC(TIMEDIFF($attendnace_table.out_time,$attendnace_table.in_time))) total_sec
-                FROM $attendnace_table 
-                WHERE $attendnace_table.deleted=0 AND $attendnace_table.status!='incomplete' $attendance_where";
+        $attendance_sql = "SELECT SUM(TIME_TO_SEC(TIMEDIFF($attendnace_table.out_time,$attendnace_table.in_time))) total_sec
+            FROM $attendnace_table 
+            WHERE $attendnace_table.deleted=0 AND $attendnace_table.status!='incomplete' $attendance_where";
         $info->timecard_total = $this->db->query($attendance_sql)->getRow()->total_sec;
 
-        $timesheet_sql = "SELECT (SUM(TIME_TO_SEC(TIMEDIFF($timesheet_table.end_time,$timesheet_table.start_time))) + SUM((ROUND(($timesheet_table.hours * 60), 0)) * 60)) total_sec
+        if ($project_id) {
+            $tasks_table = $this->db->prefixTable('tasks');
+
+            $date_where = "";
+            $start_date = $this->_get_clean_value($options, "start_date");
+            if ($start_date) {
+                $date_where .= " AND DATE($timesheet_table.start_time) >= '$start_date'";
+            }
+            $end_date = $this->_get_clean_value($options, "end_date");
+            if ($end_date) {
+                $date_where .= " AND DATE($timesheet_table.start_time) <= '$end_date'";
+            }
+
+            $timesheet_sql = "SELECT SUM(TIME_TO_SEC(TIMEDIFF($timesheet_table.end_time,$timesheet_table.start_time))) total_sec
+                FROM $timesheet_table
+                INNER JOIN $tasks_table ON $tasks_table.id = $timesheet_table.task_id
+                WHERE $timesheet_table.deleted=0 AND $timesheet_table.status='logged'
+                AND $tasks_table.project_id=$project_id
+                AND $tasks_table.deleted=0
+                AND $timesheet_table.end_time > $timesheet_table.start_time
+                $timesheet_where $date_where";
+        } else {
+            $timesheet_sql = "SELECT (SUM(TIME_TO_SEC(TIMEDIFF($timesheet_table.end_time,$timesheet_table.start_time))) + SUM((ROUND(($timesheet_table.hours * 60), 0)) * 60)) total_sec
                 FROM $timesheet_table 
                 WHERE $timesheet_table.deleted=0 AND $timesheet_table.status='logged' $timesheet_where";
+        }
 
         $info->timesheet_total = $this->db->query($timesheet_sql)->getRow()->total_sec;
 
         return $info;
     }
 
-    private function get_timesheet_own_project_memeber_only_query($timesheet_table) {
+    private function get_timesheet_own_project_memeber_only_query($timesheet_table)
+    {
         $users_model = model("App\Models\Users_model", false);
         $login_user_id = $users_model->login_user_id();
 
@@ -486,7 +522,8 @@ class Timesheets_model extends Crud_model {
         }
     }
 
-    function user_has_any_open_timer_on_this_task($task_id, $user_id) {
+    function user_has_any_open_timer_on_this_task($task_id, $user_id)
+    {
         $timesheet_table = $this->db->prefixTable('project_time');
 
         $task_id = $this->_get_clean_value($task_id);

@@ -1,5 +1,6 @@
 <?php
 
+
 namespace App\Controllers;
 
 use App\Libraries\Excel_import;
@@ -1212,6 +1213,18 @@ class Tasks extends Security_Controller
         $save_id = $this->Tasks_model->ci_save($data, $id);
         if ($save_id) {
 
+            // ── CORRECCIÓN: sincronizar project_id en los registros de tiempo ──
+            if ($id && $project_id && isset($task_info) && (int)$task_info->project_id !== (int)$project_id) {
+                $db = \Config\Database::connect();
+                $pt = $db->prefixTable('project_time');
+                $db->query(
+                    "UPDATE {$pt} SET project_id = " . (int)$project_id .
+                    " WHERE task_id = " . (int)$id .
+                    " AND deleted = 0"
+                );
+            }
+            // ── FIN CORRECCIÓN ──
+
             if ($is_clone && $main_task_id) {
                 //clone task checklist
                 if ($copy_checklist) {
@@ -1915,13 +1928,8 @@ class Tasks extends Security_Controller
         //count total worked hours in a task
         $timesheet_options = array("project_id" => $model_info->project_id, "task_id" => $model_info->id);
 
-        //get allowed member ids
-        $members = $this->_get_members_to_manage_timesheet();
-        if ($members != "all" && $this->login_user->user_type == "staff") {
-            //if user has permission to access all members, query param is not required
-            //client can view all timesheet
-            $timesheet_options["allowed_members"] = $members;
-        }
+
+        
 
         $info = $this->Timesheets_model->count_total_time($timesheet_options);
         $view_data["total_task_hours"] = convert_seconds_to_time_format($info->timesheet_total);

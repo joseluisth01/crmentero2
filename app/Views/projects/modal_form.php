@@ -146,6 +146,40 @@
 
         <div class="form-group">
             <div class="row">
+                <label for="max_hours_monthly" class=" col-md-3">Horas mensuales máx.</label>
+                <div class=" col-md-9">
+                    <?php
+                    echo form_input(array(
+                        "id" => "max_hours_monthly",
+                        "name" => "max_hours_monthly",
+                        "value" => $model_info->max_hours_monthly ? $model_info->max_hours_monthly : "",
+                        "class" => "form-control",
+                        "placeholder" => "Horas mensuales máximas (0 = sin límite)"
+                    ));
+                    ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="row">
+                <label for="max_hours_total" class=" col-md-3">Horas totales (bolsa)</label>
+                <div class=" col-md-9">
+                    <?php
+                    echo form_input(array(
+                        "id" => "max_hours_total",
+                        "name" => "max_hours_total",
+                        "value" => $model_info->max_hours_total ? $model_info->max_hours_total : "",
+                        "class" => "form-control",
+                        "placeholder" => "Horas totales de bolsa (0 = sin límite)"
+                    ));
+                    ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="row">
                 <label for="project_labels" class=" col-md-3"><?php echo app_lang('labels'); ?></label>
                 <div class=" col-md-9">
                     <?php

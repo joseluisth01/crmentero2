@@ -333,7 +333,9 @@ class Projects extends Security_Controller
             "project_type" => $project_type,
             "price" => unformat_currency($this->request->getPost('price')),
             "labels" => $labels,
-            "status_id" => $status_id ? $status_id : 1
+            "status_id" => $status_id ? $status_id : 1,
+            "max_hours_monthly" => $this->request->getPost('max_hours_monthly') ? $this->request->getPost('max_hours_monthly') : 0,
+            "max_hours_total" => $this->request->getPost('max_hours_total') ? $this->request->getPost('max_hours_total') : 0
         );
 
         $context = $this->request->getPost('context');
@@ -1189,6 +1191,14 @@ class Projects extends Security_Controller
 
         $info = $this->Timesheets_model->count_total_time($options);
         $view_data["total_project_hours"] = to_decimal_format($info->timesheet_total / 60 / 60);
+
+        // Horas usadas este mes (para límite mensual)
+        $month_options = array_merge($options, array(
+            "start_date" => date('Y-m-01'),
+            "end_date"   => date('Y-m-t')
+        ));
+        $month_info = $this->Timesheets_model->count_total_time($month_options);
+        $view_data["hours_used_this_month"] = $month_info->timesheet_total / 60 / 60;
 
         return $this->template->view('projects/overview', $view_data);
     }
