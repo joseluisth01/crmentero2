@@ -1,5 +1,4 @@
 <?php
-// Solo mostrar si el proyecto tiene límite de horas configurado
 if (!$project_info->max_hours_monthly && !$project_info->max_hours_total) {
     return;
 }
@@ -63,5 +62,16 @@ $type_label = $is_monthly ? '(se reinicia cada mes)' : '(bolsa total)';
                 Quedan: <strong class="<?php echo $text_color; ?>"><?php echo number_format($remaining, 2); ?>h</strong>
             </span>
         </div>
+
+        <?php if (!empty($hours_by_user)): ?>
+            <div class="mt-2 pt-2" style="border-top: 1px solid rgba(0,0,0,0.08); font-size: 0.82em;">
+                <?php foreach ($hours_by_user as $user_hours): ?>
+                    <div class="d-flex justify-content-between text-off py-1">
+                        <span><?php echo $user_hours->usuario; ?></span>
+                        <span><strong><?php echo number_format($user_hours->horas, 2); ?>h</strong></span>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
     </div>
 </div>

@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
-class Projects_model extends Crud_model {
+class Projects_model extends Crud_model
+{
 
     protected $table = null;
 
-    function __construct() {
+    function __construct()
+    {
         $this->table = 'projects';
         parent::__construct($this->table);
     }
 
-    function get_details($options = array()) {
+    function get_details($options = array())
+    {
         $projects_table = $this->db->prefixTable('projects');
         $project_members_table = $this->db->prefixTable('project_members');
         $clients_table = $this->db->prefixTable('clients');
@@ -144,7 +147,27 @@ class Projects_model extends Crud_model {
             $where .= " )";
         }
 
-        $sql = "SELECT SQL_CALC_FOUND_ROWS $projects_table.*, $clients_table.company_name, $clients_table.currency_symbol,  total_points_table.total_points, completed_points_table.completed_points, $project_status_table.key_name AS status_key_name, $project_status_table.title_language_key, $project_status_table.title AS status_title,  $project_status_table.icon AS status_icon, $select_labels_data_query $select_custom_fieds
+        $timesheet_table = $this->db->prefixTable('project_time');
+        $sql = "SELECT SQL_CALC_FOUND_ROWS $projects_table.*, $clients_table.company_name, $clients_table.currency_symbol,  total_points_table.total_points, completed_points_table.completed_points, $project_status_table.key_name AS status_key_name, $project_status_table.title_language_key, $project_status_table.title AS status_title,  $project_status_table.icon AS status_icon, $select_labels_data_query $select_custom_fieds,
+        CASE 
+            WHEN $projects_table.max_hours_monthly > 0 THEN
+                ROUND((SELECT SUM(TIME_TO_SEC(TIMEDIFF($timesheet_table.end_time,$timesheet_table.start_time)))/3600
+                FROM $timesheet_table 
+                INNER JOIN {$this->db->prefixTable('tasks')} t2 ON t2.id = $timesheet_table.task_id
+                WHERE t2.project_id = $projects_table.id AND $timesheet_table.deleted=0 AND $timesheet_table.status='logged'
+                AND $timesheet_table.end_time > $timesheet_table.start_time
+                AND DATE($timesheet_table.start_time) >= DATE_FORMAT(NOW(),'%Y-%m-01')
+                AND DATE($timesheet_table.start_time) <= LAST_DAY(NOW())
+                ) / $projects_table.max_hours_monthly * 100, 0)
+            WHEN $projects_table.max_hours_total > 0 THEN
+                ROUND((SELECT SUM(TIME_TO_SEC(TIMEDIFF($timesheet_table.end_time,$timesheet_table.start_time)))/3600
+                FROM $timesheet_table 
+                INNER JOIN {$this->db->prefixTable('tasks')} t2 ON t2.id = $timesheet_table.task_id
+                WHERE t2.project_id = $projects_table.id AND $timesheet_table.deleted=0 AND $timesheet_table.status='logged'
+                AND $timesheet_table.end_time > $timesheet_table.start_time
+                ) / $projects_table.max_hours_total * 100, 0)
+            ELSE NULL
+        END AS hours_percentage
         FROM $projects_table
         LEFT JOIN $clients_table ON $clients_table.id= $projects_table.client_id
         LEFT JOIN (SELECT project_id, SUM(points) AS total_points FROM $tasks_table WHERE deleted=0 GROUP BY project_id) AS  total_points_table ON total_points_table.project_id= $projects_table.id
@@ -169,7 +192,8 @@ class Projects_model extends Crud_model {
         }
     }
 
-    function get_label_suggestions() {
+    function get_label_suggestions()
+    {
         $projects_table = $this->db->prefixTable('projects');
         $sql = "SELECT GROUP_CONCAT(labels) as label_groups
         FROM $projects_table
@@ -177,7 +201,8 @@ class Projects_model extends Crud_model {
         return $this->db->query($sql)->getRow()->label_groups;
     }
 
-    function count_project_status($options = array()) {
+    function count_project_status($options = array())
+    {
         $projects_table = $this->db->prefixTable('projects');
         $project_members_table = $this->db->prefixTable('project_members');
 
@@ -218,7 +243,8 @@ class Projects_model extends Crud_model {
         return $info;
     }
 
-    function get_gantt_data($options = array()) {
+    function get_gantt_data($options = array())
+    {
         $tasks_table = $this->db->prefixTable('tasks');
         $milestones_table = $this->db->prefixTable('milestones');
         $users_table = $this->db->prefixTable('users');
@@ -300,7 +326,8 @@ class Projects_model extends Crud_model {
         return $this->db->query($sql)->getResult();
     }
 
-    function add_remove_star($project_id, $user_id, $type = "add") {
+    function add_remove_star($project_id, $user_id, $type = "add")
+    {
         $projects_table = $this->db->prefixTable('projects');
 
         $project_id = $this->_get_clean_value($project_id);
@@ -319,7 +346,8 @@ class Projects_model extends Crud_model {
         return $this->db->query($sql);
     }
 
-    function get_starred_projects($user_id) {
+    function get_starred_projects($user_id)
+    {
         $projects_table = $this->db->prefixTable('projects');
         $project_status_table = $this->db->prefixTable('project_status');
 
@@ -333,7 +361,8 @@ class Projects_model extends Crud_model {
         return $this->db->query($sql);
     }
 
-    function delete_project_and_sub_items($project_id) {
+    function delete_project_and_sub_items($project_id)
+    {
         $projects_table = $this->db->prefixTable('projects');
         $tasks_table = $this->db->prefixTable('tasks');
         $milestones_table = $this->db->prefixTable('milestones');
@@ -396,7 +425,8 @@ class Projects_model extends Crud_model {
         return true;
     }
 
-    function get_search_suggestion($search = "", $options = array()) {
+    function get_search_suggestion($search = "", $options = array())
+    {
         $projects_table = $this->db->prefixTable('projects');
         $project_members_table = $this->db->prefixTable('project_members');
 
@@ -425,7 +455,8 @@ class Projects_model extends Crud_model {
         return $this->db->query($sql);
     }
 
-    function count_task_points($options = array()) {
+    function count_task_points($options = array())
+    {
         $projects_table = $this->db->prefixTable('projects');
         $project_members_table = $this->db->prefixTable('project_members');
         $tasks_table = $this->db->prefixTable('tasks');
@@ -453,7 +484,8 @@ class Projects_model extends Crud_model {
         return $this->db->query($sql)->getRow();
     }
 
-    function get_team_members_summary($options = array()) {
+    function get_team_members_summary($options = array())
+    {
         $projects_table = $this->db->prefixTable('projects');
         $project_members_table = $this->db->prefixTable('project_members');
         $users_table = $this->db->prefixTable('users');
@@ -502,7 +534,8 @@ class Projects_model extends Crud_model {
         return $this->db->query($sql);
     }
 
-    function get_clients_summary($options = array()) {
+    function get_clients_summary($options = array())
+    {
         $projects_table = $this->db->prefixTable('projects');
         $clients_table = $this->db->prefixTable('clients');
         $timesheet_table = $this->db->prefixTable('project_time');
@@ -551,7 +584,8 @@ class Projects_model extends Crud_model {
         return $this->db->query($sql);
     }
 
-    function get_projects_id_and_name() {
+    function get_projects_id_and_name()
+    {
         $projects_table = $this->db->prefixTable('projects');
 
         $sql = "SELECT id, title

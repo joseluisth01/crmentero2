@@ -1009,6 +1009,25 @@ class Projects extends Security_Controller
             $row_data[] = $this->template->view("custom_fields/output_" . $field->field_type, array("value" => $data->$cf_id));
         }
 
+        $hours_percentage_html = "-";
+        if (!is_null($data->hours_percentage)) {
+            $pct = (int) $data->hours_percentage;
+            if ($pct >= 90) {
+                $color = "bg-danger";
+            } elseif ($pct >= 70) {
+                $color = "bg-warning";
+            } else {
+                $color = "bg-success";
+            }
+            $hours_percentage_html = "<div class='d-flex align-items-center gap-2'>
+        <div class='progress flex-grow-1 mb0' style='height:8px; min-width:60px;'>
+            <div class='progress-bar $color' style='width:" . min(100, $pct) . "%'></div>
+        </div>
+        <span class='text-off' style='font-size:0.85em; white-space:nowrap;'>{$pct}%</span>
+    </div>";
+        }
+
+        $row_data[] = $hours_percentage_html;
         $row_data[] = $optoins;
 
         return $row_data;
@@ -1179,26 +1198,52 @@ class Projects extends Security_Controller
 
         $view_data['custom_fields_list'] = $this->Custom_fields_model->get_combined_details("projects", $project_id, $this->login_user->is_admin, $this->login_user->user_type)->getResult();
 
-        //count total worked hours
-        $options = array("project_id" => $project_id);
+        // Horas totales del proyecto (TODOS los usuarios, sin filtro)
+        $options_all = array("project_id" => $project_id);
+        $info_all = $this->Timesheets_model->count_total_time($options_all);
+        $view_data["total_project_hours"] = to_decimal_format($info_all->timesheet_total / 60 / 60);
 
-        //get allowed member ids
-        $members = $this->_get_members_to_manage_timesheet();
-        if ($members != "all") {
-            //if user has permission to access all members, query param is not required
-            $options["allowed_members"] = $members;
-        }
-
-        $info = $this->Timesheets_model->count_total_time($options);
-        $view_data["total_project_hours"] = to_decimal_format($info->timesheet_total / 60 / 60);
-
-        // Horas usadas este mes (para límite mensual)
-        $month_options = array_merge($options, array(
+        // Horas del mes actuales (TODOS los usuarios, para widget de límite mensual)
+        $month_options_all = array(
+            "project_id" => $project_id,
             "start_date" => date('Y-m-01'),
             "end_date"   => date('Y-m-t')
-        ));
-        $month_info = $this->Timesheets_model->count_total_time($month_options);
-        $view_data["hours_used_this_month"] = $month_info->timesheet_total / 60 / 60;
+        );
+        $month_info_all = $this->Timesheets_model->count_total_time($month_options_all);
+        $view_data["hours_used_this_month"] = $month_info_all->timesheet_total / 60 / 60;
+
+        // Horas del usuario logueado en este proyecto
+        $options_own = array("project_id" => $project_id, "user_id" => $this->login_user->id);
+        $info_own = $this->Timesheets_model->count_total_time($options_own);
+        $view_data["my_project_hours"] = to_decimal_format($info_own->timesheet_total / 60 / 60);
+
+        // Desglose de horas por usuario para el widget
+        $db = \Config\Database::connect();
+        $pt = $db->prefixTable('project_time');
+        $tasks_t = $db->prefixTable('tasks');
+        $users_t = $db->prefixTable('users');
+
+        $is_monthly_limit = $view_data['project_info']->max_hours_monthly > 0;
+        if ($is_monthly_limit) {
+            $date_filter = "AND DATE($pt.start_time) >= '" . date('Y-m-01') . "' AND DATE($pt.start_time) <= '" . date('Y-m-t') . "'";
+        } else {
+            $date_filter = "";
+        }
+
+        $users_hours_sql = "SELECT CONCAT($users_t.first_name, ' ', $users_t.last_name) as usuario,
+            ROUND(SUM(TIME_TO_SEC(TIMEDIFF($pt.end_time, $pt.start_time)))/3600, 2) as horas
+        FROM $pt
+        INNER JOIN $tasks_t ON $tasks_t.id = $pt.task_id
+        INNER JOIN $users_t ON $users_t.id = $pt.user_id
+        WHERE $tasks_t.project_id = $project_id
+        AND $pt.deleted = 0 AND $pt.status = 'logged'
+        AND $pt.end_time > $pt.start_time
+        $date_filter
+        GROUP BY $pt.user_id, $users_t.first_name, $users_t.last_name
+        HAVING horas > 0
+        ORDER BY horas DESC";
+
+        $view_data["hours_by_user"] = $db->query($users_hours_sql)->getResult();
 
         return $this->template->view('projects/overview', $view_data);
     }

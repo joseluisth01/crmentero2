@@ -94,36 +94,114 @@
             compactView: compactViewId ? true : false,
             smartFilterIdentity: "all_projects_list", //a to z and _ only. should be unique to avoid conflicts 
             ignoreSavedFilter: ignoreSavedFilter,
-            multiSelect: [
+            multiSelect: [{
+                name: "status_id",
+                text: "<?php echo app_lang('status'); ?>",
+                options: <?php echo view("project_status/project_status_dropdown", array("project_statuses" => $project_statuses, "selected_status_id" => $selected_status_id)); ?>
+            }],
+            filterDropdown: [{
+                name: "project_label",
+                class: "w200",
+                options: <?php echo $project_labels_dropdown; ?>
+            }, <?php echo $custom_field_filters; ?>],
+            rangeDatepicker: [{
+                startDate: {
+                    name: "start_date_from",
+                    value: ""
+                },
+                endDate: {
+                    name: "start_date_to",
+                    value: ""
+                },
+                showClearButton: true,
+                label: "<?php echo app_lang('start_date'); ?>",
+                ranges: ['this_month', 'last_month', 'this_year', 'last_year', 'next_7_days', 'next_month']
+            }],
+            singleDatepicker: [{
+                name: "deadline",
+                defaultText: "<?php echo app_lang('deadline') ?>",
+                options: [{
+                        value: "expired",
+                        text: "<?php echo app_lang('expired') ?>"
+                    },
+                    {
+                        value: dynamicDates.today,
+                        text: "<?php echo app_lang('today') ?>"
+                    },
+                    {
+                        value: dynamicDates.tomorrow,
+                        text: "<?php echo app_lang('tomorrow') ?>"
+                    },
+                    {
+                        value: dynamicDates.in_next_7_days,
+                        text: "<?php echo sprintf(app_lang('in_number_of_days'), 7); ?>"
+                    },
+                    {
+                        value: dynamicDates.in_next_15_days,
+                        text: "<?php echo sprintf(app_lang('in_number_of_days'), 15); ?>"
+                    }
+                ]
+            }],
+            columns: [{
+                    title: '<?php echo app_lang("id") ?>',
+                    "class": "w50",
+                    order_by: "id"
+                },
                 {
-                    name: "status_id",
-                    text: "<?php echo app_lang('status'); ?>",
-                    options: <?php echo view("project_status/project_status_dropdown", array("project_statuses" => $project_statuses, "selected_status_id" => $selected_status_id)); ?>
+                    title: '<?php echo app_lang("title") ?>',
+                    "class": "all",
+                    order_by: "title"
+                },
+                {
+                    title: '<?php echo app_lang("client") ?>',
+                    "class": "w10p",
+                    order_by: "company_name"
+                },
+                {
+                    visible: optionVisibility,
+                    title: '<?php echo app_lang("price") ?>',
+                    "class": "w10p text-right",
+                    order_by: "price"
+                },
+                {
+                    visible: false,
+                    searchable: false,
+                    order_by: "start_date"
+                },
+                {
+                    title: '<?php echo app_lang("start_date") ?>',
+                    "class": "w10p",
+                    "iDataSort": 4
+                },
+                {
+                    visible: false,
+                    searchable: false,
+                    order_by: "deadline"
+                },
+                {
+                    title: '<?php echo app_lang("deadline") ?>',
+                    "class": "w10p",
+                    "iDataSort": 6
+                },
+                {
+                    title: '<?php echo app_lang("progress") ?>',
+                    "class": "w10p"
+                },
+                {
+                    title: '<?php echo app_lang("status") ?>',
+                    "class": "w10p",
+                    order_by: "status"
                 }
-            ],
-            filterDropdown: [{name: "project_label", class: "w200", options: <?php echo $project_labels_dropdown; ?>}, <?php echo $custom_field_filters; ?>],
-            rangeDatepicker: [{startDate: {name: "start_date_from", value: ""}, endDate: {name: "start_date_to", value: ""}, showClearButton: true, label: "<?php echo app_lang('start_date'); ?>", ranges: ['this_month', 'last_month', 'this_year', 'last_year', 'next_7_days', 'next_month']}],
-            singleDatepicker: [{name: "deadline", defaultText: "<?php echo app_lang('deadline') ?>",
-                    options: [
-                        {value: "expired", text: "<?php echo app_lang('expired') ?>"},
-                        {value: dynamicDates.today, text: "<?php echo app_lang('today') ?>"},
-                        {value: dynamicDates.tomorrow, text: "<?php echo app_lang('tomorrow') ?>"},
-                        {value: dynamicDates.in_next_7_days, text: "<?php echo sprintf(app_lang('in_number_of_days'), 7); ?>"},
-                        {value: dynamicDates.in_next_15_days, text: "<?php echo sprintf(app_lang('in_number_of_days'), 15); ?>"}
-                    ]}],
-            columns: [
-                {title: '<?php echo app_lang("id") ?>', "class": "w50", order_by: "id"},
-                {title: '<?php echo app_lang("title") ?>', "class": "all", order_by: "title"},
-                {title: '<?php echo app_lang("client") ?>', "class": "w10p", order_by: "company_name"},
-                {visible: optionVisibility, title: '<?php echo app_lang("price") ?>', "class": "w10p text-right", order_by: "price"},
-                {visible: false, searchable: false, order_by: "start_date"},
-                {title: '<?php echo app_lang("start_date") ?>', "class": "w10p", "iDataSort": 4},
-                {visible: false, searchable: false, order_by: "deadline"},
-                {title: '<?php echo app_lang("deadline") ?>', "class": "w10p", "iDataSort": 6},
-                {title: '<?php echo app_lang("progress") ?>', "class": "w10p"},
-                {title: '<?php echo app_lang("status") ?>', "class": "w10p", order_by: "status"}
                 <?php echo $custom_field_headers; ?>,
-                {visible: optionVisibility, title: '<i data-feather="menu" class="icon-16"></i>', "class": "text-center option w140"}
+                {
+                    title: 'Horas %',
+                    "class": "w10p"
+                },
+                {
+                    visible: optionVisibility,
+                    title: '<i data-feather="menu" class="icon-16"></i>',
+                    "class": "text-center option w140"
+                }
             ],
             rowCallback: function(nRow, aData, iDisplayIndex, iDisplayIndexFull) {
                 if (compactViewId) {
@@ -134,7 +212,7 @@
                 [1, "desc"]
             ],
             printColumns: combineCustomFieldsColumns([0, 1, 2, 3, 5, 7, 8, 9], '<?php echo $custom_field_headers; ?>'),
-            xlsColumns: combineCustomFieldsColumns([0, 1, 2, 3, 5, 7, 8, 9], '<?php echo $custom_field_headers; ?>')
+xlsColumns: combineCustomFieldsColumns([0, 1, 2, 3, 5, 7, 8, 9], '<?php echo $custom_field_headers; ?>')
         });
     });
 </script>

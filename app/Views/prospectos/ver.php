@@ -126,7 +126,7 @@
                     </div>
 
                     <!-- COLUMNA DERECHA: timeline de notas -->
-                    <div style="flex:1;padding:24px;background:#f8f9fa;min-width:0;display:flex;flex-direction:column;">
+                    <div style="flex:1;padding:24px;background:#f8f9fa;min-width:0;display:flex;flex-direction:column;min-width:70%">
 
                         <h6 style="margin:0 0 18px;color:#555;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;">
                             <i data-feather="message-square" class="icon-14"></i> &nbsp;Notas &amp; seguimiento
