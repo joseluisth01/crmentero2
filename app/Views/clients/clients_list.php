@@ -123,6 +123,9 @@
                     title: "<?php echo app_lang("labels") ?>"
                 },
                 {
+                    title: "NIVEL"
+                },
+                {
                     title: "<?php echo app_lang("projects") ?>"
                 },
                 {
@@ -164,8 +167,8 @@
                     $("#client-table-container").attr('style', 'min-height: ' + heightDiff + 'px !important');
                 }
             },
-            printColumns: combineCustomFieldsColumns([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], '<?php echo $custom_field_headers; ?>'),
-            xlsColumns: combineCustomFieldsColumns([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], '<?php echo $custom_field_headers; ?>'),
+            printColumns: combineCustomFieldsColumns([0, 1, 2, 3, 4, 5, 7, 8, 9, 10], '<?php echo $custom_field_headers; ?>'),
+            xlsColumns: combineCustomFieldsColumns([0, 1, 2, 3, 4, 5, 7, 8, 9, 10], '<?php echo $custom_field_headers; ?>'),
             reloadHooks: [{
                 type: "app_form",
                 id: "client-form"

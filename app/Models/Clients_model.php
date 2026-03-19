@@ -24,6 +24,8 @@ class Clients_model extends Crud_model {
         $orders_table = $this->db->prefixTable('orders');
         $proposals_table = $this->db->prefixTable('proposals');
         $lead_source_table = $this->db->prefixTable('lead_source');
+        $custom_field_values_table = $this->db->prefixTable('custom_field_values');
+        $nivel_custom_field_id = 11;
 
         $where = "";
         $id = $this->_get_clean_value($options, "id");
@@ -199,7 +201,13 @@ class Clients_model extends Crud_model {
                 $projects_select
                 $client_groups_select
                 $lead_status_table.title AS lead_status_title,  $lead_status_table.color AS lead_status_color,
-                owner_details.owner_name, owner_details.owner_avatar, $lead_source_table.title AS lead_source_title, $select_labels_data_query
+                owner_details.owner_name, owner_details.owner_avatar, $lead_source_table.title AS lead_source_title, $select_labels_data_query,
+                (SELECT cfv.value FROM $custom_field_values_table cfv
+                 WHERE cfv.related_to_type='clients'
+                 AND cfv.custom_field_id=$nivel_custom_field_id
+                 AND cfv.deleted=0
+                 AND cfv.related_to_id=$clients_table.id
+                 LIMIT 1) AS client_nivel
         FROM $clients_table
         LEFT JOIN $users_table primary_contact_table ON primary_contact_table.client_id = $clients_table.id AND primary_contact_table.deleted=0 AND primary_contact_table.is_primary_contact=1 
         $projects_join
@@ -716,6 +724,8 @@ class Clients_model extends Crud_model {
         $clients_table = $this->db->prefixTable('clients');
         $users_table = $this->db->prefixTable('users');
         $lead_source_table = $this->db->prefixTable('lead_source');
+        $custom_field_values_table = $this->db->prefixTable('custom_field_values');
+        $nivel_custom_field_id = 11;
 
         $where = "";
 

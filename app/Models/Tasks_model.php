@@ -60,7 +60,7 @@ class Tasks_model extends Crud_model {
             ),
             "status" => array(
                 "label" => app_lang("status"),
-                "type" => "language_key" //we'are not using this field from 1.9 but don't delete it for existing data.
+                "type" => "language_key"
             ),
             "status_id" => array(
                 "label" => app_lang("status"),
@@ -139,6 +139,8 @@ class Tasks_model extends Crud_model {
         $expenses_table = $this->db->prefixTable('expenses');
         $invoices_table = $this->db->prefixTable('invoices');
         $proposals_table = $this->db->prefixTable('proposals');
+        $custom_field_values_table_gd = $this->db->prefixTable('custom_field_values');
+        $nivel_custom_field_id_gd = 11;
 
         $where = "";
 
@@ -298,9 +300,9 @@ class Tasks_model extends Crud_model {
             $now = get_my_local_time("Y-m-d");
             if ($deadline === "expired") {
                 $where .= " AND IF($tasks_table.deadline IS NULL, $milestones_table.due_date<'$now', $tasks_table.deadline<'$now')";
-            } else if ($deadline == $now) { //today
+            } else if ($deadline == $now) {
                 $where .= " AND IF($tasks_table.deadline IS NULL, $milestones_table.due_date='$deadline', $tasks_table.deadline='$deadline')";
-            } else { //future deadlines, extract today's
+            } else {
                 $now = add_period_to_date($now, 1);
                 $where .= " AND IF($tasks_table.deadline IS NULL, $milestones_table.due_date BETWEEN '$now' AND '$deadline', $tasks_table.deadline BETWEEN '$now' AND '$deadline')";
             }
@@ -375,20 +377,33 @@ class Tasks_model extends Crud_model {
 
         if ($order_by) {
             $order_dir = $this->_get_clean_value($options, "order_dir");
-            $order = " ORDER BY $order_by $order_dir ";
+            $nivel_order = "CASE (SELECT cfvgd2.value FROM $custom_field_values_table_gd cfvgd2
+                 WHERE cfvgd2.related_to_type='clients'
+                 AND cfvgd2.custom_field_id=$nivel_custom_field_id_gd
+                 AND cfvgd2.deleted=0
+                 AND cfvgd2.related_to_id = IF(
+                     $tasks_table.context='client',
+                     $tasks_table.client_id,
+                     (SELECT pgd2.client_id FROM $projects_table pgd2 WHERE pgd2.id=$tasks_table.project_id LIMIT 1)
+                 )
+                 LIMIT 1)
+                WHEN 'DIAMANTE' THEN 1
+                WHEN 'ORO'      THEN 2
+                WHEN 'PLATA'    THEN 3
+                WHEN 'BRONCE'   THEN 4
+                ELSE 5
+            END";
+            $order = " ORDER BY $nivel_order ASC, $order_by $order_dir ";
         }
 
-        $search_by = get_array_value($options, "search_by"); //clean later since we need to check the #
+        $search_by = get_array_value($options, "search_by");
         if ($search_by) {
             $search_by = $this->db->escapeLikeString($search_by);
             $labels_table = $this->db->prefixTable("labels");
 
             if (strpos($search_by, '#') !== false) {
-                //get sub tasks of this task
                 $search_by = substr($search_by, 1);
-
                 $search_by = $this->_get_clean_value($search_by);
-
                 $where .= " AND ($tasks_table.id='$search_by' OR $tasks_table.parent_task_id='$search_by')";
             } else {
                 $search_by = $this->_get_clean_value($search_by);
@@ -409,7 +424,6 @@ class Tasks_model extends Crud_model {
             }
         }
 
-        //prepare custom fild binding query
         $custom_fields = get_array_value($options, "custom_fields");
         $custom_field_filter = get_array_value($options, "custom_field_filter");
 
@@ -433,7 +447,17 @@ class Tasks_model extends Crud_model {
                     $subscriptions_table.title AS subscription_title,
                     $expenses_table.expense_date, $expenses_table.title AS expense_title,
                     $invoices_table.display_id AS invoice_display_id,
-                    IF($tasks_table.deadline IS NULL, $milestones_table.title, '') AS deadline_milestone_title, notification_table.task_id AS unread, sub_task_table.total_sub_tasks AS has_sub_tasks, $select_labels_data_query $select_custom_fieds 
+                    IF($tasks_table.deadline IS NULL, $milestones_table.title, '') AS deadline_milestone_title, notification_table.task_id AS unread, sub_task_table.total_sub_tasks AS has_sub_tasks, $select_labels_data_query $select_custom_fieds,
+                    (SELECT cfvgd.value FROM $custom_field_values_table_gd cfvgd
+                     WHERE cfvgd.related_to_type='clients'
+                     AND cfvgd.custom_field_id=$nivel_custom_field_id_gd
+                     AND cfvgd.deleted=0
+                     AND cfvgd.related_to_id = IF(
+                         $tasks_table.context='client',
+                         $tasks_table.client_id,
+                         (SELECT pgd.client_id FROM $projects_table pgd WHERE pgd.id=$tasks_table.project_id LIMIT 1)
+                     )
+                     LIMIT 1) AS client_nivel
                         
         FROM $tasks_table
         LEFT JOIN $users_table ON $users_table.id= $tasks_table.assigned_to
@@ -483,8 +507,6 @@ class Tasks_model extends Crud_model {
             $project_where = "";
 
             foreach ($context_permissions as $context_permission => $permission_value) {
-                //has restriction on this context, check each permissions
-
                 if (!$permission_value) {
                     continue;
                 }
@@ -558,7 +580,6 @@ class Tasks_model extends Crud_model {
             if ($context_where_for_this_context) {
                 $context_where .= $context_where_for_this_context;
             } else {
-                //has no restriction on this context
                 $context_where .= " $tasks_table.context='$context' ";
             }
         }
@@ -619,6 +640,10 @@ class Tasks_model extends Crud_model {
         $notifications_table = $this->db->prefixTable("notifications");
         $checklist_items_table = $this->db->prefixTable('checklist_items');
         $proposals_table = $this->db->prefixTable('proposals');
+        $custom_field_values_table = $this->db->prefixTable('custom_field_values');
+
+        // ID del campo personalizado NIVEL en crm_custom_fields
+        $nivel_custom_field_id = 11;
 
         $where = "";
 
@@ -696,9 +721,9 @@ class Tasks_model extends Crud_model {
             $now = get_my_local_time("Y-m-d");
             if ($deadline === "expired") {
                 $where .= " AND IF($tasks_table.deadline IS NULL, $milestones_table.due_date<'$now', $tasks_table.deadline<'$now')";
-            } else if ($deadline == $now) { //today
+            } else if ($deadline == $now) {
                 $where .= " AND IF($tasks_table.deadline IS NULL, $milestones_table.due_date='$deadline', $tasks_table.deadline='$deadline')";
-            } else { //future deadlines, extract today's
+            } else {
                 $now = add_period_to_date($now, 1);
                 $where .= " AND IF($tasks_table.deadline IS NULL, $milestones_table.due_date BETWEEN '$now' AND '$deadline', $tasks_table.deadline BETWEEN '$now' AND '$deadline')";
             }
@@ -708,12 +733,10 @@ class Tasks_model extends Crud_model {
 
         if ($search) {
             if (strpos($search, '#') !== false) {
-                //get sub tasks of this task
                 $search = substr($search, 1);
                 $search = $this->_get_clean_value($search);
                 $where .= " AND ($tasks_table.id='$search' OR $tasks_table.parent_task_id='$search')";
             } else {
-                //normal search
                 $search = $this->db->escapeLikeString($search);
                 $search = $this->_get_clean_value($search);
                 $where .= " AND ($tasks_table.title LIKE '%$search%' ESCAPE '!' OR FIND_IN_SET((SELECT $labels_table.id FROM $labels_table WHERE $labels_table.deleted=0 AND $labels_table.context='task' AND $labels_table.title LIKE '%$search%' ESCAPE '!' LIMIT 1), $tasks_table.labels) OR $tasks_table.id='$search')";
@@ -781,7 +804,17 @@ class Tasks_model extends Crud_model {
                 (SELECT COUNT($checklist_items_table.id) FROM $checklist_items_table WHERE $checklist_items_table.deleted=0 AND $checklist_items_table.task_id=$tasks_table.id) AS total_checklist,
                 (SELECT COUNT($checklist_items_table.id) FROM $checklist_items_table WHERE $checklist_items_table.is_checked=1 AND $checklist_items_table.deleted=0 AND $checklist_items_table.task_id=$tasks_table.id) AS total_checklist_checked,
                 COUNT(sub_tasks_table.id) AS total_sub_tasks, completed_sub_tasks_table.total_sub_tasks_done, $tasks_table.client_id, $tasks_table.contract_id, $tasks_table.estimate_id, $tasks_table.expense_id, $tasks_table.invoice_id, $tasks_table.lead_id, $tasks_table.order_id, $tasks_table.proposal_id, $tasks_table.subscription_id, $tasks_table.ticket_id, $tasks_table.collaborators,
-                $select_labels_data_query
+                $select_labels_data_query,
+                (SELECT cfv.value FROM $custom_field_values_table cfv 
+                 WHERE cfv.related_to_type='clients' 
+                 AND cfv.custom_field_id=$nivel_custom_field_id 
+                 AND cfv.deleted=0
+                 AND cfv.related_to_id = IF(
+                     $tasks_table.context='client', 
+                     $tasks_table.client_id, 
+                     (SELECT p2.client_id FROM $projects_table p2 WHERE p2.id=$tasks_table.project_id LIMIT 1)
+                 )
+                 LIMIT 1) AS client_nivel
         FROM $tasks_table
         LEFT JOIN (
             SELECT $tasks_table.id, $tasks_table.parent_task_id, $tasks_table.title
@@ -807,7 +840,25 @@ class Tasks_model extends Crud_model {
         $extra_left_join
         WHERE $tasks_table.deleted=0 $where $custom_fields_where 
         GROUP BY $tasks_table.id
-        ORDER BY ISNULL($tasks_table.deadline) ASC, $tasks_table.deadline ASC $limit_sql";
+        ORDER BY 
+            CASE (SELECT cfv2.value FROM $custom_field_values_table cfv2
+                  WHERE cfv2.related_to_type='clients'
+                  AND cfv2.custom_field_id=$nivel_custom_field_id
+                  AND cfv2.deleted=0
+                  AND cfv2.related_to_id = IF(
+                      $tasks_table.context='client',
+                      $tasks_table.client_id,
+                      (SELECT p3.client_id FROM $projects_table p3 WHERE p3.id=$tasks_table.project_id LIMIT 1)
+                  )
+                  LIMIT 1)
+                WHEN 'DIAMANTE' THEN 1
+                WHEN 'ORO'      THEN 2
+                WHEN 'PLATA'    THEN 3
+                WHEN 'BRONCE'   THEN 4
+                ELSE 5
+            END ASC,
+            ISNULL($tasks_table.deadline) ASC,
+            $tasks_table.deadline ASC $limit_sql";
         }
 
         return $this->db->query($sql);
@@ -943,7 +994,6 @@ class Tasks_model extends Crud_model {
         }
     }
 
-    //get the recurring tasks which are ready to renew as on a given date
     function get_renewable_tasks($date) {
         $tasks_table = $this->db->prefixTable('tasks');
 
@@ -990,6 +1040,8 @@ class Tasks_model extends Crud_model {
         $ticket_table = $this->db->prefixTable('tickets');
         $projects_table = $this->db->prefixTable('projects');
         $proposals_table = $this->db->prefixTable('proposals');
+        $custom_field_values_table_gd = $this->db->prefixTable('custom_field_values');
+        $nivel_custom_field_id_gd = 11;
 
         $where = "";
 
@@ -1072,23 +1124,18 @@ class Tasks_model extends Crud_model {
 
         $task_id = $this->_get_clean_value($task_id);
 
-        //get task comment files info to delete the files from directory 
         $task_comment_files_sql = "SELECT * FROM $project_comments_table WHERE $project_comments_table.deleted=0 AND $project_comments_table.task_id=$task_id; ";
         $task_comments = $this->db->query($task_comment_files_sql)->getResult();
 
-        //delete comments
         $delete_comments_sql = "UPDATE $project_comments_table SET $project_comments_table.deleted=1 WHERE $project_comments_table.task_id=$task_id; ";
         $this->db->query($delete_comments_sql);
 
-        //delete task
         $delete_task_sql = "UPDATE $tasks_table SET $tasks_table.deleted=1 WHERE $tasks_table.id=$task_id; ";
         $this->db->query($delete_task_sql);
 
-        //delete checklists 
         $delete_checklists_sql = "UPDATE $checklist_items_table SET $checklist_items_table.deleted=1 WHERE $checklist_items_table.task_id=$task_id; ";
         $this->db->query($delete_checklists_sql);
 
-        //delete the task comment files from directory
         $comment_file_path = get_setting("timeline_file_path");
 
         foreach ($task_comments as $comment_info) {
@@ -1130,7 +1177,7 @@ class Tasks_model extends Crud_model {
         if ($row) {
             return $row->sort + 10;
         } else {
-            return 1000; //could be any positive value
+            return 1000;
         }
     }
 }

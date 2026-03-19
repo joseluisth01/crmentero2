@@ -38,17 +38,14 @@ foreach ($tasks as $task) {
     }
 
     $toggle_sub_task_icon = "";
-
     if ($task->has_sub_tasks) {
         $toggle_sub_task_icon = "<span class='filter-sub-task-kanban-button clickable float-end ml5' title='" . app_lang("show_sub_tasks") . "' main-task-id= '#$task->id'><i data-feather='filter' class='icon-14'></i></span>";
     }
 
     $disable_dragging = get_array_value($tasks_edit_permissions, $task->id) ? "" : "disable-dragging";
 
-    //custom fields to show in kanban
     $kanban_custom_fields_data = "";
     $kanban_custom_fields = get_custom_variables_data("tasks", $task->id, $login_user->is_admin);
-
     if (is_array($kanban_custom_fields)) {
         foreach ($kanban_custom_fields as $kanban_custom_field) {
             if (is_array($kanban_custom_field)) {
@@ -90,28 +87,80 @@ foreach ($tasks as $task) {
     }
 
     $client_name = "";
-
     $client = "";
     if (!empty($task->client_name)) {
         $client = $task->client_name;
     } else if (!empty($task->company_name)) {
         $client = $task->company_name;
     }
-
     if ($client) {
         $client_name = "<div class='clearfix mt5 text-truncate'><i data-feather='briefcase' class='icon-14 text-off mr5'></i> " . $client . "</div>";
     }
 
+    // ── Badge NIVEL de cliente ──
+    $nivel_badge = "";
+    if (!empty($task->client_nivel) && trim($task->client_nivel) !== '-') {
+        $nivel_value = strtoupper(trim($task->client_nivel));
+
+        $nivel_cfg = array(
+            'DIAMANTE' => array(
+                'border' => '#38bdf8',
+                'bg'     => '#e0f2fe',
+                'text'   => '#0c4a6e',
+                'dot'    => '#0ea5e9',
+            ),
+            'ORO' => array(
+                'border' => '#f59e0b',
+                'bg'     => '#fef3c7',
+                'text'   => '#78350f',
+                'dot'    => '#d97706',
+            ),
+            'PLATA' => array(
+                'border' => '#94a3b8',
+                'bg'     => '#f1f5f9',
+                'text'   => '#334155',
+                'dot'    => '#64748b',
+            ),
+            'BRONCE' => array(
+                'border' => '#b87333',
+                'bg'     => '#fdf0e0',
+                'text'   => '#6b3a1f',
+                'dot'    => '#b87333',
+            ),
+        );
+
+        $cfg = isset($nivel_cfg[$nivel_value]) ? $nivel_cfg[$nivel_value] : array(
+            'border' => '#cbd5e1', 'bg' => '#f8fafc', 'text' => '#475569', 'dot' => '#94a3b8'
+        );
+
+        $nivel_badge = "<div class='clearfix' style='margin-top:6px;'>"
+            . "<span style='"
+            . "display:inline-flex;align-items:center;gap:5px;"
+            . "background:" . $cfg['bg'] . ";"
+            . "border:1.5px solid " . $cfg['border'] . ";"
+            . "color:" . $cfg['text'] . ";"
+            . "border-radius:6px;"
+            . "padding:2px 8px 2px 6px;"
+            . "font-size:10px;"
+            . "font-weight:700;"
+            . "letter-spacing:.7px;"
+            . "line-height:1.7;"
+            . "text-transform:uppercase;"
+            . "'>"
+            . "<span style='width:7px;height:7px;border-radius:50%;background:" . $cfg['dot'] . ";flex-shrink:0;display:inline-block;'></span>"
+            . htmlspecialchars($nivel_value)
+            . "</span>"
+            . "</div>";
+    }
+    // ── Fin badge NIVEL ──
 
     $sub_task_status = "";
     $sub_task_label_color = "#6690F4";
-
     if ($task->total_sub_tasks_done <= 0) {
         $sub_task_label_color = "#E18A00";
     } else if ($task->total_sub_tasks_done == $task->total_sub_tasks) {
         $sub_task_label_color = "#01B392";
     }
-
     if ($task->total_sub_tasks) {
         $sub_task_status .= "<div class='meta float-start badge rounded-pill' style='background-color:$sub_task_label_color'><span data-bs-toggle='tooltip' title='" . app_lang("sub_task_status") . "'><i data-feather='git-merge' class='icon-14'></i> " . ($task->total_sub_tasks_done ? $task->total_sub_tasks_done : 0) . "/$task->total_sub_tasks</span></div>";
     }
@@ -121,41 +170,30 @@ foreach ($tasks as $task) {
         $parent_task = "<div class='mt5 text-truncate text-off'>" . $parent_task_id . $task->parent_task_title . "</div>";
     }
 
-    // Avatar del usuario asignado
     $assigned_avatar = "<span class='avatar'><img src='" . get_avatar($task->assigned_to_avatar) . "'></span>";
 
-    // Avatares de colaboradores (se mostrarán en la misma fila que las etiquetas)
     $collaborators_html = "";
     if (isset($task->collaborator_list) && $task->collaborator_list) {
         $collaborators_array = explode(",", $task->collaborator_list);
         $max_collaborators = 3;
         $count = 0;
-        
         $collaborators_html = "<div class='meta float-start mr5'>";
-        
         foreach ($collaborators_array as $collaborator) {
             if ($count >= $max_collaborators) break;
-            
             $collaborator_parts = explode("--::--", $collaborator);
             if (count($collaborator_parts) >= 3) {
-                $collaborator_avatar = $collaborator_parts[2];
-                $collaborator_name = $collaborator_parts[1];
-                
-                $collab_image_url = get_avatar($collaborator_avatar);
-                $collaborators_html .= "<span class='avatar avatar-xs mr5' title='" . htmlspecialchars($collaborator_name) . "'><img src='" . $collab_image_url . "' alt=''></span>";
+                $collab_image_url = get_avatar($collaborator_parts[2]);
+                $collaborators_html .= "<span class='avatar avatar-xs mr5' title='" . htmlspecialchars($collaborator_parts[1]) . "'><img src='" . $collab_image_url . "' alt=''></span>";
                 $count++;
             }
         }
-        
-        // Si hay más colaboradores, mostrar un contador
         $remaining = count($collaborators_array) - $max_collaborators;
         if ($remaining > 0) {
-            $collaborators_html .= "<span class='avatar avatar-xs bg-secondary text-white d-inline-block text-center' style='width: 20px; height: 20px; line-height: 20px; font-size: 9px; border-radius: 50%;' title='+" . $remaining . " " . app_lang("more") . "'>+" . $remaining . "</span>";
+            $collaborators_html .= "<span class='avatar avatar-xs bg-secondary text-white d-inline-block text-center' style='width:20px;height:20px;line-height:20px;font-size:9px;border-radius:50%;' title='+" . $remaining . " " . app_lang("more") . "'>+" . $remaining . "</span>";
         }
-        
         $collaborators_html .= "</div>";
     }
 
-    echo modal_anchor(get_uri("tasks/view"), $assigned_avatar . $sub_task_icon . $task_id . $task->title . $toggle_sub_task_icon . "<div class='clearfix'>" . $start_date . $end_date . "</div>" . $project_name . $client_name . $kanban_custom_fields_data .
+    echo modal_anchor(get_uri("tasks/view"), $assigned_avatar . $sub_task_icon . $task_id . $task->title . $toggle_sub_task_icon . "<div class='clearfix'>" . $start_date . $end_date . "</div>" . $project_name . $client_name . $nivel_badge . $kanban_custom_fields_data .
         $task_labels . $task_checklist_status . $sub_task_status . $collaborators_html . "<div class='clearfix'></div>" . $parent_task, array("class" => "kanban-item d-block $disable_dragging $unread_comments_class", "data-status_id" => $task->status_id, "data-id" => $task->id, "data-project_id" => $task->project_id, "data-sort" => $task->new_sort, "data-post-id" => $task->id, "title" => app_lang('task_info') . " #$task->id", "data-modal-lg" => "1"));
 }

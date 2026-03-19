@@ -1219,8 +1219,8 @@ class Tasks extends Security_Controller
                 $pt = $db->prefixTable('project_time');
                 $db->query(
                     "UPDATE {$pt} SET project_id = " . (int)$project_id .
-                    " WHERE task_id = " . (int)$id .
-                    " AND deleted = 0"
+                        " WHERE task_id = " . (int)$id .
+                        " AND deleted = 0"
                 );
             }
             // ── FIN CORRECCIÓN ──
@@ -1514,6 +1514,39 @@ class Tasks extends Security_Controller
         $client_name = "-";
         if ($data->company_name) {
             $client_name = $data->company_name;
+        }
+
+        // Badge NIVEL de cliente
+        if (!empty($data->client_nivel) && trim($data->client_nivel) !== '-') {
+            $nivel_value = strtoupper(trim($data->client_nivel));
+            $nivel_cfg = array(
+                'DIAMANTE' => array('border' => '#38bdf8', 'bg' => '#e0f2fe', 'text' => '#0c4a6e', 'dot' => '#0ea5e9'),
+                'ORO'      => array('border' => '#f59e0b', 'bg' => '#fef3c7', 'text' => '#78350f', 'dot' => '#d97706'),
+                'PLATA'    => array('border' => '#94a3b8', 'bg' => '#f1f5f9', 'text' => '#334155', 'dot' => '#64748b'),
+                'BRONCE'   => array('border' => '#b87333', 'bg' => '#fdf0e0', 'text' => '#6b3a1f', 'dot' => '#b87333'),
+            );
+            $cfg = isset($nivel_cfg[$nivel_value]) ? $nivel_cfg[$nivel_value] : array('border' => '#cbd5e1', 'bg' => '#f8fafc', 'text' => '#475569', 'dot' => '#94a3b8');
+            $nivel_badge = " <span style='"
+                . "display:inline-flex;align-items:center;gap:4px;"
+                . "background:" . $cfg['bg'] . ";"
+                . "border:1.5px solid " . $cfg['border'] . ";"
+                . "color:" . $cfg['text'] . ";"
+                . "border-radius:6px;"
+                . "padding:1px 7px 1px 5px;"
+                . "font-size:10px;"
+                . "font-weight:700;"
+                . "letter-spacing:.6px;"
+                . "text-transform:uppercase;"
+                . "vertical-align:middle;"
+                . "'>"
+                . "<span style='width:6px;height:6px;border-radius:50%;background:" . $cfg['dot'] . ";display:inline-block;flex-shrink:0;'></span>"
+                . htmlspecialchars($nivel_value)
+                . "</span>";
+            if ($client_name !== "-") {
+                $client_name .= "<br>" . $nivel_badge;
+            } else {
+                $client_name = $nivel_badge;
+            }
         }
 
         $assigned_to = "-";
@@ -1929,7 +1962,7 @@ class Tasks extends Security_Controller
         $timesheet_options = array("project_id" => $model_info->project_id, "task_id" => $model_info->id);
 
 
-        
+
 
         $info = $this->Timesheets_model->count_total_time($timesheet_options);
         $view_data["total_task_hours"] = convert_seconds_to_time_format($info->timesheet_total);

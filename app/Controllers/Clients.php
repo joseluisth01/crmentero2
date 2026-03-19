@@ -251,6 +251,34 @@ class Clients extends Security_Controller {
             $client_name = "<div class='box-wrapper mini-list-item'>" . $link . "</div>";
         }
 
+        // Badge NIVEL de cliente
+        $nivel_badge = "";
+        if (!empty($data->client_nivel) && trim($data->client_nivel) !== '-') {
+            $nivel_value = strtoupper(trim($data->client_nivel));
+            $nivel_cfg = array(
+                'DIAMANTE' => array('border' => '#38bdf8', 'bg' => '#e0f2fe', 'text' => '#0c4a6e', 'dot' => '#0ea5e9'),
+                'ORO'      => array('border' => '#f59e0b', 'bg' => '#fef3c7', 'text' => '#78350f', 'dot' => '#d97706'),
+                'PLATA'    => array('border' => '#94a3b8', 'bg' => '#f1f5f9', 'text' => '#334155', 'dot' => '#64748b'),
+                'BRONCE'   => array('border' => '#b87333', 'bg' => '#fdf0e0', 'text' => '#6b3a1f', 'dot' => '#b87333'),
+            );
+            $cfg = isset($nivel_cfg[$nivel_value]) ? $nivel_cfg[$nivel_value] : array('border' => '#cbd5e1', 'bg' => '#f8fafc', 'text' => '#475569', 'dot' => '#94a3b8');
+            $nivel_badge = "<span style='"
+                . "display:inline-flex;align-items:center;gap:5px;"
+                . "background:" . $cfg['bg'] . ";"
+                . "border:1.5px solid " . $cfg['border'] . ";"
+                . "color:" . $cfg['text'] . ";"
+                . "border-radius:6px;"
+                . "padding:2px 8px 2px 6px;"
+                . "font-size:10px;"
+                . "font-weight:700;"
+                . "letter-spacing:.6px;"
+                . "text-transform:uppercase;"
+                . "'>"
+                . "<span style='width:7px;height:7px;border-radius:50%;background:" . $cfg['dot'] . ";flex-shrink:0;display:inline-block;'></span>"
+                . htmlspecialchars($nivel_value)
+                . "</span>";
+        }
+
         $row_data = array(
             $data->id,
             $client_name,
@@ -258,6 +286,7 @@ class Clients extends Security_Controller {
             $data->phone,
             $group_list,
             $client_labels,
+            $nivel_badge,
             to_decimal_format($data->total_projects),
             to_currency($data->invoice_value, $data->currency_symbol),
             to_currency($data->payment_received, $data->currency_symbol),
