@@ -591,8 +591,8 @@ $pageTitle = 'Dashboard';
 
                 <a href="https://tictac-comunicacion.es/briefing?ttb_u=tictac&ttb_p=Sipilu2019" target="_blank" class="dashboard-card active">
                     <div class="card-icon">📋</div>
-                    <div class="card-title">Portal Briefings</div>
-                    <div class="card-description">Accede al portal de briefings de clientes. Consulta las respuestas enviadas y gestiona los accesos.</div>
+                    <div class="card-title">Portal de Clientes</div>
+                    <div class="card-description">Gestiona briefings, revisiones de diseño y revisiones de programación web. Crea accesos, consulta respuestas y hace seguimiento de cada proyecto.</div>
                     <span class="badge">Disponible</span>
                 </a>
 
