@@ -161,6 +161,14 @@
 var _baseUrl = AppHelper.baseUrl + 'index.php/';
 var _tablaIniciada = false;
 
+var COLORES_ESTADO = {
+    nuevo:             '#d72173',
+    en_contacto:       '#C6D617',
+    propuesta_enviada: '#7c3aed',
+    convertido:        '#27ae60',
+    perdido:           '#e74c3c',
+};
+
 function actualizarBadgeMenu() {
     $.getJSON(_baseUrl + 'prospectos/kanban_data', function (data) {
         var nuevos = 0;
@@ -175,14 +183,6 @@ function actualizarBadgeMenu() {
 
 $(document).ready(function () {
 
-    var ESTADOS = {
-        nuevo:             { color: '#d72173' },
-        en_contacto:       { color: '#C6D617' },
-        propuesta_enviada: { color: '#7c3aed' },
-        convertido:        { color: '#27ae60' },
-        perdido:           { color: '#e74c3c' },
-    };
-
     // ── Toggle listado ───────────────────────────────────────────────────────
     $('#toggle-listado').on('click', function () {
         var $contenido = $('#listado-contenido');
@@ -192,7 +192,6 @@ $(document).ready(function () {
         $contenido.slideToggle(250);
         $chevron.css('transform', abierto ? 'rotate(0deg)' : 'rotate(180deg)');
 
-        // Iniciar tabla solo la primera vez que se abre
         if (!abierto && !_tablaIniciada) {
             _tablaIniciada = true;
             $('#prospectos-table').appTable({
@@ -216,7 +215,7 @@ $(document).ready(function () {
                     {title: 'Teléfono'},
                     {title: 'Web'},
                     {title: 'Mensaje'},
-                    {title: 'Estado',   class: 'text-center w130'},
+                    {title: 'Estado',   class: 'text-center w160'},
                     {title: '<i data-feather="menu" class="icon-16"></i>', class: 'text-center option w80'},
                 ],
                 printColumns: [0,1,2,3,4,5,6],
@@ -225,30 +224,34 @@ $(document).ready(function () {
         }
     });
 
-    // Cambio de estado inline desde tabla
-    $('body').on('click', '[data-act=update-prospecto-estado]', function () {
-        var $btn = $(this);
-        $(this).appModifier({
-            value:     $btn.attr('data-value'),
-            actionUrl: _baseUrl + 'prospectos/save_estado',
-            postData:  {id: $btn.attr('data-id')},
-            select2Option: {
-                data: [
-                    {id: 'nuevo',             text: 'Nuevo'},
-                    {id: 'en_contacto',       text: 'En contacto'},
-                    {id: 'propuesta_enviada', text: 'Propuesta enviada'},
-                    {id: 'convertido',        text: 'Convertido'},
-                    {id: 'perdido',           text: 'Perdido'},
-                ]
-            },
-            onSuccess: function (response) {
-                if (response.success) {
-                    if (_tablaIniciada) $('#prospectos-table').appTable({reload: true});
-                    cargarKanban();
-                }
+    // ── Cambio de estado desde la tabla (select propio, sin appModifier) ─────
+    // IMPORTANTE: appModifier del CRM ejecuta el fallback de borrado con el
+    // valor 'propuesta_enviada'. Por eso usamos un <select> con AJAX propio.
+    $('body').on('change', '.prospecto-estado-select', function () {
+        var $sel    = $(this);
+        var id      = $sel.data('id');
+        var estado  = $sel.val();
+        var color   = COLORES_ESTADO[estado] || '#999';
+
+        // Feedback visual inmediato
+        $sel.css('border-color', color).css('color', color);
+        $sel.prop('disabled', true);
+
+        $.post(_baseUrl + 'prospectos/update_estado_prospecto', {id: id, value: estado}, function (r) {
+            $sel.prop('disabled', false);
+            if (r.success) {
+                cargarKanban();
+                if (_tablaIniciada) $('#prospectos-table').appTable({reload: true});
+            } else {
+                appAlert.error('Error al cambiar estado.', {duration: 3000});
+                // Recargar tabla para restaurar el valor real
+                if (_tablaIniciada) $('#prospectos-table').appTable({reload: true});
             }
+        }, 'json').fail(function () {
+            $sel.prop('disabled', false);
+            appAlert.error('Error de conexión.', {duration: 3000});
+            if (_tablaIniciada) $('#prospectos-table').appTable({reload: true});
         });
-        return false;
     });
 
     // ── Modal nuevo prospecto ────────────────────────────────────────────────
@@ -293,7 +296,7 @@ $(document).ready(function () {
 
     // ── Kanban ───────────────────────────────────────────────────────────────
     function renderCard(p) {
-        var color  = ESTADOS[p.estado] ? ESTADOS[p.estado].color : '#999';
+        var color  = COLORES_ESTADO[p.estado] || '#999';
         var nombre = p.nombre ? p.nombre : '(Sin nombre)';
         var fecha  = p.fecha_recepcion ? p.fecha_recepcion.substring(0, 10) : '';
         var msgHtml = '';
@@ -349,8 +352,8 @@ $(document).ready(function () {
                 onEnd: function (evt) {
                     var id          = evt.item.dataset.id;
                     var nuevoEstado = evt.to.dataset.estado;
-                    evt.item.style.borderLeftColor = ESTADOS[nuevoEstado] ? ESTADOS[nuevoEstado].color : '#999';
-                    $.post(_baseUrl + 'prospectos/save_estado', {id: id, value: nuevoEstado}, function (r) {
+                    evt.item.style.borderLeftColor = COLORES_ESTADO[nuevoEstado] || '#999';
+                    $.post(_baseUrl + 'prospectos/update_estado_prospecto', {id: id, value: nuevoEstado}, function (r) {
                         if (r.success) {
                             recalcularContadores();
                             actualizarBadgeMenu();
@@ -379,7 +382,8 @@ $(document).ready(function () {
         '.kanban-card:hover { box-shadow: 0 4px 12px rgba(215,33,115,.15) !important; }' +
         '.kanban-card { user-select: none; }' +
         '#toggle-listado:hover { background: #fafafa; }' +
-        '#listado-chevron { vertical-align: middle; }'
+        '#listado-chevron { vertical-align: middle; }' +
+        '.prospecto-estado-select:focus { outline: none; box-shadow: none; }'
     ).appendTo('head');
 
     cargarKanban();

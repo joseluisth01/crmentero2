@@ -55,21 +55,41 @@ class Prospectos extends Security_Controller {
     }
 
     private function _make_row($row) {
-        $estado_labels = array(
-            'nuevo'             => "<span class='badge' style='background-color:#d72173;'>Nuevo</span>",
-            'en_contacto'       => "<span class='badge' style='background-color:#C6D617;color:#333;'>En contacto</span>",
-            'propuesta_enviada' => "<span class='badge' style='background-color:#7c3aed;'>Propuesta enviada</span>",
-            'convertido'        => "<span class='badge' style='background-color:#27ae60;'>Convertido</span>",
-            'perdido'           => "<span class='badge' style='background-color:#e74c3c;'>Perdido</span>",
+
+        // ── Select directo en lugar de appModifier/js_anchor ────────────────
+        // appModifier del CRM ejecuta el fallback de borrado con ciertos valores
+        // como 'propuesta_enviada'. Usamos un <select> con AJAX propio.
+        $estados_opciones = array(
+            'nuevo'             => 'Nuevo',
+            'en_contacto'       => 'En contacto',
+            'propuesta_enviada' => 'Propuesta enviada',
+            'convertido'        => 'Convertido',
+            'perdido'           => 'Perdido',
         );
 
-        $estado_badge    = isset($estado_labels[$row->estado]) ? $estado_labels[$row->estado] : $row->estado;
-        $estado_selector = js_anchor($estado_badge, array(
-            'title'      => '',
-            'data-id'    => $row->id,
-            'data-value' => $row->estado,
-            'data-act'   => 'update-prospecto-estado',
-        ));
+        $colores = array(
+            'nuevo'             => '#d72173',
+            'en_contacto'       => '#C6D617',
+            'propuesta_enviada' => '#7c3aed',
+            'convertido'        => '#27ae60',
+            'perdido'           => '#e74c3c',
+        );
+
+        $color_actual = isset($colores[$row->estado]) ? $colores[$row->estado] : '#999';
+
+        $options_html = '';
+        foreach ($estados_opciones as $val => $label) {
+            $selected = ($row->estado === $val) ? ' selected' : '';
+            $options_html .= "<option value=\"$val\"$selected>$label</option>";
+        }
+
+        $estado_selector = "<select class=\"prospecto-estado-select form-control input-sm\"
+            data-id=\"{$row->id}\"
+            style=\"font-size:11px;padding:2px 4px;height:28px;border-radius:6px;
+                    border:2px solid {$color_actual};color:{$color_actual};
+                    font-weight:700;background:#fff;cursor:pointer;min-width:140px;\">
+            {$options_html}
+        </select>";
 
         $ver = modal_anchor(
             get_uri("prospectos/ver/" . $row->id),
@@ -148,7 +168,6 @@ class Prospectos extends Security_Controller {
             show_404();
         }
 
-        // Notas: primero las pineadas, luego por fecha desc
         $tabla_notas = $db->prefixTable('prospectos_notas');
         $notas = $db->query("
             SELECT * FROM $tabla_notas
@@ -243,7 +262,7 @@ class Prospectos extends Security_Controller {
     }
 
     // ── Guardar estado (kanban / tabla) ──────────────────────────────────────
-    function save_estado() {
+    function update_estado_prospecto() {
         $this->access_only_team_members();
 
         $id     = $this->request->getPost('id');
