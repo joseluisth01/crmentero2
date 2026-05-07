@@ -1205,6 +1205,65 @@ function generarPDF($contratosFile)
         $pdf->Ln(8);
     }
 
+    // ── CLÁUSULA LOPD ──────────────────────────────────────────────
+    if (($pdf->GetY() + 60) > $pdf->getPageHeight() - 40) $pdf->AddPage();
+
+    $pdf->Ln(4);
+    $lopdY = $pdf->GetY();
+    $pdf->SetFillColor(248, 248, 248);
+    $pdf->SetDrawColor(220, 220, 220);
+    $pdf->RoundedRect(20, $lopdY, $cW, 7, 2, '1100', 'F');
+    $pdf->SetXY(22, $lopdY + 1.5);
+    $pdf->SetFont('Helvetica', 'B', 8.5);
+    $pdf->SetTextColor(51, 51, 51);
+    $pdf->Cell($cW - 4, 4.5, 'PROTECCION DE DATOS - INFORMACION BASICA', 0, 1, 'L');
+    $pdf->SetTextColor(51, 51, 51);
+    $pdf->Ln(2);
+
+    if ($esKitDigital) {
+        $lopdResponsable = 'PROYECTO TRESS AZAFATAS SL - CIF: B56028293  Dir. postal: C/ Cruz Conde, 19, Planta 6, 14001 de Cordoba.  Telefono: 957963074  E-mail: info@proymer.com';
+    } else {
+        $lopdResponsable = 'TIC TAC COMUNICACION DIGITAL SL - CIF: B09912478  Dir. postal: C/ Cruz Conde, 19, Planta 6, 14001 de Cordoba.  Telefono: 957786914  E-mail: hola@tictac-comunicacion.es';
+    }
+
+    $pdf->SetFont('Helvetica', 'B', 7.5);
+    $pdf->SetX(20);
+    $pdf->Write(4.2, 'Responsable: ');
+    $pdf->SetFont('Helvetica', '', 7.5);
+    $pdf->Write(4.2, $lopdResponsable);
+    $pdf->Ln(5);
+
+    $lopdTexto  = "Tratamos la informacion que nos facilita con el fin de prestarles el servicio solicitado. Los datos proporcionados se conservaran durante el tiempo necesario para cumplir con las finalidades previstas. Los datos no se cedaran a terceros salvo en los casos en que exista una obligacion legal. Usted tiene derecho de acceso, rectificacion, supresion y portabilidad de sus datos y oposicion y limitacion a su tratamiento en la direccion postal o correo electronico facilitados, adjuntando copia de su DNI o documento equivalente. Asimismo, y especialmente si considera que no ha obtenido satisfaccion plena en el ejercicio de sus derechos, podra presentar una reclamacion ante la autoridad nacional de control dirigiendose a estos efectos a la Agencia Espanola de Proteccion de Datos, C/ Jorge Juan, 6 - 28001 Madrid.\n\n";
+    $lopdTexto .= "Asimismo, solicitamos su autorizacion para enviarle publicidad relacionada con nuestros productos y servicios por cualquier medio (postal, email o telefono) e invitarle a eventos organizados por la empresa.";
+
+    $pdf->SetFont('Helvetica', '', 7.5);
+    $pdf->SetX(20);
+    $pdf->MultiCell($cW, 4.2, $lopdTexto, 0, 'J');
+    $pdf->Ln(3);
+
+    // Checkboxes SI / NO Autorizo
+    $chkY = $pdf->GetY();
+    $pdf->SetFont('Helvetica', '', 8.5);
+    $pdf->SetX(20);
+    $pdf->SetDrawColor(100, 100, 100);
+    $pdf->SetLineWidth(0.3);
+    $pdf->Rect(20, $chkY, 4.5, 4.5);
+    $pdf->SetX(26);
+    $pdf->Cell(25, 4.5, 'SI Autorizo', 0, 0, 'L');
+    $pdf->Rect(60, $chkY, 4.5, 4.5);
+    $pdf->SetX(66);
+    $pdf->Cell(30, 4.5, 'NO Autorizo', 0, 1, 'L');
+    $pdf->Ln(4);
+
+    if (!$esKitDigital) {
+        $lopdExtra = "El CLIENTE es responsable de garantizar que dispone de los consentimientos y autorizaciones legales necesarias para la publicacion de imagenes o datos personales de trabajadores y terceros. TIC TAC COMUNICACION DIGITAL SL quedara exonerada de cualquier responsabilidad derivada de incumplimientos en materia de proteccion de datos por parte del cliente.";
+        $pdf->SetFont('Helvetica', '', 7.5);
+        $pdf->SetX(20);
+        $pdf->MultiCell($cW, 4.2, $lopdExtra, 0, 'J');
+        $pdf->Ln(4);
+    }
+
+
     // ── FIRMAS ─────────────────────────────────────────────────────
     if (($pdf->GetY() + 45) > $pdf->getPageHeight() - 40) $pdf->AddPage();
 
@@ -1228,7 +1287,7 @@ function generarPDF($contratosFile)
     $pdf->Ln(3);
     $pdf->SetFont('Helvetica', '', 8);
     $pdf->SetX(20);
-    $pdf->Cell($half2, 4, 'Tictac Comunicacion Digital SL', 0, 1, 'C');
+    $pdf->Cell($half2, 4, $esKitDigital ? 'Proyecto Tress Azafatas SL' : 'Tictac Comunicacion Digital SL', 0, 1, 'C');
 
     $pdf->SetY($firmaY);
     $pdf->SetFont('Helvetica', 'B', 9);

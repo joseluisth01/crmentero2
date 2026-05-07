@@ -2,10 +2,6 @@
 
 /**
  * Editor de Presupuestos - Crear/Editar
- * VERSIÓN ACTUALIZADA: Campos manuales para clientes y artículos
- * + WYSIWYG para Notas Adicionales y Detalles Propuesta
- * + Múltiples emails separados por comas
- * + Precio original (sin rebajar) tachado en PDF
  */
 
 require_once '../config.php';
@@ -13,7 +9,6 @@ require_once '../config.php';
 $pageTitle = 'Editor de Presupuestos';
 $showBackButton = true;
 
-// Obtener ID si estamos editando
 $editId = isset($_GET['id']) ? $_GET['id'] : null;
 $presupuesto = null;
 
@@ -30,7 +25,6 @@ if ($editId) {
     }
 }
 
-// Obtener lista de clientes del CRM - DIRECTAMENTE DE BBDD
 $clientes = array();
 $mysqli = conexionBBDD();
 if ($mysqli) {
@@ -38,7 +32,6 @@ if ($mysqli) {
             FROM crm_clients 
             WHERE deleted = 0 
             ORDER BY company_name ASC";
-
     $result = $mysqli->query($sql);
     if ($result) {
         while ($row = $result->fetch_assoc()) {
@@ -48,11 +41,9 @@ if ($mysqli) {
     }
 }
 
-// Obtener artículos/servicios del catálogo (consulta directa a BBDD)
 $articulos = getArticulosCRM();
 
 $additionalStyles = '
-<!-- Quill WYSIWYG Editor CSS -->
 <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
 <style>
     .editor-container {
@@ -62,36 +53,21 @@ $additionalStyles = '
         padding: 40px;
         margin: 30px 0;
     }
-    
-    .form-section {
-        margin-bottom: 40px;
-    }
-    
+    .form-section { margin-bottom: 40px; }
     .form-section h3 {
         color: ' . BRAND_COLOR . ';
         margin-bottom: 20px;
         padding-bottom: 10px;
         border-bottom: 2px solid ' . BRAND_COLOR . ';
     }
-    
     .form-row {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 20px;
         margin-bottom: 20px;
     }
-    
-    .form-group {
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .form-group label {
-        font-weight: 600;
-        margin-bottom: 8px;
-        color: #333;
-    }
-    
+    .form-group { display: flex; flex-direction: column; }
+    .form-group label { font-weight: 600; margin-bottom: 8px; color: #333; }
     .form-group input,
     .form-group select,
     .form-group textarea {
@@ -101,21 +77,19 @@ $additionalStyles = '
         font-size: 14px;
         transition: all 0.3s;
     }
-    
     .form-group input:focus,
     .form-group select:focus,
     .form-group textarea:focus {
         outline: none;
         border-color: ' . BRAND_COLOR . ';
     }
-    
     .form-group textarea {
         min-height: 100px;
         resize: vertical;
         font-family: inherit;
     }
 
-    /* Email tags input */
+    /* Email tags */
     .email-tags-container {
         border: 2px solid #e0e0e0;
         border-radius: 8px;
@@ -129,9 +103,7 @@ $additionalStyles = '
         transition: border-color 0.3s;
         background: white;
     }
-    .email-tags-container:focus-within {
-        border-color: ' . BRAND_COLOR . ';
-    }
+    .email-tags-container:focus-within { border-color: ' . BRAND_COLOR . '; }
     .email-tag {
         background: #ffe8f3;
         color: ' . BRAND_COLOR . ';
@@ -161,22 +133,16 @@ $additionalStyles = '
         font-size: 14px;
         background: transparent;
     }
-    .email-hint {
-        font-size: 11px;
-        color: #999;
-        margin-top: 4px;
-    }
-    
-    /* ===== WYSIWYG STYLES ===== */
+    .email-hint { font-size: 11px; color: #999; margin-top: 4px; }
+
+    /* WYSIWYG global (Detalles / Notas) */
     .wysiwyg-container {
         border: 2px solid #e0e0e0;
         border-radius: 8px;
         overflow: hidden;
         transition: border-color 0.3s;
     }
-    .wysiwyg-container:focus-within {
-        border-color: ' . BRAND_COLOR . ';
-    }
+    .wysiwyg-container:focus-within { border-color: ' . BRAND_COLOR . '; }
     .wysiwyg-container .ql-toolbar {
         border: none;
         border-bottom: 1px solid #e0e0e0;
@@ -188,20 +154,39 @@ $additionalStyles = '
         font-size: 14px;
         font-family: "Helvetica Neue", Arial, sans-serif;
     }
-    .wysiwyg-container .ql-editor {
-        min-height: 120px;
-        padding: 12px;
+    .wysiwyg-container .ql-editor { min-height: 120px; padding: 12px; }
+    .wysiwyg-container .ql-editor.ql-blank::before { font-style: normal; color: #999; }
+
+    /* WYSIWYG descripción de item */
+    .item-desc-wysiwyg {
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-top: 10px;
+        transition: border-color 0.3s;
     }
-    .wysiwyg-container .ql-editor.ql-blank::before {
+    .item-desc-wysiwyg:focus-within { border-color: ' . BRAND_COLOR . '; }
+    .item-desc-wysiwyg .ql-toolbar {
+        border: none;
+        border-bottom: 1px solid #e0e0e0;
+        background: #fafafa;
+        padding: 4px 8px;
+    }
+    .item-desc-wysiwyg .ql-container {
+        border: none;
+        min-height: 80px;
+        font-size: 13px;
+        font-family: "Helvetica Neue", Arial, sans-serif;
+    }
+    .item-desc-wysiwyg .ql-editor { min-height: 80px; padding: 8px 10px; }
+    .item-desc-wysiwyg .ql-editor.ql-blank::before {
         font-style: normal;
         color: #999;
+        font-size: 13px;
     }
-    
-    /* ===== SEARCHABLE SELECT STYLES ===== */
-    .searchable-select-wrapper {
-        position: relative;
-        width: 100%;
-    }
+
+    /* Searchable select */
+    .searchable-select-wrapper { position: relative; width: 100%; }
     .searchable-select-wrapper .ss-main {
         display: flex;
         align-items: center;
@@ -215,9 +200,7 @@ $additionalStyles = '
         position: relative;
     }
     .searchable-select-wrapper .ss-main:focus-within,
-    .searchable-select-wrapper .ss-main.ss-open {
-        border-color: ' . BRAND_COLOR . ';
-    }
+    .searchable-select-wrapper .ss-main.ss-open { border-color: ' . BRAND_COLOR . '; }
     .searchable-select-wrapper .ss-main .ss-selected-text {
         flex: 1;
         color: #333;
@@ -226,9 +209,7 @@ $additionalStyles = '
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    .searchable-select-wrapper .ss-main .ss-selected-text.ss-placeholder {
-        color: #999;
-    }
+    .searchable-select-wrapper .ss-main .ss-selected-text.ss-placeholder { color: #999; }
     .searchable-select-wrapper .ss-main .ss-arrow {
         width: 0; height: 0;
         border-left: 5px solid transparent;
@@ -237,9 +218,7 @@ $additionalStyles = '
         margin-left: 8px;
         transition: transform 0.2s;
     }
-    .searchable-select-wrapper .ss-main.ss-open .ss-arrow {
-        transform: rotate(180deg);
-    }
+    .searchable-select-wrapper .ss-main.ss-open .ss-arrow { transform: rotate(180deg); }
     .searchable-select-wrapper .ss-dropdown {
         display: none;
         position: absolute;
@@ -253,9 +232,7 @@ $additionalStyles = '
         max-height: 280px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
-    .searchable-select-wrapper .ss-dropdown.ss-open {
-        display: block;
-    }
+    .searchable-select-wrapper .ss-dropdown.ss-open { display: block; }
     .searchable-select-wrapper .ss-search {
         padding: 10px;
         border-bottom: 1px solid #eee;
@@ -273,14 +250,8 @@ $additionalStyles = '
         box-sizing: border-box;
         outline: none;
     }
-    .searchable-select-wrapper .ss-search input:focus {
-        border-color: ' . BRAND_COLOR . ';
-    }
-    .searchable-select-wrapper .ss-options {
-        max-height: 210px;
-        overflow-y: auto;
-        padding: 4px 0;
-    }
+    .searchable-select-wrapper .ss-search input:focus { border-color: ' . BRAND_COLOR . '; }
+    .searchable-select-wrapper .ss-options { max-height: 210px; overflow-y: auto; padding: 4px 0; }
     .searchable-select-wrapper .ss-option {
         padding: 10px 12px;
         cursor: pointer;
@@ -289,18 +260,13 @@ $additionalStyles = '
         transition: background 0.15s;
         border-bottom: 1px solid #f5f5f5;
     }
-    .searchable-select-wrapper .ss-option:last-child {
-        border-bottom: none;
-    }
+    .searchable-select-wrapper .ss-option:last-child { border-bottom: none; }
     .searchable-select-wrapper .ss-option:hover,
     .searchable-select-wrapper .ss-option.ss-highlighted {
         background: #fff0f7;
         color: ' . BRAND_COLOR . ';
     }
-    .searchable-select-wrapper .ss-option.ss-selected {
-        background: #ffe8f3;
-        font-weight: 600;
-    }
+    .searchable-select-wrapper .ss-option.ss-selected { background: #ffe8f3; font-weight: 600; }
     .searchable-select-wrapper .ss-option .ss-option-price {
         float: right;
         color: ' . BRAND_COLOR . ';
@@ -320,15 +286,14 @@ $additionalStyles = '
         font-size: 13px;
         font-style: italic;
     }
-    /* ===== END SEARCHABLE SELECT ===== */
 
+    /* Items */
     .items-section {
         background: #f9f9f9;
         padding: 20px;
         border-radius: 8px;
         margin-top: 20px;
     }
-    
     .item-row {
         background: white;
         padding: 15px;
@@ -337,9 +302,8 @@ $additionalStyles = '
         display: grid;
         grid-template-columns: 2fr 1fr 1fr 60px;
         gap: 15px;
-        align-items: end;
+        align-items: start;
     }
-    
     .item-row input,
     .item-row select {
         padding: 10px;
@@ -347,27 +311,11 @@ $additionalStyles = '
         border-radius: 8px;
         font-size: 14px;
     }
+    .precio-original-wrap { position: relative; margin-top: 8px; }
+    .precio-original-wrap label { font-size: 11px; color: #888; margin-bottom: 4px; }
+    .precio-original-wrap input { border-color: #f0c0d0 !important; }
+    .precio-original-preview { font-size: 11px; color: #999; margin-top: 3px; text-decoration: line-through; }
 
-    /* Precio original tachado */
-    .precio-original-wrap {
-        position: relative;
-        margin-top: 8px;
-    }
-    .precio-original-wrap label {
-        font-size: 11px;
-        color: #888;
-        margin-bottom: 4px;
-    }
-    .precio-original-wrap input {
-        border-color: #f0c0d0 !important;
-    }
-    .precio-original-preview {
-        font-size: 11px;
-        color: #999;
-        margin-top: 3px;
-        text-decoration: line-through;
-    }
-    
     .btn-remove {
         background: #dc3545;
         color: white;
@@ -377,12 +325,11 @@ $additionalStyles = '
         cursor: pointer;
         font-size: 18px;
         transition: all 0.3s;
+        align-self: start;
+        margin-top: 28px;
     }
-    
-    .btn-remove:hover {
-        background: #c82333;
-    }
-    
+    .btn-remove:hover { background: #c82333; }
+
     .btn-add {
         background: ' . ACCENT_COLOR . ';
         color: #333;
@@ -394,25 +341,10 @@ $additionalStyles = '
         margin-top: 15px;
         transition: all 0.3s;
     }
-    
-    .btn-add:hover {
-        opacity: 0.8;
-    }
-    
-    .totals-section {
-        background: #f0f0f0;
-        padding: 20px;
-        border-radius: 8px;
-        margin-top: 30px;
-    }
-    
-    .total-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 10px 0;
-        font-size: 16px;
-    }
-    
+    .btn-add:hover { opacity: 0.8; }
+
+    .totals-section { background: #f0f0f0; padding: 20px; border-radius: 8px; margin-top: 30px; }
+    .total-row { display: flex; justify-content: space-between; padding: 10px 0; font-size: 16px; }
     .total-row.final {
         border-top: 3px solid ' . BRAND_COLOR . ';
         margin-top: 10px;
@@ -421,7 +353,7 @@ $additionalStyles = '
         font-weight: bold;
         color: ' . BRAND_COLOR . ';
     }
-    
+
     .actions-bar {
         display: flex;
         gap: 15px;
@@ -430,7 +362,6 @@ $additionalStyles = '
         padding-top: 20px;
         border-top: 2px solid #e0e0e0;
     }
-    
     .btn {
         padding: 15px 30px;
         border-radius: 50px;
@@ -442,34 +373,14 @@ $additionalStyles = '
         text-decoration: none;
         display: inline-block;
     }
-    
-    .btn-secondary {
-        background: #6c757d;
-        color: white;
-    }
+    .btn-secondary { background: #6c757d; color: white; }
     .btn-secondary:hover { background: #5a6268; }
-    
-    .btn-primary {
-        background: ' . BRAND_COLOR . ';
-        color: white;
-    }
-    .btn-primary:hover {
-        background: ' . BRAND_COLOR_DARK . ';
-        transform: translateY(-2px);
-    }
-    
-    .btn-success {
-        background: #28a745;
-        color: white;
-    }
+    .btn-primary { background: ' . BRAND_COLOR . '; color: white; }
+    .btn-primary:hover { background: ' . BRAND_COLOR_DARK . '; transform: translateY(-2px); }
+    .btn-success { background: #28a745; color: white; }
     .btn-success:hover { background: #218838; }
-    
-    .item-info {
-        font-size: 11px;
-        color: #666;
-        margin-top: 5px;
-    }
-    
+    .item-info { font-size: 11px; color: #666; margin-top: 5px; }
+
     @media (max-width: 768px) {
         .item-row { grid-template-columns: 1fr; }
         .actions-bar { flex-direction: column; }
@@ -509,14 +420,12 @@ include '../includes/header.php';
             </div>
         </div>
 
-        <!-- DATOS DEL CLIENTE (editable manualmente o desde CRM) -->
+        <!-- DATOS DEL CLIENTE -->
         <div class="form-section">
             <h3>👤 Información del Cliente</h3>
-
             <div class="form-row">
                 <div class="form-group" style="grid-column: 1 / -1;">
                     <label>Seleccionar Cliente del CRM (opcional)</label>
-                    <!-- Hidden select real para el form -->
                     <select name="cliente_id" id="clienteSelect" style="display:none;">
                         <option value="">-- Opcional: buscar en CRM --</option>
                         <?php foreach ($clientes as $cliente): ?>
@@ -533,7 +442,6 @@ include '../includes/header.php';
                             </option>
                         <?php endforeach; ?>
                     </select>
-                    <!-- Searchable select visible -->
                     <div class="searchable-select-wrapper" id="clienteSearchWrapper">
                         <div class="ss-main" id="clienteSSmain">
                             <span class="ss-selected-text ss-placeholder" id="clienteSStext">-- Opcional: buscar cliente del CRM --</span>
@@ -555,22 +463,17 @@ include '../includes/header.php';
                         placeholder="Introduce el nombre del cliente"
                         value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_nombre'] ?? '') : ''; ?>">
                 </div>
-
-                <!-- EMAILS MÚLTIPLES -->
                 <div class="form-group" style="grid-column: span 2;">
                     <label>Email(s) del cliente *</label>
-                    <!-- Campo hidden que almacena emails separados por comas -->
                     <input type="hidden" name="cliente_email" id="clienteEmailHidden"
                         value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['cliente_email'] ?? '') : ''; ?>">
                     <div class="email-tags-container" id="emailTagsContainer">
-                        <!-- Las etiquetas se generan por JS -->
                         <input type="text" class="email-tags-input" id="emailTagsInput"
                             placeholder="Escribe un email y pulsa Enter o coma..."
                             autocomplete="off">
                     </div>
                     <span class="email-hint">Puedes añadir varios emails. Pulsa <strong>Enter</strong> o <strong>,</strong> para añadir cada uno.</span>
                 </div>
-
                 <div class="form-group">
                     <label>Teléfono</label>
                     <input type="text" name="cliente_telefono" id="clienteTelefono"
@@ -619,7 +522,6 @@ include '../includes/header.php';
         <!-- ARTÍCULOS/SERVICIOS -->
         <div class="form-section">
             <h3>📦 Artículos y Servicios</h3>
-
             <div class="items-section" id="itemsContainer">
                 <?php
                 $existingItems = ($presupuesto && isset($presupuesto['items'])) ? $presupuesto['items'] : [null];
@@ -628,7 +530,6 @@ include '../includes/header.php';
                     <div class="item-row" data-item-index="<?php echo $index; ?>">
                         <div class="form-group">
                             <label>Artículo/Servicio</label>
-                            <!-- Hidden select real -->
                             <select class="articulo-select" data-index="<?php echo $index; ?>" style="display:none;">
                                 <option value="">-- Opcional: seleccionar del catálogo --</option>
                                 <?php foreach ($articulos as $art): ?>
@@ -638,7 +539,6 @@ include '../includes/header.php';
                                     </option>
                                 <?php endforeach; ?>
                             </select>
-                            <!-- Searchable select visible -->
                             <div class="searchable-select-wrapper" id="artSSWrapper_<?php echo $index; ?>">
                                 <div class="ss-main" id="artSSmain_<?php echo $index; ?>">
                                     <span class="ss-selected-text ss-placeholder" id="artSStext_<?php echo $index; ?>">-- Opcional: buscar en catálogo --</span>
@@ -653,9 +553,12 @@ include '../includes/header.php';
                                 placeholder="Nombre del servicio" required class="item-nombre"
                                 style="margin-top: 10px;"
                                 value="<?php echo $item ? htmlspecialchars($item['nombre'] ?? '') : ''; ?>">
-                            <textarea name="items[<?php echo $index; ?>][descripcion]"
-                                placeholder="Descripción del servicio" class="item-descripcion"
-                                style="margin-top: 10px; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; min-height: 60px;"><?php echo $item ? htmlspecialchars($item['descripcion'] ?? '') : ''; ?></textarea>
+                            <!-- Hidden + WYSIWYG para la descripción -->
+                            <input type="hidden"
+                                name="items[<?php echo $index; ?>][descripcion]"
+                                class="item-descripcion-hidden"
+                                value="<?php echo $item ? htmlspecialchars($item['descripcion'] ?? '') : ''; ?>">
+                            <div class="item-desc-wysiwyg" id="descWysiwyg_<?php echo $index; ?>"></div>
                         </div>
 
                         <div class="form-group">
@@ -674,8 +577,6 @@ include '../includes/header.php';
                             <input type="number" name="items[<?php echo $index; ?>][precio]"
                                 placeholder="0.00" step="0.01" required class="item-precio"
                                 value="<?php echo $item ? ($item['precio'] ?? '') : ''; ?>">
-
-                            <!-- PRECIO ORIGINAL (tachado) -->
                             <div class="precio-original-wrap">
                                 <label>Precio original sin descuento (€) — opcional</label>
                                 <input type="number" name="items[<?php echo $index; ?>][precio_original]"
@@ -686,7 +587,6 @@ include '../includes/header.php';
                                     Antes: <?php echo ($item && !empty($item['precio_original'])) ? number_format($item['precio_original'], 2, ',', '.') . ' €' : ''; ?>
                                 </div>
                             </div>
-
                             <div class="item-info">
                                 <strong>Total: <span class="item-total-display"><?php echo $item ? number_format(($item['cantidad'] ?? 0) * ($item['precio'] ?? 0), 2) . ' €' : '0.00 €'; ?></span></strong>
                             </div>
@@ -697,7 +597,6 @@ include '../includes/header.php';
                     </div>
                 <?php endforeach; ?>
             </div>
-
             <button type="button" class="btn-add" onclick="addItem()">+ Añadir Artículo</button>
         </div>
 
@@ -707,33 +606,37 @@ include '../includes/header.php';
             <div class="form-row">
                 <div class="form-group">
                     <label>IVA (%)</label>
-                    <input type="number" name="iva" id="iva" step="0.01" value="<?php echo $presupuesto ? ($presupuesto['iva'] ?? 21) : 21; ?>" min="0">
+                    <input type="number" name="iva" id="iva" step="0.01"
+                        value="<?php echo $presupuesto ? ($presupuesto['iva'] ?? 21) : 21; ?>" min="0">
                 </div>
                 <div class="form-group">
                     <label>Segundo Impuesto (%) - Opcional</label>
-                    <input type="number" name="segundo_impuesto" id="segundoImpuesto" step="0.01" value="<?php echo $presupuesto ? ($presupuesto['segundo_impuesto'] ?? 0) : 0; ?>" min="0">
+                    <input type="number" name="segundo_impuesto" id="segundoImpuesto" step="0.01"
+                        value="<?php echo $presupuesto ? ($presupuesto['segundo_impuesto'] ?? 0) : 0; ?>" min="0">
                 </div>
             </div>
         </div>
 
-        <!-- DETALLES PROPUESTA (WYSIWYG) -->
+        <!-- DETALLES PROPUESTA -->
         <div class="form-section">
             <h3>📋 Detalles de la Propuesta</h3>
             <div class="form-group">
                 <label>Detalles (opcional) — Aparecerá antes de la tabla de artículos en el PDF</label>
-                <input type="hidden" name="detalles_propuesta" id="detallesPropuestaHidden" value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['detalles_propuesta'] ?? '') : ''; ?>">
+                <input type="hidden" name="detalles_propuesta" id="detallesPropuestaHidden"
+                    value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['detalles_propuesta'] ?? '') : ''; ?>">
                 <div class="wysiwyg-container">
                     <div id="detallesEditor"></div>
                 </div>
             </div>
         </div>
 
-        <!-- NOTAS ADICIONALES (WYSIWYG) -->
+        <!-- NOTAS ADICIONALES -->
         <div class="form-section">
             <h3>📝 Notas Adicionales</h3>
             <div class="form-group">
                 <label>Notas (opcional) — Aparecerá al final del PDF</label>
-                <input type="hidden" name="notas" id="notasHidden" value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['notas'] ?? '') : ''; ?>">
+                <input type="hidden" name="notas" id="notasHidden"
+                    value="<?php echo $presupuesto ? htmlspecialchars($presupuesto['notas'] ?? '') : ''; ?>">
                 <div class="wysiwyg-container">
                     <div id="notasEditor"></div>
                 </div>
@@ -769,24 +672,18 @@ include '../includes/header.php';
     </form>
 </div>
 
-<!-- Quill JS -->
 <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 
 <?php
-$articulosJson = json_encode($articulos, JSON_UNESCAPED_UNICODE);
-$clientesJson = json_encode($clientes, JSON_UNESCAPED_UNICODE);
+$articulosJson     = json_encode($articulos, JSON_UNESCAPED_UNICODE);
+$clientesJson      = json_encode($clientes,  JSON_UNESCAPED_UNICODE);
 $selectedClienteId = $presupuesto && isset($presupuesto['cliente_id']) ? $presupuesto['cliente_id'] : '';
-
-$notasInicial = $presupuesto ? ($presupuesto['notas'] ?? '') : '';
-$detallesInicial = $presupuesto ? ($presupuesto['detalles_propuesta'] ?? '') : '';
-
-// Emails iniciales (pueden ser varios separados por comas)
-$emailsIniciales = $presupuesto ? ($presupuesto['cliente_email'] ?? '') : '';
+$emailsIniciales   = $presupuesto ? ($presupuesto['cliente_email'] ?? '') : '';
 
 $additionalScripts = '
 <script>
 // ============================================================
-// WYSIWYG EDITORS (Quill)
+// WYSIWYG — Detalles y Notas (secciones globales)
 // ============================================================
 const quillToolbar = [
     ["bold", "italic", "underline"],
@@ -807,10 +704,10 @@ const notasQuill = new Quill("#notasEditor", {
 });
 
 (function() {
-    var detallesVal = document.getElementById("detallesPropuestaHidden").value;
-    if (detallesVal && detallesVal.trim() !== "") detallesQuill.root.innerHTML = detallesVal;
-    var notasVal = document.getElementById("notasHidden").value;
-    if (notasVal && notasVal.trim() !== "") notasQuill.root.innerHTML = notasVal;
+    var dv = document.getElementById("detallesPropuestaHidden").value;
+    if (dv && dv.trim() !== "") detallesQuill.root.innerHTML = dv;
+    var nv = document.getElementById("notasHidden").value;
+    if (nv && nv.trim() !== "") notasQuill.root.innerHTML = nv;
 })();
 
 detallesQuill.on("text-change", function() {
@@ -826,20 +723,72 @@ notasQuill.on("text-change", function() {
 });
 
 // ============================================================
-// EMAIL TAGS (múltiples emails)
+// WYSIWYG — Descripción de cada item
+// ============================================================
+window.itemDescQuills = {};
+
+const itemDescToolbar = [
+    ["bold", "italic", "underline"],
+    [{ "list": "ordered" }, { "list": "bullet" }],
+    ["clean"]
+];
+
+function initItemDescQuill(index) {
+    const container = document.getElementById("descWysiwyg_" + index);
+    if (!container || window.itemDescQuills[index]) return;
+
+    const q = new Quill(container, {
+        theme: "snow",
+        modules: { toolbar: itemDescToolbar },
+        placeholder: "Descripción del servicio..."
+    });
+
+    window.itemDescQuills[index] = q;
+
+    // Cargar valor inicial desde el hidden
+    const row = document.querySelector("[data-item-index=\"" + index + "\"]");
+    if (row) {
+        const hidden = row.querySelector(".item-descripcion-hidden");
+        if (hidden && hidden.value && hidden.value.trim() !== "") {
+            const val = hidden.value;
+            if (val.indexOf("<") !== -1) {
+                q.root.innerHTML = val;
+            } else {
+                q.setText(val);
+            }
+        }
+    }
+
+    // Sincronizar cambios → hidden
+    q.on("text-change", function() {
+        const row2 = document.querySelector("[data-item-index=\"" + index + "\"]");
+        if (!row2) return;
+        const hidden2 = row2.querySelector(".item-descripcion-hidden");
+        if (!hidden2) return;
+        let html = q.root.innerHTML;
+        if (q.getText().trim() === "") html = "";
+        hidden2.value = html;
+    });
+}
+
+// Inicializar Quills de descripción para items ya existentes en la página
+document.querySelectorAll("[data-item-index]").forEach(function(row) {
+    initItemDescQuill(parseInt(row.getAttribute("data-item-index")));
+});
+
+// ============================================================
+// EMAIL TAGS
 // ============================================================
 (function() {
     const container = document.getElementById("emailTagsContainer");
-    const input = document.getElementById("emailTagsInput");
-    const hidden = document.getElementById("clienteEmailHidden");
-
+    const input     = document.getElementById("emailTagsInput");
+    const hidden    = document.getElementById("clienteEmailHidden");
     let emails = [];
 
-    // Cargar emails iniciales
     const initialEmails = ' . json_encode($emailsIniciales) . ';
     if (initialEmails && initialEmails.trim() !== "") {
-        initialEmails.split(",").forEach(e => {
-            const em = e.trim();
+        initialEmails.split(",").forEach(function(e) {
+            var em = e.trim();
             if (em) addEmailTag(em);
         });
     }
@@ -847,31 +796,26 @@ notasQuill.on("text-change", function() {
     function isValidEmail(email) {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
-
-    function updateHidden() {
-        hidden.value = emails.join(",");
-    }
+    function updateHidden() { hidden.value = emails.join(","); }
 
     function addEmailTag(email) {
         email = email.trim().toLowerCase();
         if (!email || emails.includes(email)) return;
         if (!isValidEmail(email)) {
             input.style.borderColor = "#dc3545";
-            setTimeout(() => input.style.borderColor = "", 800);
+            setTimeout(function() { input.style.borderColor = ""; }, 800);
             return;
         }
         emails.push(email);
-
         const tag = document.createElement("div");
         tag.className = "email-tag";
         tag.dataset.email = email;
-        tag.innerHTML = escapeHtml(email) + \'<span class="remove-tag" title="Eliminar">×</span>\';
-        tag.querySelector(".remove-tag").addEventListener("click", () => {
-            emails = emails.filter(e => e !== email);
+        tag.innerHTML = escapeHtml(email) + \'<span class="remove-tag" title="Eliminar">\u00d7</span>\';
+        tag.querySelector(".remove-tag").addEventListener("click", function() {
+            emails = emails.filter(function(e) { return e !== email; });
             tag.remove();
             updateHidden();
         });
-
         container.insertBefore(tag, input);
         input.value = "";
         updateHidden();
@@ -882,30 +826,20 @@ notasQuill.on("text-change", function() {
             e.preventDefault();
             addEmailTag(input.value);
         } else if (e.key === "Backspace" && input.value === "" && emails.length > 0) {
-            const lastEmail = emails[emails.length - 1];
-            const lastTag = container.querySelector(`.email-tag[data-email="${lastEmail}"]`);
-            if (lastTag) {
-                emails.pop();
-                lastTag.remove();
-                updateHidden();
-            }
+            var lastEmail = emails[emails.length - 1];
+            var lastTag = container.querySelector(".email-tag[data-email=\"" + lastEmail + "\"]");
+            if (lastTag) { emails.pop(); lastTag.remove(); updateHidden(); }
         }
     });
-
-    input.addEventListener("blur", function() {
-        if (input.value.trim()) addEmailTag(input.value);
-    });
-
+    input.addEventListener("blur", function() { if (input.value.trim()) addEmailTag(input.value); });
     container.addEventListener("click", function() { input.focus(); });
 
-    // Exponer función para que el selector CRM pueda setear el email
     window.setClienteEmails = function(emailStr) {
-        // Limpiar tags existentes
-        container.querySelectorAll(".email-tag").forEach(t => t.remove());
+        container.querySelectorAll(".email-tag").forEach(function(t) { t.remove(); });
         emails = [];
         updateHidden();
         if (emailStr) {
-            emailStr.split(",").forEach(e => addEmailTag(e.trim()));
+            emailStr.split(",").forEach(function(e) { addEmailTag(e.trim()); });
         }
     };
 })();
@@ -914,19 +848,19 @@ notasQuill.on("text-change", function() {
 // DATOS
 // ============================================================
 let itemCounter = ' . count($existingItems) . ';
-const articulosData = ' . $articulosJson . ';
-const clientesData = ' . $clientesJson . ';
+const articulosData   = ' . $articulosJson . ';
+const clientesData    = ' . $clientesJson . ';
 const selectedClienteId = "' . $selectedClienteId . '";
 
 // ============================================================
 // SEARCHABLE SELECT ENGINE
 // ============================================================
 function initSearchableSelect(config) {
-    const main = document.getElementById(config.mainId);
-    const dropdown = document.getElementById(config.dropdownId);
-    const search = document.getElementById(config.searchId);
+    const main             = document.getElementById(config.mainId);
+    const dropdown         = document.getElementById(config.dropdownId);
+    const search           = document.getElementById(config.searchId);
     const optionsContainer = document.getElementById(config.optionsId);
-    const textSpan = document.getElementById(config.textId);
+    const textSpan         = document.getElementById(config.textId);
 
     let isOpen = false;
     let highlightedIndex = -1;
@@ -934,39 +868,36 @@ function initSearchableSelect(config) {
 
     function renderOptions(filter) {
         filter = (filter || "").toLowerCase().trim();
-        filteredItems = config.items.filter(item => {
-            const label = (config.getLabel ? config.getLabel(item) : item.label || "").toLowerCase();
-            const sub = (config.getSub ? config.getSub(item) : item.sub || "").toLowerCase();
+        filteredItems = config.items.filter(function(item) {
+            var label = (config.getLabel ? config.getLabel(item) : (item.label || "")).toLowerCase();
+            var sub   = (config.getSub   ? config.getSub(item)   : (item.sub   || "")).toLowerCase();
             return label.includes(filter) || sub.includes(filter);
         });
-
         if (filteredItems.length === 0) {
             optionsContainer.innerHTML = \'<div class="ss-no-results">No se encontraron resultados</div>\';
             return;
         }
-
-        optionsContainer.innerHTML = filteredItems.map((item, i) => {
-            const label = config.getLabel ? config.getLabel(item) : item.label;
-            const sub = config.getSub ? config.getSub(item) : (item.sub || "");
-            const price = config.getPrice ? config.getPrice(item) : "";
-            const isSelected = config.isSelected ? config.isSelected(item) : false;
-            return `<div class="ss-option ${isSelected ? "ss-selected" : ""}" data-index="${i}" onmousedown="event.preventDefault()">
-                ${price ? `<span class="ss-option-price">${price}</span>` : ""}
-                <strong>${escapeHtml(label)}</strong>
-                ${sub ? `<span class="ss-option-sub">${escapeHtml(sub)}</span>` : ""}
-            </div>`;
+        optionsContainer.innerHTML = filteredItems.map(function(item, i) {
+            var label      = config.getLabel    ? config.getLabel(item)    : item.label;
+            var sub        = config.getSub      ? config.getSub(item)      : (item.sub || "");
+            var price      = config.getPrice    ? config.getPrice(item)    : "";
+            var isSelected = config.isSelected  ? config.isSelected(item)  : false;
+            return "<div class=\"ss-option " + (isSelected ? "ss-selected" : "") + "\" data-index=\"" + i + "\" onmousedown=\"event.preventDefault()\">" +
+                (price ? "<span class=\"ss-option-price\">" + price + "</span>" : "") +
+                "<strong>" + escapeHtml(label) + "</strong>" +
+                (sub ? "<span class=\"ss-option-sub\">" + escapeHtml(sub) + "</span>" : "") +
+                "</div>";
         }).join("");
-
-        optionsContainer.querySelectorAll(".ss-option").forEach((opt, i) => {
-            opt.addEventListener("click", () => selectItem(i));
+        optionsContainer.querySelectorAll(".ss-option").forEach(function(opt, i) {
+            opt.addEventListener("click", function() { selectItem(i); });
         });
         highlightedIndex = -1;
     }
 
     function selectItem(index) {
-        const item = filteredItems[index];
+        var item = filteredItems[index];
         if (!item) return;
-        const label = config.getLabel ? config.getLabel(item) : item.label;
+        var label = config.getLabel ? config.getLabel(item) : item.label;
         textSpan.textContent = label;
         textSpan.classList.remove("ss-placeholder");
         close();
@@ -982,28 +913,26 @@ function initSearchableSelect(config) {
         renderOptions("");
         search.focus();
     }
-
     function close() {
         isOpen = false;
         main.classList.remove("ss-open");
         dropdown.classList.remove("ss-open");
     }
-
     function toggle() { isOpen ? close() : open(); }
 
-    main.addEventListener("click", (e) => { e.stopPropagation(); toggle(); });
-    search.addEventListener("input", (e) => { renderOptions(e.target.value); });
-    search.addEventListener("keydown", (e) => {
-        const opts = optionsContainer.querySelectorAll(".ss-option");
+    main.addEventListener("click", function(e) { e.stopPropagation(); toggle(); });
+    search.addEventListener("input", function(e) { renderOptions(e.target.value); });
+    search.addEventListener("keydown", function(e) {
+        var opts = optionsContainer.querySelectorAll(".ss-option");
         if (e.key === "ArrowDown") {
             e.preventDefault();
             highlightedIndex = Math.min(highlightedIndex + 1, opts.length - 1);
-            opts.forEach((o, i) => o.classList.toggle("ss-highlighted", i === highlightedIndex));
+            opts.forEach(function(o, i) { o.classList.toggle("ss-highlighted", i === highlightedIndex); });
             if (opts[highlightedIndex]) opts[highlightedIndex].scrollIntoView({block:"nearest"});
         } else if (e.key === "ArrowUp") {
             e.preventDefault();
             highlightedIndex = Math.max(highlightedIndex - 1, 0);
-            opts.forEach((o, i) => o.classList.toggle("ss-highlighted", i === highlightedIndex));
+            opts.forEach(function(o, i) { o.classList.toggle("ss-highlighted", i === highlightedIndex); });
             if (opts[highlightedIndex]) opts[highlightedIndex].scrollIntoView({block:"nearest"});
         } else if (e.key === "Enter" && highlightedIndex >= 0) {
             e.preventDefault();
@@ -1012,42 +941,40 @@ function initSearchableSelect(config) {
             close();
         }
     });
-
-    document.addEventListener("click", (e) => {
+    document.addEventListener("click", function(e) {
         if (main && !main.closest(".searchable-select-wrapper").contains(e.target)) close();
     });
 
-    return { open, close, selectItem, renderOptions };
+    return { open: open, close: close, selectItem: selectItem, renderOptions: renderOptions };
 }
 
 // ============================================================
 // CLIENTE SEARCHABLE SELECT
 // ============================================================
 const clienteSS = initSearchableSelect({
-    mainId: "clienteSSmain",
-    dropdownId: "clienteSS-dropdown",
-    searchId: "clienteSSsearch",
+    mainId:    "clienteSSmain",
+    dropdownId:"clienteSS-dropdown",
+    searchId:  "clienteSSsearch",
     optionsId: "clienteSSoptions",
-    textId: "clienteSStext",
-    items: clientesData,
-    getLabel: (c) => c.company_name || "",
-    getSub: (c) => (c.city ? c.city : "") + (c.phone ? " · " + c.phone : ""),
-    isSelected: (c) => String(c.id) === String(selectedClienteId),
-    onSelect: (cliente) => {
-        document.getElementById("clienteSelect").value = cliente.id;
-        document.getElementById("clienteNombre").value = cliente.company_name || "";
+    textId:    "clienteSStext",
+    items:     clientesData,
+    getLabel:  function(c) { return c.company_name || ""; },
+    getSub:    function(c) { return (c.city ? c.city : "") + (c.phone ? " · " + c.phone : ""); },
+    isSelected:function(c) { return String(c.id) === String(selectedClienteId); },
+    onSelect:  function(cliente) {
+        document.getElementById("clienteSelect").value    = cliente.id;
+        document.getElementById("clienteNombre").value   = cliente.company_name || "";
         document.getElementById("clienteDireccion").value = cliente.address || "";
-        document.getElementById("clienteCiudad").value = cliente.city || "";
-        document.getElementById("clienteCp").value = cliente.zip || "";
-        document.getElementById("clientePais").value = cliente.country || "";
-        document.getElementById("clienteCif").value = cliente.vat_number || "";
-        
+        document.getElementById("clienteCiudad").value   = cliente.city    || "";
+        document.getElementById("clienteCp").value       = cliente.zip     || "";
+        document.getElementById("clientePais").value     = cliente.country || "";
+        document.getElementById("clienteCif").value      = cliente.vat_number || "";
         fetch("get_contacto.php?client_id=" + cliente.id)
-            .then(response => response.json())
-            .then(contactos => {
+            .then(function(r) { return r.json(); })
+            .then(function(contactos) {
                 if (contactos && contactos.length > 0) {
-                    const contactoPrincipal = contactos.find(c => c.is_primary_contact === "1");
-                    const contacto = contactoPrincipal || contactos[0];
+                    var principal = contactos.find(function(c) { return c.is_primary_contact === "1"; });
+                    var contacto  = principal || contactos[0];
                     if (window.setClienteEmails) window.setClienteEmails(contacto.email || "");
                     document.getElementById("clienteTelefono").value = contacto.phone || contacto.alternative_phone || "";
                 } else {
@@ -1055,15 +982,14 @@ const clienteSS = initSearchableSelect({
                     document.getElementById("clienteTelefono").value = "";
                 }
             })
-            .catch(error => {
-                console.error("Error obteniendo contacto:", error);
+            .catch(function() {
                 if (window.setClienteEmails) window.setClienteEmails("");
             });
     }
 });
 
 if (selectedClienteId) {
-    const preSelected = clientesData.find(c => String(c.id) === String(selectedClienteId));
+    var preSelected = clientesData.find(function(c) { return String(c.id) === String(selectedClienteId); });
     if (preSelected) {
         document.getElementById("clienteSStext").textContent = preSelected.company_name || "";
         document.getElementById("clienteSStext").classList.remove("ss-placeholder");
@@ -1077,30 +1003,46 @@ const articulosSS = {};
 
 function initArticuloSS(index) {
     articulosSS[index] = initSearchableSelect({
-        mainId: "artSSmain_" + index,
-        dropdownId: "artSS-dropdown_" + index,
-        searchId: "artSSsearch_" + index,
+        mainId:    "artSSmain_"     + index,
+        dropdownId:"artSS-dropdown_" + index,
+        searchId:  "artSSsearch_"  + index,
         optionsId: "artSSoptions_" + index,
-        textId: "artSStext_" + index,
-        items: articulosData,
-        getLabel: (a) => a.title || "",
-        getSub: (a) => (a.category_title || "") + (a.unit_type ? " · " + a.unit_type : ""),
-        getPrice: (a) => a.rate != null ? parseFloat(a.rate).toFixed(2) + " €" : "",
-        onSelect: (articulo) => {
-            const row = document.querySelector(`[data-item-index="${index}"]`);
+        textId:    "artSStext_"    + index,
+        items:     articulosData,
+        getLabel:  function(a) { return a.title || ""; },
+        getSub:    function(a) { return (a.category_title || "") + (a.unit_type ? " · " + a.unit_type : ""); },
+        getPrice:  function(a) { return a.rate != null ? parseFloat(a.rate).toFixed(2) + " €" : ""; },
+        onSelect:  function(articulo) {
+            var row = document.querySelector("[data-item-index=\"" + index + "\"]");
             if (!row) return;
+
+            // Nombre y precio
             row.querySelector(".item-nombre").value = articulo.title || "";
-            row.querySelector(".item-descripcion").value = articulo.description || "";
             row.querySelector(".item-precio").value = parseFloat(articulo.rate || 0).toFixed(2);
             row.querySelector(".item-unidad").value = articulo.unit_type || "";
+
+            // Descripción → hidden + Quill
+            var descHidden = row.querySelector(".item-descripcion-hidden");
+            var descTxt    = articulo.description || "";
+            descHidden.value = descTxt;
+            if (window.itemDescQuills && window.itemDescQuills[index]) {
+                var q = window.itemDescQuills[index];
+                if (descTxt.indexOf("<") !== -1) {
+                    q.root.innerHTML = descTxt;
+                } else {
+                    if (descTxt) { q.setText(descTxt); } else { q.setText(""); }
+                }
+            }
+
             calculateTotals();
         }
     });
 }
 
-document.querySelectorAll("[data-item-index]").forEach(row => {
-    initArticuloSS(parseInt(row.getAttribute("data-item-index")));
-    attachPrecioOriginalListener(row, parseInt(row.getAttribute("data-item-index")));
+document.querySelectorAll("[data-item-index]").forEach(function(row) {
+    var idx = parseInt(row.getAttribute("data-item-index"));
+    initArticuloSS(idx);
+    attachPrecioOriginalListener(row, idx);
 });
 
 // ============================================================
@@ -1109,61 +1051,63 @@ document.querySelectorAll("[data-item-index]").forEach(row => {
 function addItem() {
     const container = document.getElementById("itemsContainer");
     const idx = itemCounter;
-    
+
     const newItem = document.createElement("div");
     newItem.className = "item-row";
     newItem.setAttribute("data-item-index", idx);
-    newItem.innerHTML = `
-        <div class="form-group">
-            <label>Artículo/Servicio</label>
-            <div class="searchable-select-wrapper" id="artSSWrapper_${idx}">
-                <div class="ss-main" id="artSSmain_${idx}">
-                    <span class="ss-selected-text ss-placeholder" id="artSStext_${idx}">-- Opcional: buscar en catálogo --</span>
-                    <div class="ss-arrow"></div>
-                </div>
-                <div class="ss-dropdown" id="artSS-dropdown_${idx}">
-                    <div class="ss-search"><input type="text" id="artSSsearch_${idx}" placeholder="Buscar artículo..." autocomplete="off"></div>
-                    <div class="ss-options" id="artSSoptions_${idx}"></div>
-                </div>
-            </div>
-            <input type="text" name="items[${idx}][nombre]" placeholder="Nombre del servicio" required class="item-nombre" style="margin-top:10px;">
-            <textarea name="items[${idx}][descripcion]" placeholder="Descripción del servicio" class="item-descripcion" style="margin-top:10px; padding:10px; border:2px solid #e0e0e0; border-radius:8px; font-size:14px; min-height:60px;"></textarea>
-        </div>
-        <div class="form-group">
-            <label>Cantidad</label>
-            <input type="number" name="items[${idx}][cantidad]" placeholder="1" step="0.01" value="1" required class="item-cantidad">
-            <input type="text" name="items[${idx}][unidad]" placeholder="Tipo (ej: Mensual)" class="item-unidad" style="margin-top:10px; padding:10px; border:2px solid #e0e0e0; border-radius:8px; font-size:13px;">
-        </div>
-        <div class="form-group">
-            <label>Precio con descuento (€)</label>
-            <input type="number" name="items[${idx}][precio]" placeholder="0.00" step="0.01" required class="item-precio">
-            <div class="precio-original-wrap">
-                <label>Precio original sin descuento (€) — opcional</label>
-                <input type="number" name="items[${idx}][precio_original]" placeholder="Dejar vacío si no hay descuento" step="0.01" class="item-precio-original">
-                <div class="precio-original-preview" id="previoOriginal_${idx}" style="display:none;"></div>
-            </div>
-            <div class="item-info"><strong>Total: <span class="item-total-display">0.00 €</span></strong></div>
-            <input type="hidden" class="item-total" value="0">
-        </div>
-        <button type="button" class="btn-remove" onclick="removeItem(this)">🗑️</button>
-    `;
+    newItem.innerHTML =
+        "<div class=\"form-group\">" +
+            "<label>Art\u00edculo/Servicio</label>" +
+            "<div class=\"searchable-select-wrapper\" id=\"artSSWrapper_" + idx + "\">" +
+                "<div class=\"ss-main\" id=\"artSSmain_" + idx + "\">" +
+                    "<span class=\"ss-selected-text ss-placeholder\" id=\"artSStext_" + idx + "\">-- Opcional: buscar en cat\u00e1logo --</span>" +
+                    "<div class=\"ss-arrow\"></div>" +
+                "</div>" +
+                "<div class=\"ss-dropdown\" id=\"artSS-dropdown_" + idx + "\">" +
+                    "<div class=\"ss-search\"><input type=\"text\" id=\"artSSsearch_" + idx + "\" placeholder=\"Buscar art\u00edculo...\" autocomplete=\"off\"></div>" +
+                    "<div class=\"ss-options\" id=\"artSSoptions_" + idx + "\"></div>" +
+                "</div>" +
+            "</div>" +
+            "<input type=\"text\" name=\"items[" + idx + "][nombre]\" placeholder=\"Nombre del servicio\" required class=\"item-nombre\" style=\"margin-top:10px;\">" +
+            "<input type=\"hidden\" name=\"items[" + idx + "][descripcion]\" class=\"item-descripcion-hidden\">" +
+            "<div class=\"item-desc-wysiwyg\" id=\"descWysiwyg_" + idx + "\"></div>" +
+        "</div>" +
+        "<div class=\"form-group\">" +
+            "<label>Cantidad</label>" +
+            "<input type=\"number\" name=\"items[" + idx + "][cantidad]\" placeholder=\"1\" step=\"0.01\" value=\"1\" required class=\"item-cantidad\">" +
+            "<input type=\"text\" name=\"items[" + idx + "][unidad]\" placeholder=\"Tipo (ej: Mensual)\" class=\"item-unidad\" style=\"margin-top:10px; padding:10px; border:2px solid #e0e0e0; border-radius:8px; font-size:13px;\">" +
+        "</div>" +
+        "<div class=\"form-group\">" +
+            "<label>Precio con descuento (\u20ac)</label>" +
+            "<input type=\"number\" name=\"items[" + idx + "][precio]\" placeholder=\"0.00\" step=\"0.01\" required class=\"item-precio\">" +
+            "<div class=\"precio-original-wrap\">" +
+                "<label>Precio original sin descuento (\u20ac) \u2014 opcional</label>" +
+                "<input type=\"number\" name=\"items[" + idx + "][precio_original]\" placeholder=\"Dejar vac\u00edo si no hay descuento\" step=\"0.01\" class=\"item-precio-original\">" +
+                "<div class=\"precio-original-preview\" id=\"previoOriginal_" + idx + "\" style=\"display:none;\"></div>" +
+            "</div>" +
+            "<div class=\"item-info\"><strong>Total: <span class=\"item-total-display\">0.00 \u20ac</span></strong></div>" +
+            "<input type=\"hidden\" class=\"item-total\" value=\"0\">" +
+        "</div>" +
+        "<button type=\"button\" class=\"btn-remove\" onclick=\"removeItem(this)\">\uD83D\uDDD1\uFE0F</button>";
+
     container.appendChild(newItem);
     itemCounter++;
-    
+
     initArticuloSS(idx);
     attachItemListeners(newItem);
     attachPrecioOriginalListener(newItem, idx);
+    initItemDescQuill(idx);   // <-- inicializar Quill del nuevo item
 }
 
 function attachPrecioOriginalListener(row, idx) {
-    const inputOrig = row.querySelector(".item-precio-original");
-    const preview = document.getElementById("previoOriginal_" + idx);
+    var inputOrig = row.querySelector(".item-precio-original");
+    var preview   = document.getElementById("previoOriginal_" + idx);
     if (!inputOrig || !preview) return;
     inputOrig.addEventListener("input", function() {
-        const val = parseFloat(this.value);
+        var val = parseFloat(this.value);
         if (!isNaN(val) && val > 0) {
             preview.style.display = "block";
-            preview.textContent = "Antes: " + val.toLocaleString("es-ES", {minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
+            preview.textContent = "Antes: " + val.toLocaleString("es-ES", {minimumFractionDigits:2, maximumFractionDigits:2}) + " \u20ac";
         } else {
             preview.style.display = "none";
             preview.textContent = "";
@@ -1172,12 +1116,17 @@ function attachPrecioOriginalListener(row, idx) {
 }
 
 function removeItem(button) {
-    const items = document.querySelectorAll(".item-row");
+    var items = document.querySelectorAll(".item-row");
     if (items.length > 1) {
-        button.closest(".item-row").remove();
+        var row = button.closest(".item-row");
+        var idx = parseInt(row.getAttribute("data-item-index"));
+        if (window.itemDescQuills && window.itemDescQuills[idx]) {
+            delete window.itemDescQuills[idx];
+        }
+        row.remove();
         calculateTotals();
     } else {
-        alert("Debe haber al menos un artículo en el presupuesto");
+        alert("Debe haber al menos un art\u00edculo en el presupuesto");
     }
 }
 
@@ -1185,32 +1134,31 @@ function removeItem(button) {
 // TOTALES
 // ============================================================
 function calculateItemTotal(itemRow) {
-    const cantidad = parseFloat(itemRow.querySelector(".item-cantidad").value) || 0;
-    const precio = parseFloat(itemRow.querySelector(".item-precio").value) || 0;
-    const total = cantidad * precio;
+    var cantidad = parseFloat(itemRow.querySelector(".item-cantidad").value) || 0;
+    var precio   = parseFloat(itemRow.querySelector(".item-precio").value)   || 0;
+    var total    = cantidad * precio;
     itemRow.querySelector(".item-total").value = total.toFixed(2);
     itemRow.querySelector(".item-total-display").textContent = formatCurrency(total);
 }
 
 function calculateTotals() {
-    let subtotal = 0;
-    document.querySelectorAll(".item-row").forEach(row => {
+    var subtotal = 0;
+    document.querySelectorAll(".item-row").forEach(function(row) {
         calculateItemTotal(row);
         subtotal += parseFloat(row.querySelector(".item-total").value) || 0;
     });
+    var iva    = parseFloat(document.getElementById("iva").value)             || 0;
+    var seg    = parseFloat(document.getElementById("segundoImpuesto").value) || 0;
+    var ivaAmt = (subtotal * iva) / 100;
+    var segAmt = (subtotal * seg) / 100;
+    var total  = subtotal + ivaAmt + segAmt;
 
-    const iva = parseFloat(document.getElementById("iva").value) || 0;
-    const seg = parseFloat(document.getElementById("segundoImpuesto").value) || 0;
-    const ivaAmt = (subtotal * iva) / 100;
-    const segAmt = (subtotal * seg) / 100;
-    const total = subtotal + ivaAmt + segAmt;
-
-    document.getElementById("subtotal").textContent = formatCurrency(subtotal);
-    document.getElementById("ivaPercent").textContent = iva.toFixed(0);
-    document.getElementById("ivaAmount").textContent = formatCurrency(ivaAmt);
+    document.getElementById("subtotal").textContent            = formatCurrency(subtotal);
+    document.getElementById("ivaPercent").textContent          = iva.toFixed(0);
+    document.getElementById("ivaAmount").textContent           = formatCurrency(ivaAmt);
     document.getElementById("segundoImpuestoPercent").textContent = seg.toFixed(0);
-    document.getElementById("segundoImpuestoAmount").textContent = formatCurrency(segAmt);
-    document.getElementById("total").textContent = formatCurrency(total);
+    document.getElementById("segundoImpuestoAmount").textContent  = formatCurrency(segAmt);
+    document.getElementById("total").textContent               = formatCurrency(total);
     document.getElementById("segundoImpuestoRow").style.display = seg > 0 ? "flex" : "none";
 }
 
@@ -1219,18 +1167,18 @@ function formatCurrency(amount) {
 }
 
 function escapeHtml(text) {
-    const div = document.createElement("div");
+    var div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
 }
 
 function attachItemListeners(itemRow) {
     itemRow.querySelector(".item-cantidad").addEventListener("input", calculateTotals);
-    itemRow.querySelector(".item-precio").addEventListener("input", calculateTotals);
+    itemRow.querySelector(".item-precio").addEventListener("input",   calculateTotals);
 }
 
-document.querySelectorAll(".item-row").forEach(attachItemListeners);
-document.getElementById("iva").addEventListener("input", calculateTotals);
+document.querySelectorAll(".item-row").forEach(function(row) { attachItemListeners(row); });
+document.getElementById("iva").addEventListener("input",             calculateTotals);
 document.getElementById("segundoImpuesto").addEventListener("input", calculateTotals);
 calculateTotals();
 
@@ -1240,51 +1188,66 @@ calculateTotals();
 document.getElementById("presupuestoForm").addEventListener("submit", function(e) {
     e.preventDefault();
 
-    // Validar que haya al menos un email
-    const emailHidden = document.getElementById("clienteEmailHidden").value.trim();
+    // Validar email
+    var emailHidden = document.getElementById("clienteEmailHidden").value.trim();
     if (!emailHidden) {
-        alert("Por favor, añade al menos un email para el cliente.");
+        alert("Por favor, a\u00f1ade al menos un email para el cliente.");
         document.getElementById("emailTagsInput").focus();
         return;
     }
-    
+
+    // Sincronizar Quills globales
     var detallesHtml = detallesQuill.root.innerHTML;
     if (detallesQuill.getText().trim() === "") detallesHtml = "";
     document.getElementById("detallesPropuestaHidden").value = detallesHtml;
-    
+
     var notasHtml = notasQuill.root.innerHTML;
     if (notasQuill.getText().trim() === "") notasHtml = "";
     document.getElementById("notasHidden").value = notasHtml;
-    
-    const formData = new FormData(this);
-    const action = e.submitter.value;
+
+    // Sincronizar Quills de descripción de items
+    if (window.itemDescQuills) {
+        Object.keys(window.itemDescQuills).forEach(function(idx) {
+            var q   = window.itemDescQuills[idx];
+            var row = document.querySelector("[data-item-index=\"" + idx + "\"]");
+            if (!row) return;
+            var hidden = row.querySelector(".item-descripcion-hidden");
+            if (!hidden) return;
+            var html = q.root.innerHTML;
+            if (q.getText().trim() === "") html = "";
+            hidden.value = html;
+        });
+    }
+
+    var formData = new FormData(this);
+    var action   = e.submitter.value;
     formData.append("action", action);
 
-    let totalSubtotal = 0;
-    document.querySelectorAll(".item-total").forEach(input => {
+    var totalSubtotal = 0;
+    document.querySelectorAll(".item-total").forEach(function(input) {
         totalSubtotal += parseFloat(input.value) || 0;
     });
 
-    const iva = parseFloat(document.getElementById("iva").value) || 0;
-    const seg = parseFloat(document.getElementById("segundoImpuesto").value) || 0;
-    const total = totalSubtotal + (totalSubtotal * iva / 100) + (totalSubtotal * seg / 100);
+    var iva   = parseFloat(document.getElementById("iva").value)             || 0;
+    var seg   = parseFloat(document.getElementById("segundoImpuesto").value) || 0;
+    var total = totalSubtotal + (totalSubtotal * iva / 100) + (totalSubtotal * seg / 100);
 
     formData.append("subtotal", totalSubtotal.toFixed(2));
-    formData.append("total", total.toFixed(2));
+    formData.append("total",    total.toFixed(2));
 
     fetch("api.php", { method: "POST", body: formData })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            if (action === "guardar_pdf") {
-                window.open("api.php?action=pdf&id=" + data.id, "_blank");
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                if (action === "guardar_pdf") {
+                    window.open("api.php?action=pdf&id=" + data.id, "_blank");
+                }
+                setTimeout(function() { window.location.href = "index.php"; }, 500);
+            } else {
+                alert("Error: " + (data.message || "No se pudo guardar"));
             }
-            setTimeout(() => { window.location.href = "index.php"; }, 500);
-        } else {
-            alert("Error: " + (data.message || "No se pudo guardar"));
-        }
-    })
-    .catch(err => { console.error(err); alert("Error al guardar el presupuesto"); });
+        })
+        .catch(function(err) { console.error(err); alert("Error al guardar el presupuesto"); });
 });
 </script>
 ';
