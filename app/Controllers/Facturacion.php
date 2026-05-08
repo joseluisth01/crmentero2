@@ -43,7 +43,7 @@ class Facturacion extends Security_Controller {
 
     function clientes() {
         $view_data['clientes'] = $this->Facturacion_model->get_clientes()->getResult();
-        return $this->template->view("facturacion/clientes/index", $view_data);
+        return view("facturacion/clientes_facturacion/index", $view_data);
     }
 
     function clientes_list_data() {
@@ -79,7 +79,7 @@ class Facturacion extends Security_Controller {
         $id = $this->request->getPost('id');
         $view_data['model_info'] = $id ? $this->Facturacion_model->get_cliente($id) : null;
         $view_data['crm_clients_dropdown'] = $this->_get_crm_clients_dropdown();
-        return $this->template->view("facturacion/clientes/modal_form", $view_data);
+        return view("facturacion/clientes_facturacion/modal_form", $view_data);
     }
 
     function save_cliente() {
@@ -122,7 +122,7 @@ class Facturacion extends Security_Controller {
         $view_data['kit_digital']  = $this->Facturacion_model->get_kit_digital(['cliente_id' => $id]);
         $view_data['comisiones']   = $this->Facturacion_model->get_comisiones(['cliente_id' => $id])->getResult();
         $view_data['meses_nombres'] = $this->_get_meses();
-        return $this->template->view("facturacion/clientes/view", $view_data);
+        return view("facturacion/clientes_facturacion/view", $view_data);
     }
 
     // ============================================================
@@ -131,7 +131,7 @@ class Facturacion extends Security_Controller {
 
     function servicios_catalogo() {
         $view_data['servicios'] = $this->Facturacion_model->get_servicios_catalogo()->getResult();
-        return $this->template->view("facturacion/servicios/catalogo", $view_data);
+        return view("facturacion/servicios/catalogo", $view_data);
     }
 
     function servicio_catalogo_modal_form() {
@@ -140,7 +140,7 @@ class Facturacion extends Security_Controller {
         if ($id) {
             $view_data['model_info'] = $this->Facturacion_model->get_servicios_catalogo(['id' => $id])->getRow(); // podríamos añadir filtro id al método
         }
-        return $this->template->view("facturacion/servicios/modal_form_catalogo", $view_data);
+        return view("facturacion/servicios/modal_form_catalogo", $view_data);
     }
 
     function save_servicio_catalogo() {
@@ -198,7 +198,7 @@ class Facturacion extends Security_Controller {
         $view_data['clientes']      = $this->Facturacion_model->get_clientes()->getResult();
         $view_data['catalogo']      = $this->Facturacion_model->get_servicios_catalogo(['estado' => 'activo'])->getResult();
         $view_data['team_members']  = $this->_get_team_members_dropdown();
-        return $this->template->view("facturacion/servicios/modal_form_cliente_servicio", $view_data);
+        return view("facturacion/servicios/modal_form_cliente_servicio", $view_data);
     }
 
     function save_cliente_servicio() {
@@ -242,7 +242,7 @@ class Facturacion extends Security_Controller {
         $view_data['annos']         = range(date('Y'), date('Y') - 5);
         $view_data['meses_nombres'] = $this->_get_meses();
         $view_data['clientes']      = $this->Facturacion_model->get_clientes(['estado' => 'activo'])->getResult();
-        return $this->template->view("facturacion/facturas/index", $view_data);
+        return view("facturacion/facturas/index", $view_data);
     }
 
     function facturas_list_data() {
@@ -289,7 +289,7 @@ class Facturacion extends Security_Controller {
         $view_data['model_info'] = $id ? $this->Facturacion_model->get_factura($id) : null;
         $view_data['clientes']   = $this->Facturacion_model->get_clientes(['estado' => 'activo'])->getResult();
         $view_data['meses_nombres'] = $this->_get_meses();
-        return $this->template->view("facturacion/facturas/modal_form", $view_data);
+        return view("facturacion/facturas/modal_form", $view_data);
     }
 
     function save_factura() {
@@ -330,7 +330,7 @@ class Facturacion extends Security_Controller {
         $view_data['catalogo_dropdown'] = $this->Facturacion_model->get_servicios_catalogo(['estado' => 'activo'])->getResult();
         $view_data['cliente_servicios'] = $this->Facturacion_model->get_cliente_servicios(['cliente_id' => $factura->cliente_id, 'estado' => 'activo'])->getResult();
         $view_data['meses_nombres'] = $this->_get_meses();
-        return $this->template->view("facturacion/facturas/view", $view_data);
+        return view("facturacion/facturas/view", $view_data);
     }
 
     // ============================================================
@@ -374,7 +374,7 @@ class Facturacion extends Security_Controller {
         $view_data['clientes']      = $this->Facturacion_model->get_clientes()->getResult();
         $view_data['annos']         = range(date('Y'), date('Y') - 5);
         $view_data['meses_nombres'] = $this->_get_meses();
-        return $this->template->view("facturacion/cobros/index", $view_data);
+        return view("facturacion/cobros/index", $view_data);
     }
 
     function save_pago() {
@@ -437,7 +437,7 @@ class Facturacion extends Security_Controller {
             'anno'       => $anno,
             'mes'        => date('n'),
         ])->getResult();
-        return $this->template->view("facturacion/remesas/index", $view_data);
+        return view("facturacion/remesas/index", $view_data);
     }
 
     function remesa_modal_form() {
@@ -448,7 +448,7 @@ class Facturacion extends Security_Controller {
             foreach ($remesas as $r) { if ($r->id == $id) { $view_data['model_info'] = $r; break; } }
         }
         $view_data['meses_nombres'] = $this->_get_meses();
-        return $this->template->view("facturacion/remesas/modal_form", $view_data);
+        return view("facturacion/remesas/modal_form", $view_data);
     }
 
     function save_remesa() {
@@ -490,7 +490,7 @@ class Facturacion extends Security_Controller {
     function renovaciones() {
         $view_data['renovaciones'] = $this->Facturacion_model->get_renovaciones();
         $view_data['clientes']     = $this->Facturacion_model->get_clientes()->getResult();
-        return $this->template->view("facturacion/renovaciones/index", $view_data);
+        return view("facturacion/renovaciones/index", $view_data);
     }
 
     function renovacion_modal_form() {
@@ -503,7 +503,7 @@ class Facturacion extends Security_Controller {
         }
         $view_data['clientes']   = $this->Facturacion_model->get_clientes()->getResult();
         $view_data['cliente_id'] = $cliente_id;
-        return $this->template->view("facturacion/renovaciones/modal_form", $view_data);
+        return view("facturacion/renovaciones/modal_form", $view_data);
     }
 
     function save_renovacion() {
@@ -534,7 +534,7 @@ class Facturacion extends Security_Controller {
         $view_data['proyectos'] = $this->Facturacion_model->get_kit_digital();
         $view_data['clientes']  = $this->Facturacion_model->get_clientes()->getResult();
         $view_data['team_members'] = $this->_get_team_members_dropdown();
-        return $this->template->view("facturacion/kit_digital/index", $view_data);
+        return view("facturacion/kit_digital/index", $view_data);
     }
 
     function kit_digital_modal_form() {
@@ -542,7 +542,7 @@ class Facturacion extends Security_Controller {
         $view_data['model_info']   = null;
         $view_data['clientes']     = $this->Facturacion_model->get_clientes()->getResult();
         $view_data['team_members'] = $this->_get_team_members_dropdown();
-        return $this->template->view("facturacion/kit_digital/modal_form", $view_data);
+        return view("facturacion/kit_digital/modal_form", $view_data);
     }
 
     function save_kit_digital() {
@@ -574,7 +574,7 @@ class Facturacion extends Security_Controller {
         $view_data['comisiones']   = $this->Facturacion_model->get_comisiones()->getResult();
         $view_data['team_members'] = $this->_get_team_members_dropdown();
         $view_data['clientes']     = $this->Facturacion_model->get_clientes()->getResult();
-        return $this->template->view("facturacion/comisiones/index", $view_data);
+        return view("facturacion/comisiones/index", $view_data);
     }
 
     function comision_modal_form() {
@@ -582,7 +582,7 @@ class Facturacion extends Security_Controller {
         $view_data['model_info']   = null;
         $view_data['clientes']     = $this->Facturacion_model->get_clientes()->getResult();
         $view_data['team_members'] = $this->_get_team_members_dropdown();
-        return $this->template->view("facturacion/comisiones/modal_form", $view_data);
+        return view("facturacion/comisiones/modal_form", $view_data);
     }
 
     function save_comision() {
@@ -612,7 +612,7 @@ class Facturacion extends Security_Controller {
         $view_data['meses_nombres'] = $this->_get_meses();
         $view_data['anno_actual']   = date('Y');
         $view_data['mes_actual']    = date('n');
-        return $this->template->view("facturacion/facturas/modal_generar_mes", $view_data);
+        return view("facturacion/facturas/modal_generar_mes", $view_data);
     }
 
     function generar_mes() {
