@@ -28,6 +28,11 @@
             <li><a role="presentation" data-bs-toggle="tab" href="<?php echo_uri("facturacion/servicios_catalogo"); ?>" data-bs-target="#fac-catalogo">
                 <i data-feather="package" class="icon-14"></i> Catálogo
             </a></li>
+            <li><a role="presentation" href="<?php echo get_uri("facturacion/resumen"); ?>"
+                style="font-weight:bold;color:#d72173!important"
+                onclick="window.location.href='<?php echo get_uri('facturacion/resumen'); ?>';return false;">
+                <i data-feather="grid" class="icon-14"></i> Vista General
+            </a></li>
 
             <div class="tab-title clearfix no-border">
                 <div class="title-button-group">

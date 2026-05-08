@@ -70,6 +70,15 @@
                             <span>LEADS</span>
                         </a>
                     </li>
+
+                    <li class="nav-item" style="    display: flex;
+    align-items: center;">
+                        <a class="nav-link" href="https://gestion-tictac-comunicacion.es/index.php/facturacion" title="facturacion"
+                            style="border: 1px solid #c6120a !important; background: white; color: #c6120a !important; border-radius: 6px; padding: 5px 12px !important; margin: 0 6px; font-weight: 600; font-size: 13px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+                            
+                            <span>FACTURACIÓN</span>
+                        </a>
+                    </li>
             </ul>
 
             <div class="d-flex w-auto">

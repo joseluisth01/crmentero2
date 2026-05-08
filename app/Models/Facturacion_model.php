@@ -681,7 +681,7 @@ class Facturacion_model extends Crud_model {
             if ($v === null || $v === 'NULL') {
                 $parts[] = "`$k`=NULL";
             } else {
-                $escaped = $this->db->escapeString($v);
+                $escaped = $this->db->escapeString((string) $v);
                 $parts[] = "`$k`='$escaped'";
             }
         }

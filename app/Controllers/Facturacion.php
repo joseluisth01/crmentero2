@@ -43,6 +43,7 @@ class Facturacion extends Security_Controller {
 
     function clientes() {
         $view_data['clientes'] = $this->Facturacion_model->get_clientes()->getResult();
+        $view_data['login_user'] = $this->login_user;
         return view("facturacion/clientes_facturacion/index", $view_data);
     }
 
@@ -120,9 +121,10 @@ class Facturacion extends Security_Controller {
         $view_data['facturas']  = $this->Facturacion_model->get_facturas(['cliente_id' => $id])->getResult();
         $view_data['renovaciones'] = $this->Facturacion_model->get_renovaciones(['cliente_id' => $id]);
         $view_data['kit_digital']  = $this->Facturacion_model->get_kit_digital(['cliente_id' => $id]);
-        $view_data['comisiones']   = $this->Facturacion_model->get_comisiones(['cliente_id' => $id])->getResult();
+        $view_data['comisiones']   = $this->Facturacion_model->get_comisiones(['cliente_id' => $id]);
         $view_data['meses_nombres'] = $this->_get_meses();
-        return view("facturacion/clientes_facturacion/view", $view_data);
+        $view_data['login_user'] = $this->login_user;
+        return $this->template->rander("facturacion/clientes_facturacion/view", $view_data);
     }
 
     // ============================================================
@@ -131,6 +133,7 @@ class Facturacion extends Security_Controller {
 
     function servicios_catalogo() {
         $view_data['servicios'] = $this->Facturacion_model->get_servicios_catalogo()->getResult();
+        $view_data['login_user'] = $this->login_user;
         return view("facturacion/servicios/catalogo", $view_data);
     }
 
@@ -242,6 +245,7 @@ class Facturacion extends Security_Controller {
         $view_data['annos']         = range(date('Y'), date('Y') - 5);
         $view_data['meses_nombres'] = $this->_get_meses();
         $view_data['clientes']      = $this->Facturacion_model->get_clientes(['estado' => 'activo'])->getResult();
+        $view_data['login_user'] = $this->login_user;
         return view("facturacion/facturas/index", $view_data);
     }
 
@@ -267,7 +271,7 @@ class Facturacion extends Security_Controller {
             }
             $vencido_class = ($f->dias_vencimiento > 0 && !in_array($f->estado_cobro, ['cobrado', 'no_procede'])) ? ' style="color:red;font-weight:bold"' : '';
             $list[] = [
-                '<a href="' . get_uri("facturacion/factura_view/$f->id") . '">' . $f->numero_factura . '</a>',
+                '<a href="' . get_uri("facturacion/factura_view/$f->id") . '" data-fid="' . $f->id . '">' . $f->numero_factura . '</a>',
                 $f->cliente_nombre,
                 $f->mes . '/' . $f->anno,
                 $f->fecha_emision,
@@ -330,7 +334,8 @@ class Facturacion extends Security_Controller {
         $view_data['catalogo_dropdown'] = $this->Facturacion_model->get_servicios_catalogo(['estado' => 'activo'])->getResult();
         $view_data['cliente_servicios'] = $this->Facturacion_model->get_cliente_servicios(['cliente_id' => $factura->cliente_id, 'estado' => 'activo'])->getResult();
         $view_data['meses_nombres'] = $this->_get_meses();
-        return view("facturacion/facturas/view", $view_data);
+        $view_data['login_user'] = $this->login_user;
+        return $this->template->rander("facturacion/facturas/view", $view_data);
     }
 
     // ============================================================
@@ -374,6 +379,7 @@ class Facturacion extends Security_Controller {
         $view_data['clientes']      = $this->Facturacion_model->get_clientes()->getResult();
         $view_data['annos']         = range(date('Y'), date('Y') - 5);
         $view_data['meses_nombres'] = $this->_get_meses();
+        $view_data['login_user'] = $this->login_user;
         return view("facturacion/cobros/index", $view_data);
     }
 
@@ -416,10 +422,63 @@ class Facturacion extends Security_Controller {
     }
 
     function marcar_rechazada() {
-        $factura_id     = $this->request->getPost('factura_id');
-        $motivo         = $this->request->getPost('motivo');
+        $factura_id = $this->request->getPost('factura_id');
+        $motivo     = $this->request->getPost('motivo');
         $this->Facturacion_model->save_factura(['estado_cobro' => 'rechazado', 'observaciones_internas' => $motivo], $factura_id);
+        $factura = $this->Facturacion_model->get_factura($factura_id);
+        if ($factura) {
+            $this->_enviar_alerta_pago($factura, 'rechazado', $motivo);
+        }
         echo json_encode(['success' => true]);
+    }
+
+    // Cambio rápido de estado de cobro desde listados
+    function cambiar_estado_cobro() {
+        $factura_id  = $this->request->getPost('factura_id');
+        $nuevo_estado = $this->request->getPost('estado_cobro');
+        $estados_validos = ['pendiente','cobrado','rechazado','parcialmente_cobrado','vencido','no_procede'];
+        if (!in_array($nuevo_estado, $estados_validos)) {
+            echo json_encode(['success' => false, 'message' => 'Estado inválido']);
+            return;
+        }
+        $this->Facturacion_model->save_factura(['estado_cobro' => $nuevo_estado], $factura_id);
+        $factura = $this->Facturacion_model->get_factura($factura_id);
+        // Enviar alerta si el estado es problemático
+        if (in_array($nuevo_estado, ['pendiente','rechazado','vencido']) && $factura) {
+            $this->_enviar_alerta_pago($factura, $nuevo_estado);
+        }
+        echo json_encode(['success' => true, 'estado_cobro' => $nuevo_estado]);
+    }
+
+    // Helper privado: envío de email de alerta de pago
+    private function _enviar_alerta_pago($factura, $estado, $motivo = '') {
+        $email_destino = 'hola@tictac-comunicacion.es';
+        $estados_texto = [
+            'pendiente'  => '⚠️ PENDIENTE DE COBRO',
+            'rechazado'  => '🔴 RECIBO RECHAZADO',
+            'vencido'    => '🔴 FACTURA VENCIDA',
+        ];
+        $estado_label = $estados_texto[$estado] ?? strtoupper($estado);
+        $subject = "[FACTURACIÓN TICTAC] $estado_label — {$factura->cliente_nombre} — {$factura->numero_factura}";
+        $importe_pendiente = $factura->total - $factura->importe_cobrado;
+        $message = "<h3 style='color:#d72173'>⚠️ Alerta de pago — {$factura->cliente_nombre}</h3>";
+        $message .= "<p><strong>Estado:</strong> $estado_label</p>";
+        $message .= "<p><strong>Factura:</strong> {$factura->numero_factura}</p>";
+        $message .= "<p><strong>Cliente:</strong> {$factura->cliente_nombre}</p>";
+        $message .= "<p><strong>Importe total:</strong> " . number_format($factura->total, 2, ',', '.') . " €</p>";
+        $message .= "<p><strong>Importe pendiente:</strong> <span style='color:red;font-weight:bold'>" . number_format($importe_pendiente, 2, ',', '.') . " €</span></p>";
+        $message .= "<p><strong>Período:</strong> {$factura->mes}/{$factura->anno}</p>";
+        $message .= "<p><strong>Forma de pago:</strong> " . ucfirst($factura->forma_pago) . "</p>";
+        if ($factura->fecha_vencimiento) {
+            $message .= "<p><strong>Vencimiento:</strong> {$factura->fecha_vencimiento}</p>";
+        }
+        if ($motivo) {
+            $message .= "<p><strong>Motivo:</strong> $motivo</p>";
+        }
+        $message .= "<hr>";
+        $message .= "<p style='color:#d72173;font-weight:bold'>⚠️ RECORDAD DEJAR DE TRABAJAR PARA ESTE CLIENTE HASTA QUE REGULARICE EL PAGO.</p>";
+        $message .= "<p><a href='" . base_url('index.php/facturacion/factura_view/' . $factura->id) . "' style='background:#d72173;color:white;padding:10px 20px;text-decoration:none;border-radius:5px'>Ver factura en el sistema</a></p>";
+        send_app_mail($email_destino, $subject, $message);
     }
 
     // ============================================================
@@ -437,6 +496,7 @@ class Facturacion extends Security_Controller {
             'anno'       => $anno,
             'mes'        => date('n'),
         ])->getResult();
+        $view_data['login_user'] = $this->login_user;
         return view("facturacion/remesas/index", $view_data);
     }
 
@@ -490,6 +550,7 @@ class Facturacion extends Security_Controller {
     function renovaciones() {
         $view_data['renovaciones'] = $this->Facturacion_model->get_renovaciones();
         $view_data['clientes']     = $this->Facturacion_model->get_clientes()->getResult();
+        $view_data['login_user'] = $this->login_user;
         return view("facturacion/renovaciones/index", $view_data);
     }
 
@@ -534,6 +595,7 @@ class Facturacion extends Security_Controller {
         $view_data['proyectos'] = $this->Facturacion_model->get_kit_digital();
         $view_data['clientes']  = $this->Facturacion_model->get_clientes()->getResult();
         $view_data['team_members'] = $this->_get_team_members_dropdown();
+        $view_data['login_user'] = $this->login_user;
         return view("facturacion/kit_digital/index", $view_data);
     }
 
@@ -571,9 +633,10 @@ class Facturacion extends Security_Controller {
     // ============================================================
 
     function comisiones() {
-        $view_data['comisiones']   = $this->Facturacion_model->get_comisiones()->getResult();
+        $view_data['comisiones']   = $this->Facturacion_model->get_comisiones();
         $view_data['team_members'] = $this->_get_team_members_dropdown();
         $view_data['clientes']     = $this->Facturacion_model->get_clientes()->getResult();
+        $view_data['login_user'] = $this->login_user;
         return view("facturacion/comisiones/index", $view_data);
     }
 
@@ -677,15 +740,15 @@ class Facturacion extends Security_Controller {
 
     private function _badge_estado_cobro($estado) {
         $map = [
-            'pendiente'              => 'warning',
-            'cobrado'                => 'success',
-            'rechazado'              => 'danger',
-            'parcialmente_cobrado'   => 'info',
-            'vencido'                => 'danger',
-            'no_procede'             => 'secondary',
+            'pendiente'            => ['color' => 'warning',   'icon' => '⏳', 'label' => 'Pendiente'],
+            'cobrado'              => ['color' => 'success',   'icon' => '✅', 'label' => 'Pagado OK'],
+            'rechazado'            => ['color' => 'danger',    'icon' => '🔴', 'label' => 'Rechazado'],
+            'parcialmente_cobrado' => ['color' => 'info',      'icon' => '🔶', 'label' => 'Pago parcial'],
+            'vencido'              => ['color' => 'danger',    'icon' => '🔴', 'label' => 'Retrasado'],
+            'no_procede'           => ['color' => 'secondary', 'icon' => '—',  'label' => 'No procede'],
         ];
-        $color = $map[$estado] ?? 'secondary';
-        return '<span class="badge bg-' . $color . '">' . ucfirst(str_replace('_', ' ', $estado)) . '</span>';
+        $d = $map[$estado] ?? ['color' => 'secondary', 'icon' => '?', 'label' => ucfirst($estado)];
+        return '<span class="badge bg-' . $d['color'] . '" title="' . $d['label'] . '">' . $d['icon'] . ' ' . $d['label'] . '</span>';
     }
 
     private function _badge_forma_pago($forma_pago) {
@@ -708,6 +771,42 @@ class Facturacion extends Security_Controller {
         ];
     }
 
+    // Devuelve los datos de un cliente CRM para autorellenar el modal
+    function get_crm_client_data() {
+        $id = $this->request->getPost('id');
+        if (!$id) { echo json_encode([]); return; }
+        $db = \Config\Database::connect();
+        $tc = $db->prefixTable('clients');
+        $tu = $db->prefixTable('users');
+        // Datos del cliente CRM
+        $client = $db->query("SELECT * FROM $tc WHERE id=$id AND deleted=0 LIMIT 1")->getRow();
+        if (!$client) { echo json_encode([]); return; }
+        // Contacto principal en crm_users (is_primary_contact=1)
+        $contact = $db->query("SELECT first_name, last_name, email, phone 
+            FROM $tu 
+            WHERE client_id=$id AND user_type='client' AND is_primary_contact=1 AND deleted=0 
+            LIMIT 1")->getRow();
+        // Si no hay contacto primario, coger el primero disponible
+        if (!$contact) {
+            $contact = $db->query("SELECT first_name, last_name, email, phone 
+                FROM $tu 
+                WHERE client_id=$id AND user_type='client' AND deleted=0 
+                LIMIT 1")->getRow();
+        }
+        echo json_encode([
+            'nombre'           => $client->company_name,
+            'nombre_fiscal'    => $client->company_name,
+            'cif_nif'          => $client->vat_number ?: ($client->gst_number ?: ''),
+            'direccion'        => $client->address ?: '',
+            'ciudad'           => $client->city ?: '',
+            'codigo_postal'    => $client->zip ?: '',
+            'pais'             => $client->country ?: 'España',
+            'telefono'         => $contact->phone ?? ($client->phone ?? ''),
+            'email_facturacion'=> $contact->email ?? '',
+            'persona_contacto' => $contact ? trim(($contact->first_name ?? '') . ' ' . ($contact->last_name ?? '')) : '',
+        ]);
+    }
+
     private function _get_crm_clients_dropdown() {
         $db = \Config\Database::connect();
         $t  = $db->prefixTable('clients');
@@ -719,4 +818,135 @@ class Facturacion extends Security_Controller {
         $t  = $db->prefixTable('users');
         return $db->query("SELECT id, CONCAT(first_name,' ',last_name) as name FROM $t WHERE deleted=0 AND status='active' AND user_type='staff' ORDER BY first_name ASC")->getResult();
     }
+
+    // ============================================================
+    // VISTA RESUMEN GENERAL (tipo Excel)
+    // ============================================================
+
+    function resumen($anno = null) {
+        $anno = intval($anno ?: date('Y'));
+
+        $db = \Config\Database::connect();
+        $tf  = $db->prefixTable('fac_facturas');
+        $tfl = $db->prefixTable('fac_factura_lineas');
+        $tc  = $db->prefixTable('fac_clientes');
+        $tcs = $db->prefixTable('fac_cliente_servicios');
+
+        // Obtener todos los clientes activos + los que tienen facturas ese año
+        $clientes_raw = $db->query("
+            SELECT DISTINCT c.id, c.nombre, c.forma_pago_default
+            FROM $tc c
+            WHERE c.deleted = 0
+            AND (c.estado IN ('activo','suspendido') OR EXISTS (
+                SELECT 1 FROM $tf f WHERE f.cliente_id = c.id AND f.anno = $anno AND f.deleted = 0
+            ))
+            ORDER BY c.nombre ASC
+        ")->getResult();
+
+        // Para cada cliente, obtener sus servicios y las líneas de factura por mes
+        $clientes = [];
+        $totales_mes = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $totales_mes[$m] = ['facturado' => 0, 'cobrado' => 0, 'pendiente' => 0];
+        }
+
+        foreach ($clientes_raw as $cli) {
+            // Servicios del cliente (activos o con historial ese año)
+            $servicios_raw = $db->query("
+                SELECT DISTINCT cs.id, cs.concepto as nombre, cs.forma_pago, cs.estado
+                FROM $tcs cs
+                WHERE cs.cliente_id = {$cli->id}
+                ORDER BY cs.id ASC
+            ")->getResult();
+
+            // Si no tiene servicios pero tiene facturas, crear servicio genérico
+            if (empty($servicios_raw)) {
+                $tiene_facturas = $db->query("SELECT id FROM $tf WHERE cliente_id={$cli->id} AND anno=$anno AND deleted=0 LIMIT 1")->getRow();
+                if ($tiene_facturas) {
+                    $servicios_raw = [(object)['id' => 0, 'nombre' => 'Servicios varios', 'forma_pago' => $cli->forma_pago_default, 'estado' => 'activo']];
+                }
+            }
+
+            if (empty($servicios_raw)) continue;
+
+            $servicios = [];
+            foreach ($servicios_raw as $srv) {
+                $meses_data = [];
+
+                // Buscar líneas de factura de este servicio en cada mes del año
+                if ($srv->id > 0) {
+                    // Servicio con ID: buscar líneas vinculadas
+                    $lineas = $db->query("
+                        SELECT f.mes, f.estado_cobro, f.forma_pago,
+                               GROUP_CONCAT(fl.descripcion ORDER BY fl.id SEPARATOR ' + ') as concepto,
+                               SUM(fl.total) as importe
+                        FROM $tfl fl
+                        INNER JOIN $tf f ON f.id = fl.factura_id
+                        WHERE fl.cliente_servicio_id = {$srv->id}
+                        AND f.anno = $anno AND f.deleted = 0
+                        GROUP BY f.mes, f.estado_cobro, f.forma_pago
+                    ")->getResult();
+
+                    foreach ($lineas as $linea) {
+                        $meses_data[(int)$linea->mes] = [
+                            'concepto'     => $linea->concepto,
+                            'importe'      => floatval($linea->importe),
+                            'estado_cobro' => $linea->estado_cobro,
+                            'forma_pago'   => $linea->forma_pago,
+                        ];
+                    }
+                } else {
+                    // Servicio genérico: coger totales de factura del cliente
+                    $facturas = $db->query("
+                        SELECT f.mes, f.estado_cobro, f.forma_pago, f.total,
+                               GROUP_CONCAT(DISTINCT fl.descripcion ORDER BY fl.id SEPARATOR ' + ') as concepto
+                        FROM $tf f
+                        LEFT JOIN $tfl fl ON fl.factura_id = f.id
+                        WHERE f.cliente_id = {$cli->id} AND f.anno = $anno AND f.deleted = 0
+                        GROUP BY f.mes, f.estado_cobro, f.forma_pago
+                    ")->getResult();
+
+                    foreach ($facturas as $fac) {
+                        $meses_data[(int)$fac->mes] = [
+                            'concepto'     => $fac->concepto ?: 'Servicios varios',
+                            'importe'      => floatval($fac->total),
+                            'estado_cobro' => $fac->estado_cobro,
+                            'forma_pago'   => $fac->forma_pago,
+                        ];
+                    }
+                }
+
+                // Actualizar totales por mes
+                foreach ($meses_data as $mes => $d) {
+                    $totales_mes[$mes]['facturado'] += $d['importe'];
+                    if ($d['estado_cobro'] === 'cobrado') {
+                        $totales_mes[$mes]['cobrado'] += $d['importe'];
+                    } else {
+                        $totales_mes[$mes]['pendiente'] += $d['importe'];
+                    }
+                }
+
+                $servicios[] = [
+                    'nombre'    => $srv->nombre,
+                    'forma_pago'=> $srv->forma_pago ?: $cli->forma_pago_default,
+                    'estado'    => $srv->estado,
+                    'meses'     => $meses_data,
+                ];
+            }
+
+            $clientes[] = [
+                'nombre'    => $cli->nombre,
+                'forma_pago'=> $cli->forma_pago_default,
+                'servicios' => $servicios,
+            ];
+        }
+
+        $view_data['anno']        = $anno;
+        $view_data['clientes']    = $clientes;
+        $view_data['totales_mes'] = $totales_mes;
+        $view_data['login_user']  = $this->login_user;
+
+        return $this->template->rander("facturacion/resumen/index", $view_data);
+    }
+
 }

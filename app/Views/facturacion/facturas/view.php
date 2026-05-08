@@ -51,8 +51,31 @@
                                 </span>
                             </div>
                             <div class="col-md-3">
+                                <label class="small text-muted">Tipo de factura</label><br>
+                                <select id="sel-tipo-factura" class="form-select form-select-sm" style="max-width:160px"
+                                    onchange="cambiarEstadoCobro(<?php echo $factura->id; ?>, null, this.value)">
+                                    <option value="">— Tipo —</option>
+                                    <option value="mensual" <?php echo ($factura->observaciones_internas && strpos($factura->observaciones_internas,'tipo:mensual')!==false)?'selected':''; ?>>Mensual</option>
+                                    <option value="trimestral">Trimestral</option>
+                                    <option value="semestral">Semestral</option>
+                                    <option value="anual">Anual</option>
+                                    <option value="unico">Pago único</option>
+                                    <option value="puntual">Trabajo puntual</option>
+                                    <option value="kit_digital">Kit Digital</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
                                 <label class="small text-muted">Estado cobro</label><br>
-                                <span id="badge-estado-cobro">
+                                <select id="sel-estado-cobro-view" class="form-select form-select-sm" style="max-width:170px"
+                                    onchange="cambiarEstadoCobro(<?php echo $factura->id; ?>, this.value, null)">
+                                    <option value="pendiente" <?php echo $factura->estado_cobro=='pendiente'?'selected':''; ?>>⏳ Pendiente</option>
+                                    <option value="cobrado" <?php echo $factura->estado_cobro=='cobrado'?'selected':''; ?>>✅ Pagado OK</option>
+                                    <option value="rechazado" <?php echo $factura->estado_cobro=='rechazado'?'selected':''; ?>>🔴 Rechazado</option>
+                                    <option value="vencido" <?php echo $factura->estado_cobro=='vencido'?'selected':''; ?>>🔴 Retrasado</option>
+                                    <option value="parcialmente_cobrado" <?php echo $factura->estado_cobro=='parcialmente_cobrado'?'selected':''; ?>>🔶 Pago parcial</option>
+                                    <option value="no_procede" <?php echo $factura->estado_cobro=='no_procede'?'selected':''; ?>>— No procede</option>
+                                </select>
+                                <span id="badge-estado-cobro" style="display:none">
                                 <?php
                                 $ec_map = ['pendiente'=>'warning','cobrado'=>'success','rechazado'=>'danger','parcialmente_cobrado'=>'info','vencido'=>'danger','no_procede'=>'secondary'];
                                 $ec_col = $ec_map[$factura->estado_cobro] ?? 'secondary';
@@ -388,4 +411,22 @@ function marcarRechazada(id){
 }
 
 function formatMoney(n){ return parseFloat(n).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+
+function cambiarEstadoCobro(facturaId, estadoCobro, tipoPago) {
+    if (estadoCobro) {
+        $.post('<?php echo get_uri("facturacion/cambiar_estado_cobro"); ?>', 
+            {factura_id: facturaId, estado_cobro: estadoCobro}, 
+            function(res){
+                if (res.success) {
+                    var msgs = {
+                        'cobrado': '✅ Factura marcada como Pagado OK',
+                        'rechazado': '🔴 Rechazado — email de alerta enviado al equipo',
+                        'vencido': '🔴 Retrasado — email de alerta enviado al equipo',
+                        'pendiente': '⏳ Pendiente — email de aviso enviado al equipo',
+                    };
+                    appAlert.success(msgs[estadoCobro] || 'Estado actualizado');
+                }
+            }, 'json');
+    }
+}
 </script>
