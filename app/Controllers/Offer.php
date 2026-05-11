@@ -2,17 +2,21 @@
 
 namespace App\Controllers;
 
-class Offer extends Security_Controller {
+class Offer extends Security_Controller
+{
 
-    function __construct() {
+    function __construct()
+    {
         parent::__construct(false);
     }
 
-    function index() {
+    function index()
+    {
         app_redirect("forbidden");
     }
 
-    function preview($proposal_id = 0, $public_key = "") {
+    function preview($proposal_id = 0, $public_key = "")
+    {
         if (!($proposal_id && $public_key)) {
             show_404();
         }
@@ -54,7 +58,8 @@ class Offer extends Security_Controller {
     }
 
     //update proposal status
-    function update_proposal_status($proposal_id, $public_key, $status) {
+    function update_proposal_status($proposal_id, $public_key, $status)
+    {
         validate_numeric_value($proposal_id);
         if (!($proposal_id && $public_key && $status)) {
             show_404();
@@ -82,7 +87,8 @@ class Offer extends Security_Controller {
     }
 
     //print proposal
-    function print_proposal($proposal_id = 0, $public_key = "") {
+    function print_proposal($proposal_id = 0, $public_key = "")
+    {
         validate_numeric_value($proposal_id);
         if ($proposal_id && $public_key) {
             $view_data = get_proposal_making_data($proposal_id);
@@ -101,7 +107,8 @@ class Offer extends Security_Controller {
         }
     }
 
-    function accept_proposal_modal_form($proposal_id = 0, $public_key = "") {
+    function accept_proposal_modal_form($proposal_id = 0, $public_key = "")
+    {
         validate_numeric_value($proposal_id);
         if (!$proposal_id) {
             show_404();
@@ -134,7 +141,8 @@ class Offer extends Security_Controller {
         return $this->template->view('proposals/accept_proposal_modal_form', $view_data);
     }
 
-    function accept_proposal() {
+    function accept_proposal()
+    {
         $validation_array = array(
             "id" => "numeric|required",
             "public_key" => "required",
@@ -158,11 +166,11 @@ class Offer extends Security_Controller {
             show_404();
         }
 
-        $name = $this->request->getPost("name");
-        $email = $this->request->getPost("email");
+        $name      = $this->request->getPost("name");
+        $email     = $this->request->getPost("email");
         $signature = $this->request->getPost("signature");
 
-        $meta_data = array();
+        $meta_data     = array();
         $proposal_data = array();
 
         if ($signature) {
@@ -171,8 +179,8 @@ class Offer extends Security_Controller {
             $signature = base64_decode($signature);
             $signature = serialize(move_temp_file("signature.jpg", get_setting("timeline_file_path"), "proposal", NULL, "", $signature));
 
-            $meta_data["signature"] = $signature;
-            $meta_data["signed_date"] = get_current_utc_time();
+            $meta_data["signature"]    = $signature;
+            $meta_data["signed_date"]  = get_current_utc_time();
         }
 
         if ($name) {
@@ -181,7 +189,7 @@ class Offer extends Security_Controller {
                 show_404();
             }
 
-            $meta_data["name"] = clean_data($name);
+            $meta_data["name"]  = clean_data($name);
             $meta_data["email"] = clean_data($email);
         } else {
             //from preview, should be logged in client contact
@@ -195,7 +203,7 @@ class Offer extends Security_Controller {
         }
 
         $proposal_data["meta_data"] = serialize($meta_data);
-        $proposal_data["status"] = "accepted";
+        $proposal_data["status"]    = "accepted";
 
         if ($this->Proposals_model->ci_save($proposal_data, $proposal_id)) {
             log_notification("proposal_accepted", array("proposal_id" => $proposal_id), ($name ? "999999996" : $this->login_user->id));
@@ -205,7 +213,14 @@ class Offer extends Security_Controller {
         }
     }
 
-    function download_pdf($proposal_id = 0, $public_key = "") {
+    /**
+     * Descarga el PDF desde la URL pública de la propuesta.
+     * Redirige a proposals/download_pdf que usa el diseño Tictac.
+     * El usuario ya tiene la clave pública validada arriba; proposals/download_pdf
+     * aplica sus propios controles de acceso (check_proposal_pdf_access_for_clients).
+     */
+    function download_pdf($proposal_id = 0, $public_key = "")
+    {
         validate_numeric_value($proposal_id);
         if (!$proposal_id) {
             show_404();
@@ -220,12 +235,12 @@ class Offer extends Security_Controller {
             show_404();
         }
 
-        $proposal_data = get_proposal_making_data($proposal_id);
-        $proposal_data['proposal_preview'] = prepare_proposal_view($proposal_data);
-
-        prepare_proposal_pdf($proposal_data);
+        // Redirigir a la ruta privada que genera el PDF Tictac.
+        // Se puede hacer porque check_proposal_pdf_access_for_clients() en Proposals
+        // comprueba también el tipo de usuario, y desde aquí ya validamos la public_key.
+        app_redirect("proposals/download_pdf/" . $proposal_id);
     }
 }
 
 /* End of file Offer.php */
-/* Location: ./app/controllers/Offer.php */
+/* Location: ./app/Controllers/Offer.php */
