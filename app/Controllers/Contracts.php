@@ -248,17 +248,6 @@ function save() {
         $copy_items_from_proposal = $this->request->getPost("copy_items_from_proposal");
         $this->_copy_related_items_to_contract($copy_items_from_proposal, $contract_id);
 
-        // ── Notificar al dashboard (sincronización CRM → dashboard) ──
-        // Solo si NO es un clon nuevo (los clones no tienen versión en el dashboard)
-        if (!$is_clone) {
-            $this->_notify_dashboard_contract_change(
-                $contract_id,
-                $this->request->getPost('title'),
-                $this->request->getPost('contract_date'),
-                $this->request->getPost('valid_until')
-            );
-        }
-
         echo json_encode(array("success" => true, "data" => $this->_row_data($contract_id), 'id' => $contract_id, 'message' => app_lang('record_saved')));
     } else {
         echo json_encode(array("success" => false, 'message' => app_lang('error_occurred')));
@@ -887,31 +876,7 @@ function save() {
         $contract_info = get_array_value($contract_data, "contract_info");
         $contract_data['contract_status_label'] = $this->_get_contract_status_label($contract_info);
 
-        // ── Intentar preview del dashboard ──────────────────────
-        $dashboard_url = 'https://gestion-tictac-comunicacion.es/dashboard/contratos/api.php'
-            . '?action=preview_by_crm_id'
-            . '&crm_id=' . intval($contract_id)
-            . '&key=ea088539d42bf7e87dc7d4b171dfdcf7be3416322cb88eec6a504f701c4bd7dc';
-
-        $ch = curl_init($dashboard_url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
-        $dashboard_html = curl_exec($ch);
-        $http_code      = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($http_code === 200 && $dashboard_html && strlen(trim($dashboard_html)) > 100) {
-            // Preview del dashboard — inyectar el HTML directamente
-            $view_data['contract_preview'] = $dashboard_html;
-            $view_data['is_dashboard_preview'] = true;
-        } else {
-            // Fallback: preview nativa del CRM
-            $view_data['contract_preview'] = prepare_contract_view($contract_data);
-            $view_data['is_dashboard_preview'] = false;
-        }
-
+        $view_data['contract_preview'] = prepare_contract_view($contract_data);
         $view_data['has_pdf_access'] = $this->check_contract_pdf_access_for_clients($this->login_user->user_type);
         $view_data['show_close_preview'] = $show_close_preview && $this->login_user->user_type === "staff" ? true : false;
         $view_data['contract_id'] = $contract_id;
@@ -1049,48 +1014,132 @@ function save() {
     }
 
     function send_contract() {
+        try {
         $contract_id = $this->request->getPost('id');
 
         if (!$this->can_edit_contracts($contract_id)) {
             app_redirect("forbidden");
         }
 
-        $this->validate_submitted_data(array(
-            "id" => "required|numeric"
-        ));
-
-        $contact_id = $this->request->getPost('contact_id');
-        $cc = $this->request->getPost('contract_cc');
-
-        $custom_bcc = $this->request->getPost('contract_bcc');
-        $subject = $this->request->getPost('subject');
-        $message = decode_ajax_post_data($this->request->getPost('message'));
-
-        $attach_pdf = $this->request->getPost('attach_pdf');
-
-        $attachments = array();
-        if ($attach_pdf) {
-            $contract_data = get_contract_making_data($contract_id);
-            $contract_data['contract_preview'] = prepare_contract_view($contract_data);
-
-            $attachement_url = prepare_contract_pdf($contract_data, "send_email");
-
-            $attachment_size = filesize($attachement_url);
-
-            if ($attachment_size / 1000000 > 10) {
-                echo json_encode(array("success" => false, 'message' => app_lang("attachment_size_is_too_large")));
-                exit();
-            }
-
-            //add contract pdf
-            array_unshift($attachments, array("file_path" => $attachement_url));
+        if (!$contract_id || !is_numeric($contract_id)) {
+            echo json_encode(array('success' => false, 'message' => 'ID de contrato no válido'));
+            return;
         }
 
-        $contact = $this->Users_model->get_one($contact_id);
+        $contact_id = $this->request->getPost('contact_id');
+        $cc         = $this->request->getPost('contract_cc');
+        $custom_bcc = $this->request->getPost('contract_bcc');
+        $attach_pdf = $this->request->getPost('attach_pdf');
 
+        // ── Datos del contrato ────────────────────────────────────────
+        $contract_data = get_contract_making_data($contract_id);
+        if (!$contract_data) {
+            echo json_encode(array('success' => false, 'message' => 'No se encontró el contrato'));
+            return;
+        }
+
+        $contract_info  = $contract_data['contract_info'];
+        $total_summary  = $this->Contracts_model->get_contract_total_summary($contract_id);
+        $contact        = $this->Users_model->get_one($contact_id);
+        $client_info    = $contract_data['client_info'];
+
+        if (!$contact->email) {
+            echo json_encode(array('success' => false, 'message' => 'El contacto no tiene email'));
+            return;
+        }
+
+        $to = $contact->email;
+
+        // ── Email HTML corporativo Tictac ─────────────────────────────
+        $subject = 'Contrato para ' . ($client_info->company_name ?? 'su proyecto') . ' - Tictac Comunicación';
+
+        $fecha_contrato  = format_to_date($contract_info->contract_date, false);
+        $valido_hasta    = format_to_date($contract_info->valid_until, false);
+        $total_str       = to_currency($total_summary->contract_total, $total_summary->currency_symbol);
+        $nombre_contacto = htmlspecialchars($contact->first_name . ' ' . $contact->last_name);
+        $contract_url    = get_uri('contract/preview/' . $contract_info->id . '/' . $contract_info->public_key);
+        $contract_ref    = get_contract_id($contract_info->id);
+
+        $message = '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body{font-family:Arial,sans-serif;line-height:1.6;color:#333;margin:0;padding:0;background-color:#f5f5f5;}
+        .email-container{max-width:600px;margin:20px auto;background:white;border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
+        .header{background:#d72173;color:white;padding:40px 30px;text-align:center;}
+        .header img{max-width:180px;height:auto;margin-bottom:15px;}
+        .header h1{margin:0;font-size:24px;font-weight:600;}
+        .content{padding:40px 30px;}
+        .content p{margin:0 0 15px 0;}
+        .resumen-box{background:#fff5f9;border-left:4px solid #d72173;padding:20px;margin:25px 0;border-radius:5px;}
+        .resumen-box strong{color:#d72173;}
+        .total-destacado{font-size:24px;color:#d72173;font-weight:bold;margin-top:10px;}
+        .btn-cta{display:block;width:fit-content;margin:25px auto 10px;background-color:#d72173 !important;color:#ffffff !important;padding:14px 36px;border-radius:50px;text-decoration:none !important;font-weight:700;font-size:16px;text-align:center;border:2px solid #d72173 !important;}
+        .btn-note{text-align:center;font-size:11px;color:#aaa;margin-bottom:10px;}
+        .footer{background:#1a1a1a;color:white;padding:30px;text-align:center;font-size:13px;}
+        .footer a{color:#d72173;text-decoration:none;}
+        .contacto-info{margin-top:15px;line-height:1.8;}
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <img src="https://tictac-comunicacion.es/wp-content/uploads/2026/02/LOGO-1-2.png" alt="Tictac Comunicación">
+            <h1>Tu Contrato Está Listo</h1>
+        </div>
+        <div class="content">
+            <p>Estimado/a <strong>' . $nombre_contacto . '</strong>,</p>
+            <p>Adjunto encontrarás el contrato de servicios con Tictac Comunicación Digital. Por favor, revísalo y acéptalo o recházalo desde el enlace que encontrarás a continuación.</p>
+            <div class="resumen-box">
+                <strong>📋 Resumen del Contrato</strong><br><br>
+                <strong>Referencia:</strong> ' . $contract_ref . '<br>
+                <strong>Fecha de emisión:</strong> ' . $fecha_contrato . '<br>
+                <strong>Válido hasta:</strong> ' . $valido_hasta . '<br>
+                <div class="total-destacado">Total: ' . $total_str . '</div>
+            </div>
+            <a href="' . $contract_url . '" class="btn-cta" target="_blank">Ver y Aceptar Contrato →</a>
+            <p class="btn-note">Puedes aceptar o rechazar el contrato desde el enlace anterior</p>
+            <p>Si tienes alguna duda, no dudes en contactarnos. Estamos encantados de atenderte.</p>
+        </div>
+        <div class="footer">
+            <strong>Tictac Comunicación Digital SL</strong>
+            <div class="contacto-info">
+                📍 C. Cruz Conde, 19, 6º 5 · 14001 Córdoba<br>
+                📞 <a href="tel:+34633335390">633 33 53 90</a><br>
+                ✉ <a href="mailto:hola@tictac-comunicacion.es">hola@tictac-comunicacion.es</a><br>
+                🌐 <a href="https://www.tictac-comunicacion.es" target="_blank">www.tictac-comunicacion.es</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>';
+
+        // ── PDF Tictac adjunto ────────────────────────────────────────
+        $attachments  = array();
+        $tmp_pdf_path = null;
+
+        if ($attach_pdf) {
+            try {
+                $tmp_pdf_path = $this->_generate_tictac_contract_pdf($contract_id, 'save');
+            } catch (\Throwable $e) {
+                log_message('error', '[Tictac] send_contract: error PDF — ' . $e->getMessage());
+            }
+
+            if ($tmp_pdf_path && file_exists($tmp_pdf_path)) {
+                if (filesize($tmp_pdf_path) / 1000000 > 10) {
+                    @unlink($tmp_pdf_path);
+                    echo json_encode(array("success" => false, 'message' => app_lang("attachment_size_is_too_large")));
+                    return;
+                }
+                $attachments[] = array("file_path" => $tmp_pdf_path);
+            }
+        }
+
+        // ── BCC ───────────────────────────────────────────────────────
         $default_bcc = get_setting('send_contract_bcc_to');
-        $bcc_emails = "";
-
+        $bcc_emails  = "";
         if ($default_bcc && $custom_bcc) {
             $bcc_emails = $default_bcc . "," . $custom_bcc;
         } else if ($default_bcc) {
@@ -1099,21 +1148,24 @@ function save() {
             $bcc_emails = $custom_bcc;
         }
 
-        if (send_app_mail($contact->email, $subject, $message, array("attachments" => $attachments, "cc" => $cc, "bcc" => $bcc_emails))) {
-            // change email status
+        // ── Enviar ────────────────────────────────────────────────────
+        if (send_app_mail($to, $subject, $message, array("attachments" => $attachments, "cc" => $cc, "bcc" => $bcc_emails))) {
+            if ($tmp_pdf_path && file_exists($tmp_pdf_path)) {
+                @unlink($tmp_pdf_path);
+            }
             $status_data = array("status" => "sent", "last_email_sent_date" => get_my_local_time());
             if ($this->Contracts_model->ci_save($status_data, $contract_id)) {
                 echo json_encode(array('success' => true, 'message' => app_lang("contract_sent_message"), "contract_id" => $contract_id));
             }
-
-            if ($attach_pdf) {
-                // delete the temp contract
-                if (file_exists($attachement_url)) {
-                    unlink($attachement_url);
-                }
-            }
         } else {
+            if ($tmp_pdf_path && file_exists($tmp_pdf_path)) {
+                @unlink($tmp_pdf_path);
+            }
             echo json_encode(array('success' => false, 'message' => app_lang('error_occurred')));
+        }
+        } catch (\Throwable $e) {
+            log_message('error', '[Tictac] send_contract EXCEPCION: ' . $e->getMessage() . ' en ' . $e->getFile() . ':' . $e->getLine());
+            echo json_encode(array('success' => false, 'message' => 'Error interno: ' . $e->getMessage()));
         }
     }
 
@@ -1217,63 +1269,536 @@ function save() {
     }
 
     function download_pdf($contract_id = 0, $mode = "download", $user_language = "") {
-    if (!$contract_id) {
-        show_404();
-    }
-
-    if (!$this->check_contract_pdf_access_for_clients($this->login_user->user_type)) {
-        show_404();
-    }
-
-    validate_numeric_value($contract_id);
-    $contract_data = get_contract_making_data($contract_id);
-    $this->_check_contract_access_permission($contract_data);
-
-    // ── Intentar PDF del dashboard ──────────────────────────────
-    $dashboard_url = 'https://gestion-tictac-comunicacion.es/dashboard/contratos/api.php'
-        . '?action=pdf_by_crm_id'
-        . '&crm_id=' . intval($contract_id)
-        . '&mode=' . urlencode($mode)
-        . '&key=ea088539d42bf7e87dc7d4b171dfdcf7be3416322cb88eec6a504f701c4bd7dc';
-
-    $ch = curl_init($dashboard_url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
-    $pdf_content = curl_exec($ch);
-    $http_code   = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $content_type = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-    curl_close($ch);
-
-    if ($http_code === 200 && $pdf_content && strpos($content_type, 'application/pdf') !== false) {
-        // El dashboard devolvió un PDF válido — enviarlo al navegador
-        $filename = 'Contrato_' . $contract_id . '.pdf';
-        header('Content-Type: application/pdf');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Content-Length: ' . strlen($pdf_content));
-        header('Cache-Control: private, max-age=0, must-revalidate');
-        echo $pdf_content;
-        exit();
-    }
-
-    // ── Fallback: PDF nativo del CRM ────────────────────────────
-    $contract_data['contract_preview'] = prepare_contract_view($contract_data);
-
-    if ($user_language) {
-        $language = service('language');
-        $active_locale = $language->getLocale();
-        if ($user_language !== $active_locale) {
-            $language->setLocale($user_language);
+        if (!$contract_id) {
+            show_404();
         }
-        prepare_contract_pdf($contract_data, $mode);
-        if ($user_language !== $active_locale) {
-            $language->setLocale($active_locale);
+
+        if (!$this->check_contract_pdf_access_for_clients($this->login_user->user_type)) {
+            show_404();
         }
-    } else {
-        prepare_contract_pdf($contract_data, $mode);
+
+        validate_numeric_value($contract_id);
+        $contract_data = get_contract_making_data($contract_id);
+        $this->_check_contract_access_permission($contract_data);
+
+        $this->_generate_tictac_contract_pdf($contract_id, 'download');
     }
-}
+
+    private function _generate_tictac_contract_pdf($contract_id, $mode = 'download') {
+        // ── Cargar TCPDF ─────────────────────────────────────────────────
+        $tcpdf_path = APPPATH . '../app/ThirdParty/tcpdf/tcpdf.php';
+        if (!file_exists($tcpdf_path)) {
+            $tcpdf_path = APPPATH . '../dashboard/tcpdf/tcpdf.php';
+        }
+        if (!file_exists($tcpdf_path)) return null;
+        require_once($tcpdf_path);
+        require_once(APPPATH . '../app/Libraries/TictacContractPDF.php');
+
+        // ── Obtener datos ────────────────────────────────────────────────
+        $contract_data  = get_contract_making_data($contract_id);
+        if (!$contract_data) return null;
+
+        $contract_info  = $contract_data['contract_info'];
+        $client_info    = $contract_data['client_info'];
+        $items          = $this->Contract_items_model->get_details(array('contract_id' => $contract_id))->getResult();
+        $total_summary  = $this->Contracts_model->get_contract_total_summary($contract_id);
+
+        $brand_r = 215; $brand_g = 33; $brand_b = 115;
+
+        // ── Helpers ──────────────────────────────────────────────────────
+        $pdf_text_plain = function ($html) {
+            if ($html === null) return '';
+            $txt = strip_tags((string)$html);
+            $txt = html_entity_decode($txt, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            return trim(preg_replace("/[ \t]+/", " ", $txt));
+        };
+
+        $pdf_html_clean = function ($html) {
+            if ($html === null || trim($html) === '' || trim($html) === '<p><br></p>') return '';
+            $html = preg_replace('~<style[^>]*>.*?</style>~is', '', $html);
+            $html = preg_replace('~<script[^>]*>.*?</script>~is', '', $html);
+            $html = preg_replace('~<span[^>]*>~i', '', $html);
+            $html = str_ireplace('</span>', '', $html);
+            $html = strip_tags($html, '<p><strong><b><em><i><u><ul><ol><li>');
+            return trim($html);
+        };
+
+        // ── Instanciar PDF ───────────────────────────────────────────────
+        $pdf = new \TictacContractPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+        $pdf->brand_r = $brand_r;
+        $pdf->brand_g = $brand_g;
+        $pdf->brand_b = $brand_b;
+
+        foreach ([
+            APPPATH . '../assets/images/logoblanco.png',
+            APPPATH . '../uploads/logoblanco.png',
+            APPPATH . '../dashboard/assets/img/logoblanco.png',
+        ] as $c) {
+            if (file_exists($c)) { $pdf->logo_path = $c; break; }
+        }
+
+        $pdf->SetAutoPageBreak(true, 20);
+        $pdf->SetCreator('Tictac Comunicación');
+        $pdf->SetAuthor('Tictac Comunicación Digital SL');
+        $pdf->SetTitle('Contrato ' . get_contract_id($contract_info->id));
+        $pdf->AddPage();
+        $pdf->SetMargins(15, 34, 15);
+        $pdf->SetY(34);
+
+        $pageW    = $pdf->getPageWidth();
+        $contentW = $pageW - 30;
+        $colW     = 85;
+        $startX   = 15;
+        $startY   = $pdf->GetY();
+
+        // ── Cajas info ───────────────────────────────────────────────────
+        $cajaH = 42;
+        $pdf->SetFillColor(250, 250, 250);
+        $pdf->SetDrawColor(230, 230, 230);
+        $pdf->Rect($startX, $startY, $colW, $cajaH, 'DF');
+        $pdf->SetFillColor($brand_r, $brand_g, $brand_b);
+        $pdf->Rect($startX, $startY, 3, $cajaH, 'F');
+        $pdf->SetXY($startX + 7, $startY + 5);
+        $pdf->SetTextColor($brand_r, $brand_g, $brand_b);
+        $pdf->SetFont('Helvetica', 'B', 7.5);
+        $pdf->Cell($colW - 10, 4, strtoupper('Datos del Contrato'), 0, 1, 'L');
+        $pdf->SetDrawColor(220, 220, 220);
+        $pdf->SetLineWidth(0.2);
+        $pdf->Line($startX + 7, $pdf->GetY() + 1, $startX + $colW - 3, $pdf->GetY() + 1);
+        $pdf->Ln(4);
+        $pdf->SetTextColor(80, 80, 80);
+        $pdf->SetX($startX + 7);
+        $pdf->SetFont('Helvetica', 'B', 8); $pdf->Cell(28, 5, 'Referencia:', 0, 0, 'L');
+        $pdf->SetFont('Helvetica', '', 8);  $pdf->Cell(0, 5, get_contract_id($contract_info->id), 0, 1, 'L');
+        $pdf->SetX($startX + 7);
+        $pdf->SetFont('Helvetica', 'B', 8); $pdf->Cell(28, 5, 'Fecha:', 0, 0, 'L');
+        $pdf->SetFont('Helvetica', '', 8);  $pdf->Cell(0, 5, !empty($contract_info->contract_date) ? date('d/m/Y', strtotime($contract_info->contract_date)) : '', 0, 1, 'L');
+        $pdf->SetX($startX + 7);
+        $pdf->SetFont('Helvetica', 'B', 8); $pdf->Cell(28, 5, 'Válido hasta:', 0, 0, 'L');
+        $pdf->SetFont('Helvetica', '', 8);  $pdf->Cell(0, 5, !empty($contract_info->valid_until) ? date('d/m/Y', strtotime($contract_info->valid_until)) : '', 0, 1, 'L');
+
+        $rightX    = $startX + $colW + 5;
+        $rightColW = $colW;
+        $labelW    = 22;
+        $valueW    = $rightColW - $labelW - 10;
+
+        $campos = [];
+        $campos[] = ['Empresa:', $client_info->company_name ?? ''];
+        if (!empty($client_info->address))  $campos[] = ['Dirección:', $client_info->address];
+        $ciudad = trim(($client_info->city ?? '') . (!empty($client_info->zip) ? ', ' . $client_info->zip : ''));
+        if ($ciudad && $ciudad !== ',') $campos[] = ['Ciudad:', $ciudad];
+        if (!empty($client_info->vat_number)) $campos[] = ['CIF/NIF:', $client_info->vat_number];
+
+        $cajaClienteH = max($cajaH, 16 + count($campos) * 5 + 4);
+        $pdf->SetFillColor(250, 250, 250);
+        $pdf->SetDrawColor(230, 230, 230);
+        $pdf->Rect($rightX, $startY, $rightColW, $cajaClienteH, 'DF');
+        $pdf->SetFillColor($brand_r, $brand_g, $brand_b);
+        $pdf->Rect($rightX, $startY, 3, $cajaClienteH, 'F');
+        $pdf->SetXY($rightX + 7, $startY + 5);
+        $pdf->SetTextColor($brand_r, $brand_g, $brand_b);
+        $pdf->SetFont('Helvetica', 'B', 7.5);
+        $pdf->Cell($rightColW - 10, 4, strtoupper('Información del Cliente'), 0, 1, 'L');
+        $pdf->SetDrawColor(220, 220, 220);
+        $pdf->SetLineWidth(0.2);
+        $pdf->Line($rightX + 7, $pdf->GetY() + 1, $rightX + $rightColW - 3, $pdf->GetY() + 1);
+        $pdf->Ln(4);
+        foreach ($campos as $campo) {
+            $curY = $pdf->GetY();
+            $pdf->SetXY($rightX + 7, $curY);
+            $pdf->SetTextColor(80, 80, 80);
+            $pdf->SetFont('Helvetica', 'B', 8);
+            $pdf->Cell($labelW, 5, $campo[0], 0, 0, 'L');
+            $pdf->SetFont('Helvetica', '', 8);
+            $pdf->SetXY($rightX + 7 + $labelW, $curY);
+            $pdf->MultiCell($valueW, 5, $campo[1] ?? '', 0, 'L', false, 1);
+        }
+
+        $pdf->SetY(max($pdf->GetY(), $startY + $cajaH));
+        $pdf->SetY($pdf->GetY() + 8);
+
+        // ── Título sección ───────────────────────────────────────────────
+        $lineY = $pdf->GetY();
+        $pdf->SetDrawColor(230, 230, 230);
+        $pdf->SetLineWidth(0.3);
+        $pdf->Line(15, $lineY, $pageW - 15, $lineY);
+        $pdf->SetFillColor($brand_r, $brand_g, $brand_b);
+        $pdf->Circle(15, $lineY, 0.8, 0, 360, 'F');
+        $pdf->SetY($lineY + 5);
+        $pdf->SetX(15);
+        $pdf->SetFont('Helvetica', 'B', 13);
+        $pdf->SetTextColor(30, 30, 30);
+        $pdf->Cell($contentW, 7, 'Servicios Contratados', 0, 1, 'L');
+        $pdf->SetFont('Helvetica', '', 8);
+        $pdf->SetTextColor(150, 150, 150);
+        $pdf->SetX(15);
+        $pdf->Cell($contentW, 5, 'Servicios incluidos en este contrato  ·  Precios sin IVA (' . number_format($total_summary->tax_percentage ?? 21, 0) . '%)', 0, 1, 'L');
+        $pdf->SetY($pdf->GetY() + 5);
+
+        // ── Tabla artículos ──────────────────────────────────────────────
+        $cArticulo = 80; $cCantidad = 22; $cTarifa = 28; $cTotal = 30;
+        $tableW = $cArticulo + $cCantidad + $cTarifa + $cTotal;
+
+        $printHeader = function () use ($pdf, $cArticulo, $cCantidad, $cTarifa, $cTotal, $tableW, $brand_r, $brand_g, $brand_b) {
+            $hy = $pdf->GetY();
+            $pdf->SetFillColor($brand_r, $brand_g, $brand_b);
+            $pdf->Rect(15, $hy, $tableW, 7, 'F');
+            $pdf->SetXY(18, $hy + 0.8);
+            $pdf->SetTextColor(255, 255, 255);
+            $pdf->SetFont('Helvetica', 'B', 7.5);
+            $pdf->Cell($cArticulo - 3, 6, 'SERVICIO / DESCRIPCIÓN', 0, 0, 'L');
+            $pdf->Cell($cCantidad, 6, 'CANT.', 0, 0, 'C');
+            $pdf->Cell($cTarifa, 6, 'PRECIO', 0, 0, 'R');
+            $pdf->Cell($cTotal - 3, 6, 'TOTAL', 0, 1, 'R');
+            $pdf->SetTextColor(51, 51, 51);
+        };
+        $printHeader();
+
+        $rowAlt = false;
+        foreach ($items as $item) {
+            $cantidad = floatval($item->quantity ?? 0);
+            $precio   = floatval($item->rate ?? 0);
+            $total    = $cantidad * $precio;
+            $nombre   = $pdf_text_plain($item->title ?? '');
+            $descClean = $pdf_html_clean($item->description ?? '');
+            $descPlain = $pdf_text_plain($item->description ?? '');
+            $hayDesc  = trim(strip_tags($descClean)) !== '' || $descPlain !== '';
+            $cabH     = 7;
+
+            if (($pdf->GetY() + $cabH) > $pdf->getPageHeight() - 25) {
+                $pdf->AddPage(); $printHeader(); $rowAlt = false;
+            }
+
+            $rowY = $pdf->GetY();
+            if ($rowAlt) {
+                $pdf->SetFillColor(250, 250, 252);
+                $pdf->Rect(15, $rowY, $tableW, $cabH + ($hayDesc ? 8 : 0), 'F');
+            }
+            $pdf->SetFillColor($brand_r, $brand_g, $brand_b);
+            $pdf->Rect(15, $rowY, 1.5, $cabH, 'F');
+            $pdf->SetXY(19, $rowY + 1.5);
+            $pdf->SetFont('Helvetica', 'B', 8.5);
+            $pdf->SetTextColor(40, 40, 40);
+            $pdf->Cell($cArticulo - 4, 5, $nombre, 0, 0, 'L');
+            $pdf->SetFont('Helvetica', '', 8);
+            $pdf->SetTextColor(90, 90, 90);
+            $pdf->Cell($cCantidad, 5, number_format($cantidad, 2, ',', '.') . ($item->unit_type ? ' ' . $item->unit_type : ''), 0, 0, 'C');
+            $pdf->Cell($cTarifa, 5, number_format($precio, 2, ',', '.') . ' €', 0, 0, 'R');
+            $pdf->SetXY(15 + $cArticulo + $cCantidad + $cTarifa, $rowY + 1.5);
+            $pdf->SetFont('Helvetica', 'B', 8.5);
+            $pdf->SetTextColor($brand_r, $brand_g, $brand_b);
+            $pdf->Cell($cTotal - 3, 5, number_format($total, 2, ',', '.') . ' €', 0, 1, 'R');
+
+            if ($hayDesc) {
+                $pdf->SetFont('Helvetica', '', 7.5);
+                $pdf->SetTextColor(110, 110, 110);
+                $pdf->SetXY(19, $rowY + $cabH);
+                $pdf->SetLeftMargin(19); $pdf->SetRightMargin(15);
+                if ($descClean !== '') {
+                    $pdf->SetX(19);
+                    $pdf->writeHTML($descClean, true, false, true, false, 'L');
+                } else {
+                    $pdf->SetX(19);
+                    $pdf->MultiCell($tableW - 4, 3.8, $descPlain, 0, 'L');
+                }
+                $pdf->SetLeftMargin(15); $pdf->SetRightMargin(15);
+                $pdf->SetTextColor(51, 51, 51);
+                $pdf->Ln(1.5);
+            } else {
+                $pdf->SetY($rowY + $cabH);
+            }
+
+            $rowEndY = $pdf->GetY();
+            $pdf->SetDrawColor(235, 235, 235);
+            $pdf->SetLineWidth(0.15);
+            $pdf->Line(15, $rowEndY, 15 + $tableW, $rowEndY);
+            $pdf->Ln(0.5);
+            $rowAlt = !$rowAlt;
+        }
+
+        // ── Totales ──────────────────────────────────────────────────────
+        $pdf->Ln(3);
+        $subtotal    = floatval($total_summary->contract_subtotal ?? 0);
+        $tax_amount  = floatval($total_summary->tax ?? 0);
+        $tax2_amount = floatval($total_summary->tax2 ?? 0);
+        $descuento   = floatval($total_summary->discount_total ?? 0);
+        $totalFinal  = floatval($total_summary->contract_total ?? 0);
+        $tax_name    = $total_summary->tax_name ?? ('IVA ' . number_format($total_summary->tax_percentage ?? 21, 0) . '%');
+        $rightM      = 15 + $tableW;
+        $labelW_t    = 38; $valW_t = 27;
+
+        $pdf->SetDrawColor($brand_r, $brand_g, $brand_b);
+        $pdf->SetLineWidth(0.4);
+        $pdf->Line($rightM - $labelW_t - $valW_t, $pdf->GetY(), $rightM, $pdf->GetY());
+        $pdf->Ln(3);
+
+        $pdf->SetX($rightM - $labelW_t - $valW_t);
+        $pdf->SetFont('Helvetica', '', 8); $pdf->SetTextColor(100, 100, 100);
+        $pdf->Cell($labelW_t, 5, 'Subtotal (sin IVA)', 0, 0, 'R');
+        $pdf->SetTextColor(50, 50, 50);
+        $pdf->Cell($valW_t, 5, number_format($subtotal, 2, ',', '.') . ' €', 0, 1, 'R');
+
+        if ($tax_amount > 0) {
+            $pdf->SetX($rightM - $labelW_t - $valW_t);
+            $pdf->SetFont('Helvetica', '', 8); $pdf->SetTextColor(100, 100, 100);
+            $pdf->Cell($labelW_t, 5, $tax_name, 0, 0, 'R');
+            $pdf->SetTextColor(50, 50, 50);
+            $pdf->Cell($valW_t, 5, number_format($tax_amount, 2, ',', '.') . ' €', 0, 1, 'R');
+        }
+
+        if ($descuento > 0) {
+            $pdf->SetX($rightM - $labelW_t - $valW_t);
+            $pdf->SetFont('Helvetica', 'B', 8); $pdf->SetTextColor(34, 120, 34);
+            $pdf->Cell($labelW_t, 5, 'Descuento aplicado', 0, 0, 'R');
+            $pdf->Cell($valW_t, 5, '- ' . number_format($descuento, 2, ',', '.') . ' €', 0, 1, 'R');
+        }
+
+        $pdf->Ln(2);
+        $totalY = $pdf->GetY();
+        $totalBlockW = $labelW_t + $valW_t;
+        $pdf->SetFillColor($brand_r, $brand_g, $brand_b);
+        $pdf->Rect($rightM - $totalBlockW, $totalY, $totalBlockW, 10, 'F');
+        $pdf->SetFillColor(180, 20, 90);
+        $pdf->Rect($rightM - $totalBlockW, $totalY, 3, 10, 'F');
+        $pdf->SetXY($rightM - $totalBlockW + 3, $totalY + 1.5);
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->SetFont('Helvetica', '', 8);
+        $pdf->Cell($labelW_t - 3, 7, 'TOTAL (IVA incluido)', 0, 0, 'R');
+        $pdf->SetFont('Helvetica', 'B', 11);
+        $pdf->Cell($valW_t, 7, number_format($totalFinal, 2, ',', '.') . ' €', 0, 1, 'R');
+        $pdf->SetTextColor(51, 51, 51);
+        $pdf->SetDrawColor(230, 230, 230);
+
+        // ── Determinar compañía ───────────────────────────────────────────
+        $company_id = intval($contract_info->company_id ?? 2);
+        $es_tictac  = ($company_id === 2 || $company_id === 0);
+        $es_tress   = ($company_id === 1);
+        $empresa_resp = $es_tress ? 'PROYECTO TRESS AZAFATAS, S.L.' : 'TIC TAC COMUNICACION DIGITAL SL';
+
+        // ── Sección "Sobre Nosotros" ──────────────────────────────────────
+        $pdf->Ln(8);
+        if (($pdf->GetY() + 30) > $pdf->getPageHeight() - 45) $pdf->AddPage();
+        $sobreStartY = $pdf->GetY();
+        $sobre_texto = $es_tress
+            ? 'En Proyecto Tress Azafatas S.L. ofrecemos soluciones digitales adaptadas a las necesidades de cada cliente, con un equipo especializado en marketing digital, diseño web y comunicación estratégica.'
+            : 'En Tictac Comunicación Digital SL desarrollamos estrategias digitales orientadas a conversión, visibilidad y crecimiento real. Cada contrato se diseña a medida, alineado con los objetivos del cliente y basado en criterios técnicos, creativos y estratégicos.';
+        $pdf->SetXY(20, $sobreStartY + 10);
+        $pdf->SetFont('Helvetica', '', 8);
+        $pdf->SetTextColor(51, 51, 51);
+        $pdf->MultiCell($contentW - 10, 4, $sobre_texto, 0, 'J');
+        $sobreH = $pdf->GetY() - $sobreStartY + 6;
+        $pdf->SetFillColor(255, 240, 247);
+        $pdf->SetDrawColor(255, 240, 247);
+        $pdf->Rect(15, $sobreStartY, $contentW, $sobreH, 'F');
+        $pdf->SetFillColor($brand_r, $brand_g, $brand_b);
+        $pdf->Rect(15, $sobreStartY, 3, $sobreH, 'F');
+        $pdf->SetXY(20, $sobreStartY + 4);
+        $pdf->SetTextColor($brand_r, $brand_g, $brand_b);
+        $pdf->SetFont('Helvetica', 'B', 9);
+        $pdf->Cell($contentW - 10, 5, 'Sobre Nosotros', 0, 1, 'L');
+        $pdf->SetXY(20, $sobreStartY + 10);
+        $pdf->SetTextColor(51, 51, 51);
+        $pdf->SetFont('Helvetica', '', 8);
+        $pdf->MultiCell($contentW - 10, 4, $sobre_texto, 0, 'J');
+        $pdf->Ln(4);
+
+        // ── Notas ────────────────────────────────────────────────────────
+        $notasHtml = $contract_info->note ?? '';
+        if (trim(strip_tags($notasHtml)) !== '') {
+            $pdf->Ln(6);
+            $notasStartY = $pdf->GetY();
+            $pdf->SetXY(20, $notasStartY + 10);
+            $pdf->SetFont('Helvetica', '', 8);
+            $pdf->SetTextColor(51, 51, 51);
+            $notasText = strip_tags(html_entity_decode($notasHtml, ENT_QUOTES, 'UTF-8'));
+            $pdf->MultiCell($contentW - 10, 3.5, $notasText, 0, 'L');
+            $notasH = $pdf->GetY() - $notasStartY + 6;
+            $pdf->SetFillColor(255, 240, 247);
+            $pdf->SetDrawColor(255, 240, 247);
+            $pdf->Rect(15, $notasStartY, $contentW, $notasH, 'F');
+            $pdf->SetXY(20, $notasStartY + 4);
+            $pdf->SetTextColor($brand_r, $brand_g, $brand_b);
+            $pdf->SetFont('Helvetica', 'B', 11);
+            $pdf->Cell($contentW - 10, 5, 'Notas Adicionales', 0, 1, 'L');
+            $pdf->SetXY(20, $notasStartY + 10);
+            $pdf->SetTextColor(51, 51, 51);
+            $pdf->SetFont('Helvetica', '', 8);
+            $pdf->MultiCell($contentW - 10, 3.5, $notasText, 0, 'L');
+            $pdf->Ln(4);
+        }
+
+        // ── Cláusulas del contrato ────────────────────────────────────────
+        $nombre_proveedor = $es_tress ? 'PROYECTO TRESS AZAFATAS, S.L.' : 'TIC TAC COMUNICACION DIGITAL, S.L.';
+        $email_proveedor  = $es_tress ? 'info@proymer.com' : 'hola@tictac-comunicacion.es';
+        $web_proveedor    = $es_tress ? 'Proyecto Tress Azafatas' : 'Tic Tac Comunicacion (www.tictac-comunicacion.es)';
+
+        $clausulas_html = '
+<p><b>CLAUSULAS</b></p>
+<p><b>1. OBJETO</b></p>
+<p>El objeto del Contrato consiste en la prestacion de servicios por parte del Proveedor a cambio del pago de un precio por parte del Cliente, en los terminos establecidos en el mismo.</p>
+<p>Las solicitudes de modificacion del contrato se haran siempre por escrito, remitido por correo ordinario o electronico ' . $email_proveedor . '. Se ejecutaran siempre que sea posible y el cliente debera asumir los costes en los que el Proveedor haya incurrido, tras dicha modificacion del contrato.</p>
+<p>El Cliente acepta que el Proveedor pueda publicar su imagen corporativa, nombre comercial y sitio web dentro de "casos de exito" o "seccion clientes" de la web de ' . $web_proveedor . ', asi como la firma de la Empresa en Footer (Pie de Pagina de la web del Cliente).</p>
+<p><b>2. SERVICIOS DEL PROVEEDOR</b></p>
+<p>2.1. Los Servicios del proyecto vendran descritos en la hoja de encargo adjunta que debera ser firmada por el cliente y por la empresa que provee el servicio.</p>
+<p>En relacion al diseno web, si el cliente ha contratado este servicio y procede, el Proveedor presentara al cliente hasta 3 bocetos en soporte fisico o digital. El Cliente ha de firmar el Boceto escogido, todos los cambios a partir del momento de la firma, conllevaran costos adicionales.</p>
+<p>2.1.1. Realizacion de material especial tal como: tipografia no convencional, caligrafia, mapas, diagramas, graficos, vectores o fotomontajes.<br/>2.1.2. Preparacion de material existente para su reproduccion tales como: redibujo parcial o total, conversion a lineas, escaneado y retoque de imagenes, tipeados, etc.<br/>2.1.3. Seguimiento de la produccion.<br/>2.1.4. Recuperacion de informacion, siempre que tecnicamente sea posible. El horario de trabajo de los tecnicos del Proveedor sera de lunes a viernes de 9:00 a 17:00, salvo en los meses de Julio y agosto que sera de 9:00 a 15:00.<br/>2.1.5. La correccion de errores imputables a la manipulacion a traves de los Programas de gestion de contenidos por personal no autorizado expresamente por el Proveedor.<br/>2.1.6. Las tareas necesarias para restablecer la situacion anterior derivada de operaciones incorrectas por parte del Cliente que ocasionen perdidas de informacion, destruccion o desorganizacion de ficheros, y situaciones analogas.<br/>2.1.7. La reparacion de danos causados por virus o defectos de otros programas no relacionados en el Contrato, o en anexo posterior.<br/>2.1.8. La reparacion de danos y malfuncionamientos causados por accidentes, uso indebido, catastrofes, abusos, alteraciones, sustitucion de elementos o software no suministrado y/o recomendado por el Proveedor.</p>
+<p><b>3. VALORACION DE LOS SERVICIOS, FACTURACION, FORMA DE PAGO, IMPUESTOS Y GASTOS</b></p>
+<p>3.1. La valoracion economica sera actualizada anualmente por el Proveedor, en funcion de las nuevas tarifas que el Proveedor establezca.<br/>3.2. El precio de los Servicios sera abonado por el Cliente al Proveedor en el momento de la formalizacion del Contrato, con caracter previo al inicio de la prestacion de los Servicios, mediante transferencia a la cuenta numero que el proveedor designe para tal efecto.<br/>3.3. El precio expresado en la tabla de arriba contiene los impuestos indirectos desglosados a la fecha de la firma actual.<br/>3.4. Se emitira un cobro mensual en el siguiente numero de cuenta bancaria facilitado por el Cliente.<br/>3.5. Cualquier revision o adiciones a los servicios descritos en el contrato seran facturados como Servicios Adicionales no incluidos en el presupuesto estimado arriba especificado.</p>
+<p><b>4. RESPONSABILIDAD DEL CLIENTE</b></p>
+<p>4.1. El Cliente proveera informacion fehaciente y completa y materiales al Proveedor, y sera responsable de la exactitud y completitud de toda la informacion y los materiales provistos. El Cliente garantiza que todo material provisto al Proveedor no afecta los derechos de autor de terceros.<br/>4.2. El Cliente en caso haber realizado alguna modificacion por su cuenta y por ello, haber desconfigurado la web, sera el mismo Cliente quien responda por el costo del arreglo.<br/>4.3. Todo texto e informacion aportado por el Cliente se entregara al Proveedor en formato digital. Este proceso sera presupuestado como un servicio suplementario.</p>
+<p><b>5. DERECHOS Y PROPIEDAD</b></p>
+<p>5.1. Todos los servicios provistos por el Proveedor y aprobados bajo este contrato seran para uso exclusivo del Cliente mas alla de su uso promocional propio del Proveedor.<br/>5.2. El Proveedor se compromete a almacenar los originales durante 6 meses a partir de la finalizacion del Proyecto.<br/>5.3. El Dominio (direccion web) pertenecera al Cliente, siendo este su propietario en todo momento.<br/>5.4. Una vez finalizado el pago total del monto acordado, el Cliente, pasara a ser propietario de la Web.</p>
+<p><b>6. DURACION DEL CONTRATO</b></p>
+<p>6.1. El Contrato tendra una vigencia minima de un (1) ano, contada a partir de la fecha de la firma del presente Contrato.<br/>6.2. El Cliente podra rescindir el presente Contrato, notificandoselo por escrito al Proveedor con al menos treinta (30) dias de antelacion a la fecha de vencimiento inicial, o, en su caso, de cualquiera de sus prorrogas.</p>
+<p><b>7. EXTINCION DEL CONTRATO</b></p>
+<p>7.1. El Contrato se extinguira por las causas generales establecidas en la legislacion vigente.<br/>7.2. En todo caso, la extincion del Contrato antes de la finalizacion del periodo inicial no dara lugar a devolucion alguna del precio abonado al Proveedor.<br/>7.3. La no acreditacion del pago del precio sera causa automatica de resolucion del Contrato.</p>
+<p><b>8. NATURALEZA DE LA RELACION</b></p>
+<p>8.1. El presente Contrato tiene caracter mercantil y se regira por sus propias clausulas, y en lo que en ellas no estuviere previsto, por las disposiciones del Codigo de Comercio, leyes especiales y usos mercantiles, y en su defecto, por el Codigo Civil.</p>
+<p><b>9. PROTECCION DE DATOS DE CARACTER PERSONAL</b></p>
+<p>9.1. Debido a la naturaleza de los Servicios, el Proveedor puede tener que realizar tratamientos automatizados de ficheros del Cliente que contengan datos de caracter personal. El Proveedor utilizara dichos datos unica y exclusivamente para los fines que figuran en el Contrato y siempre por cuenta del Cliente.<br/>9.2. El Cliente unicamente permitira el acceso a datos de caracter personal al Proveedor cuando sea necesario para la ejecucion del objeto del Contrato.<br/>9.3. El Cliente afirma y garantiza que los datos han sido recogidos de acuerdo a lo establecido en la LOPD.</p>
+<p><b>10. CONFIDENCIALIDAD</b></p>
+<p>10.1. El Proveedor considerara confidencial toda la informacion relacionada con los Servicios, y que obtenga durante la prestacion de los mismos.</p>
+<p><b>11. RESPONSABILIDAD DEL PROVEEDOR</b></p>
+<p>11.1. Salvo en los casos de culpa grave o dolo, la responsabilidad total del Proveedor no excedara, en su conjunto, de la cantidad correspondiente al precio abonado por los Servicios durante la ultima anualidad. El Proveedor no sera responsable, en ningun caso, de los danos que puedan ser calificados como danos indirectos, consecuenciales, perdida de beneficio, negocio, ingresos, clientes, datos, imagen o reputacion comercial.</p>
+<p><b>12. ACTUALIZACION</b></p>
+<p>12.1. En el caso de que alguna o algunas de las clausulas del Contrato pasen a ser invalidas, ilegales o inejecutables, se consideraran ineficaces en la medida que corresponda, pero en lo demas, este Contrato conservara su validez. CONTRATO UNICO</p>
+<p><b>13. NOTIFICACIONES Y REQUERIMIENTOS</b></p>
+<p>13.1. Toda notificacion o requerimiento que traiga su causa del Contrato se debera remitir por escrito a la otra Parte, bien por E-mail, bien personalmente, o por mensajero o correo certificado con acuse de recibo.</p>
+<p><b>14. JURISDICCION Y COMPETENCIA</b></p>
+<p>14.1. Las Partes, con renuncia expresa a cualquier otro fuero que pudiera corresponderles, se someten a la jurisdiccion y competencia de los Juzgados y Tribunales de Cordoba.</p>
+<p>14.2. Y para que asi conste, y en prueba de conformidad y aceptacion de todo cuanto antecede, las Partes firman el presente Contrato por duplicado ejemplar y a un solo efecto en la fecha y lugar indicados en el encabezamiento.</p>';
+
+        if (($pdf->GetY() + 20) > $pdf->getPageHeight() - 45) $pdf->AddPage();
+        $pdf->Ln(6);
+        $pdf->SetX(15);
+        $pdf->SetTextColor($brand_r, $brand_g, $brand_b);
+        $pdf->SetFont('Helvetica', 'B', 8.5);
+        $pdf->Cell($contentW, 5, 'CLAUSULAS DEL CONTRATO', 0, 1, 'L');
+        $pdf->SetDrawColor($brand_r, $brand_g, $brand_b);
+        $pdf->SetLineWidth(0.4);
+        $pdf->Line(15, $pdf->GetY(), 15 + $contentW, $pdf->GetY());
+        $pdf->Ln(4);
+        $pdf->SetFont('Helvetica', '', 6);
+        $pdf->SetTextColor(60, 60, 60);
+        $pdf->writeHTML($clausulas_html, true, false, true, false, 'J');
+        $pdf->Ln(3);
+
+        // Cláusula Kit Digital (solo Tress)
+        if ($es_tress) {
+            if (($pdf->GetY() + 20) > $pdf->getPageHeight() - 45) $pdf->AddPage();
+            $pdf->SetX(15);
+            $pdf->SetTextColor($brand_r, $brand_g, $brand_b);
+            $pdf->SetFont('Helvetica', 'B', 7.5);
+            $pdf->Cell($contentW, 5, 'KIT DIGITAL', 0, 1, 'L');
+            $pdf->Ln(1);
+            $kit_digital = "El cliente es beneficiario de subvencion de Kit Digital de 3000 euros que se decrementara del precio de las correspondientes partidas o soluciones digitalizadoras. El cliente esta obligado a cumplir con las premisas tributarias que genera la subvencion durante el ano siguiente para mantener la subvencion y siempre segun la Orden TDF/435/2024, de 9 de mayo, por la que se modifica la Orden ETD/1498/2021, de 29 de diciembre, por la que se aprueban las bases reguladoras de la concesion de ayudas para la digitalizacion de pequenas empresas, microempresas y personas en situacion de autoempleo, en el marco de la Agenda Espana Digital 2025, el Plan de Digitalizacion PYMEs 2021-2025 y el Plan de Recuperacion, Transformacion y Resiliencia de Espana -Financiado por la Union Europea- Next Generation EU (Programa Kit Digital), publicada en Boletin Oficial del Estado a fecha 11 de Mayo de 2024.\n\nNo seran subvencionables el Impuesto sobre el Valor Anadido que tendra que ser abonado por el beneficiario y cuya remesa se enviara durante los tres meses siguientes a la validacion del Acuerdo de Prestacion de Soluciones.\n\nEn caso de ser desestimada la ayuda (Kit Digital) por cualquier motivo ajeno a Proyecto Tress Azafatas sera el cliente el que asuma el obligado cumplimiento del pago del servicio prestado (2000 euros, IVA no incluido). La forma de pago se establece con emision de remesa bancaria previamente autorizada mediante firma de documento SEPA por parte del cliente.\n\nEn el caso de que el cliente decida desistir de la ayuda dentro del plazo de los 12 meses establecidos por Kit Digital como prestacion del servicio, sera el cliente el que tenga el obligado cumplimiento de hacerse cargo de la cuantia de los trabajos realizados hasta dicho momento por el agente digitalizador, PROYECTO TRESS AZAFATAS en este caso. Se calculara la parte proporcional del total del servicio que ira desde el inicio del acuerdo de prestacion hasta la fecha de comunicacion de renuncia de la ayuda. Una vez el cliente haya abonado la citada cuantia de los trabajos realizados se procedera a la aceptacion de la renuncia por parte de PROYECTO TRESS AZAFATAS como agente digitalizador.";
+            $pdf->SetX(15);
+            $pdf->SetFont('Helvetica', '', 6);
+            $pdf->SetTextColor(60, 60, 60);
+            $pdf->MultiCell($contentW, 3, $kit_digital, 0, 'J');
+            $pdf->Ln(3);
+        }
+
+        // ── RGPD (condicional por compañía) ───────────────────────────────
+        $pdf->Ln(4);
+        if (($pdf->GetY() + 60) > $pdf->getPageHeight() - 45) $pdf->AddPage();
+        $clY = $pdf->GetY();
+        $pdf->SetDrawColor($brand_r, $brand_g, $brand_b);
+        $pdf->SetLineWidth(0.4);
+        $pdf->Line(15, $clY, 15 + $contentW, $clY);
+        $pdf->Ln(4);
+        $pdf->SetX(15);
+        $pdf->SetTextColor($brand_r, $brand_g, $brand_b);
+        $pdf->SetFont('Helvetica', 'B', 8.5);
+        $pdf->Cell($contentW, 5, 'PROTECCION DE DATOS Y CLAUSULAS LEGALES', 0, 1, 'L');
+        $pdf->Ln(2);
+
+        if ($es_tress) {
+            $pdf->SetX(15);
+            $pdf->SetFont('Helvetica', 'B', 6.5);
+            $pdf->SetTextColor(60, 60, 60);
+            $pdf->MultiCell($contentW, 3.2, 'Responsable: PROYECTO TRESS AZAFATAS SL - CIF: B56028293  Dir. postal: C/ Cruz Conde, 19, Planta 6a, 14001 de Cordoba.  Telefono: 957963074  E-mail: info@proymer.com', 0, 'L');
+            $pdf->Ln(2);
+            $pdf->SetX(15);
+            $pdf->SetFont('Helvetica', '', 6.5);
+            $pdf->SetTextColor(80, 80, 80);
+            $pdf->MultiCell($contentW, 3.2, 'Tratamos la informacion que nos facilita con el fin de prestarles el servicio solicitado. Los datos proporcionados se conservaran durante el tiempo necesario para cumplir con las finalidades previstas. Los datos no se cederan a terceros salvo en los casos en que exista una obligacion legal. Usted tiene derecho de acceso, rectificacion, supresion y portabilidad de sus datos y oposicion y limitacion a su tratamiento en la direccion postal o correo electronico facilitados, adjuntando copia de su DNI o documento equivalente. Asimismo, y especialmente si considera que no ha obtenido satisfaccion plena en el ejercicio de sus derechos, podra presentar una reclamacion ante la autoridad nacional de control dirigiendose a estos efectos a la Agencia Espanola de Proteccion de Datos, C/ Jorge Juan, 6 - 28001 Madrid.', 0, 'J');
+            $pdf->Ln(2);
+            $pdf->SetX(15);
+            $pdf->MultiCell($contentW, 3.2, 'Asimismo, solicitamos su autorizacion para enviarle publicidad relacionada con nuestros productos y servicios por cualquier medio (postal, email o telefono) e invitarle a eventos organizados por la empresa.', 0, 'J');
+            $pdf->Ln(3);
+            $checkY = $pdf->GetY();
+            $pdf->SetFont('Helvetica', 'B', 7.5); $pdf->SetTextColor(51, 51, 51); $pdf->SetDrawColor(100, 100, 100); $pdf->SetLineWidth(0.4);
+            $pdf->SetXY(15, $checkY); $pdf->Cell(22, 5, 'SI Autorizo', 0, 0, 'L'); $pdf->Rect(38, $checkY + 0.8, 3.5, 3.5);
+            $pdf->SetXY(47, $checkY); $pdf->Cell(22, 5, 'NO Autorizo', 0, 1, 'L'); $pdf->Rect(70, $checkY + 0.8, 3.5, 3.5);
+            $pdf->SetDrawColor(230, 230, 230); $pdf->Ln(3);
+        } else {
+            $pdf->SetX(15);
+            $pdf->SetFont('Helvetica', 'B', 6.5);
+            $pdf->SetTextColor(60, 60, 60);
+            $pdf->MultiCell($contentW, 3.2, 'Responsable: TIC TAC COMUNICACION DIGITAL SL - CIF: B09912478  Dir. postal: C/ Cruz Conde, 19, Planta 6a, 14001 de Cordoba.  Telefono: 957786914  E-mail: hola@tictac-comunicacion.es', 0, 'L');
+            $pdf->Ln(2);
+            $pdf->SetX(15);
+            $pdf->SetFont('Helvetica', '', 6.5);
+            $pdf->SetTextColor(80, 80, 80);
+            $pdf->MultiCell($contentW, 3.2, 'Tratamos la informacion que nos facilita con el fin de prestarles el servicio solicitado. Los datos proporcionados se conservaran durante el tiempo necesario para cumplir con las finalidades previstas. Los datos no se cederan a terceros salvo en los casos en que exista una obligacion legal. Usted tiene derecho de acceso, rectificacion, supresion y portabilidad de sus datos y oposicion y limitacion a su tratamiento en la direccion postal o correo electronico facilitados, adjuntando copia de su DNI o documento equivalente. Asimismo, y especialmente si considera que no ha obtenido satisfaccion plena en el ejercicio de sus derechos, podra presentar una reclamacion ante la autoridad nacional de control dirigiendose a estos efectos a la Agencia Espanola de Proteccion de Datos, C/ Jorge Juan, 6 - 28001 Madrid.', 0, 'J');
+            $pdf->Ln(2);
+            $pdf->SetX(15);
+            $pdf->MultiCell($contentW, 3.2, 'Asimismo, solicitamos su autorizacion para enviarle publicidad relacionada con nuestros productos y servicios por cualquier medio (postal, email o telefono) e invitarle a eventos organizados por la empresa.', 0, 'J');
+            $pdf->Ln(3);
+            $checkY = $pdf->GetY();
+            $pdf->SetFont('Helvetica', 'B', 7.5); $pdf->SetTextColor(51, 51, 51); $pdf->SetDrawColor(100, 100, 100); $pdf->SetLineWidth(0.4);
+            $pdf->SetXY(15, $checkY); $pdf->Cell(22, 5, 'SI Autorizo', 0, 0, 'L'); $pdf->Rect(38, $checkY + 0.8, 3.5, 3.5);
+            $pdf->SetXY(47, $checkY); $pdf->Cell(22, 5, 'NO Autorizo', 0, 1, 'L'); $pdf->Rect(70, $checkY + 0.8, 3.5, 3.5);
+            $pdf->SetDrawColor(230, 230, 230); $pdf->Ln(3);
+            $pdf->SetX(15);
+            $pdf->SetFont('Helvetica', '', 6.5);
+            $pdf->SetTextColor(80, 80, 80);
+            $pdf->MultiCell($contentW, 3.2, 'El CLIENTE es responsable de garantizar que dispone de los consentimientos y autorizaciones legales necesarias para la publicacion de imagenes o datos personales de trabajadores y terceros. TIC TAC COMUNICACION DIGITAL SL quedara exonerada de cualquier responsabilidad derivada de incumplimientos en materia de proteccion de datos por parte del cliente.', 0, 'J');
+        }
+        $pdf->SetTextColor(51, 51, 51);
+        $pdf->Ln(6);
+
+        // ── Firmas ───────────────────────────────────────────────────────
+        if (($pdf->GetY() + 55) > $pdf->getPageHeight() - 45) $pdf->AddPage();
+        $firmasStartY = $pdf->GetY();
+        $firmaColW    = ($contentW - 10) / 2;
+        $pdf->SetDrawColor($brand_r, $brand_g, $brand_b);
+        $pdf->SetLineWidth(0.5);
+        $pdf->Line(15, $firmasStartY, 15 + $contentW, $firmasStartY);
+        $pdf->Ln(5);
+        $pdf->SetFont('Helvetica', 'B', 9);
+        $pdf->SetTextColor($brand_r, $brand_g, $brand_b);
+        $pdf->SetX(15);
+        $pdf->Cell($firmaColW, 5, 'FIRMA Y SELLO DEL PROVEEDOR', 0, 0, 'C');
+        $pdf->SetX(15 + $firmaColW + 10);
+        $pdf->Cell($firmaColW, 5, 'FIRMA Y SELLO DEL CLIENTE', 0, 1, 'C');
+        $pdf->Ln(18);
+        $firmaLineY = $pdf->GetY();
+        $pdf->SetDrawColor(180, 180, 180);
+        $pdf->SetLineWidth(0.4);
+        $pdf->Line(15 + 5, $firmaLineY, 15 + $firmaColW - 5, $firmaLineY);
+        $pdf->Line(15 + $firmaColW + 15, $firmaLineY, 15 + $contentW - 5, $firmaLineY);
+        $pdf->Ln(4);
+        $pdf->SetFont('Helvetica', '', 9);
+        $pdf->SetTextColor(51, 51, 51);
+        $pdf->SetX(15);
+        $nombre_firma_proveedor = $es_tress ? 'Proyecto Tress Azafatas SL' : 'Tictac Comunicacion Digital SL';
+        $pdf->Cell($firmaColW, 5, $nombre_firma_proveedor, 0, 0, 'C');
+        $pdf->SetX(15 + $firmaColW + 10);
+        $pdf->Cell($firmaColW, 5, $client_info->company_name ?? '', 0, 1, 'C');
+
+        // ── Output ───────────────────────────────────────────────────────
+        $filename = 'Contrato_' . get_contract_id($contract_info->id) . '.pdf';
+        if ($mode === 'save') {
+            $tmpFile = sys_get_temp_dir() . '/contract_' . $contract_id . '_' . time() . '.pdf';
+            $pdf->Output($tmpFile, 'F');
+            return file_exists($tmpFile) ? $tmpFile : null;
+        } else {
+            $pdf->Output($filename, 'D');
+            exit;
+        }
+    }
 
     private function _copy_related_items_to_contract($copy_items_from_proposal, $contract_id) {
         if (!$copy_items_from_proposal) {
@@ -1303,27 +1828,6 @@ function save() {
             $this->Contract_items_model->ci_save($contract_item_data);
         }
     }
-
-    private function _notify_dashboard_contract_change($crm_id, $titulo = '', $fecha_contrato = '', $valido_hasta = '') {
-    $params = http_build_query(array(
-        'action'         => 'sync_from_crm',
-        'crm_id'         => intval($crm_id),
-        'titulo'         => $titulo,
-        'fecha_contrato' => $fecha_contrato,
-        'valido_hasta'   => $valido_hasta,
-        'key'            => 'ea088539d42bf7e87dc7d4b171dfdcf7be3416322cb88eec6a504f701c4bd7dc'
-    ));
-
-    $url = 'https://gestion-tictac-comunicacion.es/dashboard/contratos/api.php?' . $params;
-
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 5);       // Timeout corto — no bloquea la respuesta al usuario
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
-    curl_exec($ch);   // Ignoramos la respuesta — si falla, no es crítico
-    curl_close($ch);
-}
 
     function compact_view($contract_id = 0) {
         validate_numeric_value($contract_id);

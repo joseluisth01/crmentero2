@@ -986,11 +986,17 @@ class Proposals extends Security_Controller
 
     function send_proposal()
     {
-        $this->validate_submitted_data(array(
-            "id" => "required|numeric"
-        ));
+        try {
 
         $proposal_id = $this->request->getPost('id');
+
+        log_message('info', '[Tictac] send_proposal() iniciado — POST data: ' . json_encode($this->request->getPost()));
+
+        if (!$proposal_id || !is_numeric($proposal_id)) {
+            echo json_encode(array('success' => false, 'message' => 'ID de propuesta no válido: ' . $proposal_id));
+            return;
+        }
+
         $this->validate_proposal_access($proposal_id);
 
         $contact_id  = $this->request->getPost('contact_id');
@@ -998,9 +1004,12 @@ class Proposals extends Security_Controller
         $custom_bcc  = $this->request->getPost('proposal_bcc');
         $attach_pdf  = $this->request->getPost('attach_pdf');
 
+        log_message('info', '[Tictac] send_proposal(): contact_id=' . $contact_id . ' attach_pdf=' . $attach_pdf);
+
         // ── Datos de la propuesta ────────────────────────────────────────
         $proposal_data = get_proposal_making_data($proposal_id);
         if (!$proposal_data) {
+            log_message('error', '[Tictac] send_proposal(): get_proposal_making_data devolvió null para id=' . $proposal_id);
             echo json_encode(array('success' => false, 'message' => 'No se encontró la propuesta'));
             return;
         }
@@ -1008,6 +1017,8 @@ class Proposals extends Security_Controller
         $proposal_info  = $proposal_data['proposal_info'];
         $total_summary  = $proposal_data['proposal_total_summary'];
         $contact        = $this->Users_model->get_one($contact_id);
+
+        log_message('info', '[Tictac] send_proposal(): contact email=' . ($contact->email ?? 'VACÍO'));
 
         if (!$contact->email) {
             echo json_encode(array('success' => false, 'message' => 'El contacto no tiene email'));
@@ -1019,10 +1030,11 @@ class Proposals extends Security_Controller
         // ── Email HTML corporativo Tictac ────────────────────────────────
         $subject = 'Presupuesto para ' . ($proposal_info->company_name ?? 'su proyecto') . ' - Tictac Comunicación';
 
-        $fecha_propuesta = format_to_date($proposal_info->proposal_date, false);
-        $valido_hasta    = format_to_date($proposal_info->valid_until, false);
-        $total_str       = to_currency($total_summary->proposal_total, $total_summary->currency_symbol);
-        $nombre_contacto = htmlspecialchars($contact->first_name . ' ' . $contact->last_name);
+        $fecha_propuesta   = format_to_date($proposal_info->proposal_date, false);
+        $valido_hasta      = format_to_date($proposal_info->valid_until, false);
+        $total_str         = to_currency($total_summary->proposal_total, $total_summary->currency_symbol);
+        $nombre_contacto   = htmlspecialchars($contact->first_name . ' ' . $contact->last_name);
+        $proposal_url      = get_uri('offer/preview/' . $proposal_info->id . '/' . $proposal_info->public_key);
 
         $message = '<!DOCTYPE html>
 <html>
@@ -1043,6 +1055,9 @@ class Proposals extends Security_Controller
         .footer{background:#1a1a1a;color:white;padding:30px;text-align:center;font-size:13px;}
         .footer a{color:#d72173;text-decoration:none;}
         .contacto-info{margin-top:15px;line-height:1.8;}
+        .btn-cta{display:block;width:fit-content;margin:25px auto 10px;background:#d72173;color:white !important;padding:14px 36px;border-radius:50px;text-decoration:none;font-weight:700;font-size:16px;text-align:center;letter-spacing:0.3px;}
+        .btn-cta:hover{background:#b51860;}
+        .btn-note{text-align:center;font-size:11px;color:#aaa;margin-bottom:10px;}
     </style>
 </head>
 <body>
@@ -1060,14 +1075,16 @@ class Proposals extends Security_Controller
                 <strong>Válido hasta:</strong> ' . $valido_hasta . '<br>
                 <div class="total-destacado">Total: ' . $total_str . '</div>
             </div>
+            <a href="' . $proposal_url . '" class="btn-cta" target="_blank">Ver y Aceptar Presupuesto →</a>
+            <p class="btn-note">También puedes aceptar o rechazar el presupuesto desde el enlace anterior</p>
             <p>Hemos diseñado esta propuesta pensando específicamente en tus necesidades y objetivos. Si tienes alguna duda o quieres comentar cualquier aspecto del presupuesto, estaremos encantados de atenderte.</p>
             <p><strong>¿Necesitas más información?</strong><br>No dudes en contactarnos. Estamos aquí para ayudarte.</p>
         </div>
         <div class="footer">
             <strong>Tictac Comunicación Digital SL</strong>
             <div class="contacto-info">
-                📍 Plaza de los Carrillos, 5 · 14001 Córdoba<br>
-                📞 <a href="tel:+34957048147">957 048 147</a><br>
+                📍 C. Cruz Conde, 19, 6º 5 · 14001 Córdoba<br>
+                📞 <a href="tel:+34633335390">633 33 53 90</a><br>
                 ✉ <a href="mailto:hola@tictac-comunicacion.es">hola@tictac-comunicacion.es</a><br>
                 🌐 <a href="https://www.tictac-comunicacion.es" target="_blank">www.tictac-comunicacion.es</a>
             </div>
@@ -1081,10 +1098,19 @@ class Proposals extends Security_Controller
         $tmp_pdf_path  = null;
 
         if ($attach_pdf) {
-            $tmp_pdf_path = $this->_generate_tictac_pdf($proposal_id, 'save');
+            log_message('info', '[Tictac] send_proposal(): generando PDF...');
+            try {
+                $tmp_pdf_path = $this->_generate_tictac_pdf($proposal_id, 'save');
+            } catch (\Throwable $e) {
+                log_message('error', '[Tictac] send_proposal(): excepción generando PDF — ' . $e->getMessage() . ' en ' . $e->getFile() . ':' . $e->getLine());
+                echo json_encode(array('success' => false, 'message' => 'Error generando PDF: ' . $e->getMessage()));
+                return;
+            }
+            log_message('info', '[Tictac] send_proposal(): PDF generado en ' . ($tmp_pdf_path ?? 'NULL'));
 
             if (!$tmp_pdf_path || !file_exists($tmp_pdf_path)) {
-                echo json_encode(array('success' => false, 'message' => 'Error: No se pudo generar el PDF. Por favor, inténtalo de nuevo.'));
+                log_message('error', '[Tictac] send_proposal(): PDF no existe en ruta ' . ($tmp_pdf_path ?? 'NULL'));
+                echo json_encode(array('success' => false, 'message' => 'Error generando el PDF. Revisa los logs del servidor.'));
                 return;
             }
 
@@ -1124,7 +1150,10 @@ class Proposals extends Security_Controller
         }
 
         // ── Enviar ───────────────────────────────────────────────────────
+        log_message('info', '[Tictac] send_proposal(): llamando send_app_mail a ' . $to . ' adjuntos=' . count($attachments));
         if (send_app_mail($to, $subject, $message, array("attachments" => $attachments, "cc" => $cc, "bcc" => $bcc_emails))) {
+
+            log_message('info', '[Tictac] send_proposal(): email enviado OK a ' . $to);
 
             // Limpiar archivo temporal
             if ($tmp_pdf_path && file_exists($tmp_pdf_path)) {
@@ -1137,10 +1166,15 @@ class Proposals extends Security_Controller
                 echo json_encode(array('success' => true, 'message' => app_lang("proposal_sent_message"), "proposal_id" => $proposal_id));
             }
         } else {
+            log_message('error', '[Tictac] send_proposal(): send_app_mail FALLÓ para ' . $to);
             if ($tmp_pdf_path && file_exists($tmp_pdf_path)) {
                 @unlink($tmp_pdf_path);
             }
             echo json_encode(array('success' => false, 'message' => app_lang('error_occurred')));
+        }
+        } catch (\Throwable $e) {
+            log_message('error', '[Tictac] send_proposal() EXCEPCIÓN GLOBAL: ' . $e->getMessage() . ' en ' . $e->getFile() . ':' . $e->getLine());
+            echo json_encode(array('success' => false, 'message' => 'Error interno: ' . $e->getMessage()));
         }
     }
 
@@ -1257,8 +1291,8 @@ class Proposals extends Security_Controller
         $pdf->SetAuthor('Tictac Comunicación Digital SL');
         $pdf->SetTitle('Presupuesto ' . get_proposal_id($proposal_info->id));
         $pdf->AddPage();
-        $pdf->SetMargins(15, 58, 15);
-        $pdf->SetY(58);
+        $pdf->SetMargins(15, 34, 15);
+        $pdf->SetY(34);
 
         $pageW    = $pdf->getPageWidth();
         $contentW = $pageW - 30;
@@ -1590,6 +1624,38 @@ class Proposals extends Security_Controller
         $pdf->SetTextColor(51, 51, 51);
         $pdf->SetDrawColor(230, 230, 230);
 
+        // ── Determinar compañía ───────────────────────────────────────────
+        $company_id = intval($proposal_info->company_id ?? 2);
+        $es_tress   = ($company_id === 1);
+
+        // ── Sección "Sobre Nosotros" — siempre Tictac ────────────────────
+        $pdf->Ln(8);
+        if (($pdf->GetY() + 30) > $pdf->getPageHeight() - 45) $pdf->AddPage();
+
+        $sobre_texto = 'En Tictac Comunicación Digital SL desarrollamos estrategias digitales orientadas a conversión, visibilidad y crecimiento real. Cada propuesta se diseña a medida, alineada con los objetivos del cliente y basada en criterios técnicos, creativos y estratégicos.';
+
+        $sobreStartY = $pdf->GetY();
+        $pdf->SetXY(20, $sobreStartY + 10);
+        $pdf->SetFont('Helvetica', '', 8);
+        $pdf->SetTextColor(51, 51, 51);
+        $pdf->MultiCell($contentW - 10, 4, $sobre_texto, 0, 'J');
+        $sobreH = $pdf->GetY() - $sobreStartY + 6;
+
+        $pdf->SetFillColor(255, 240, 247);
+        $pdf->SetDrawColor(255, 240, 247);
+        $pdf->Rect(15, $sobreStartY, $contentW, $sobreH, 'F');
+        $pdf->SetFillColor($brand_r, $brand_g, $brand_b);
+        $pdf->Rect(15, $sobreStartY, 3, $sobreH, 'F');
+        $pdf->SetXY(20, $sobreStartY + 4);
+        $pdf->SetTextColor($brand_r, $brand_g, $brand_b);
+        $pdf->SetFont('Helvetica', 'B', 9);
+        $pdf->Cell($contentW - 10, 5, 'Sobre Nosotros', 0, 1, 'L');
+        $pdf->SetXY(20, $sobreStartY + 10);
+        $pdf->SetTextColor(51, 51, 51);
+        $pdf->SetFont('Helvetica', '', 8);
+        $pdf->MultiCell($contentW - 10, 4, $sobre_texto, 0, 'J');
+        $pdf->Ln(4);
+
         // ── Notas adicionales ─────────────────────────────────────────────
         $notasHtml = $proposal_info->note ?? '';
         if ($tiene_contenido($notasHtml)) {
@@ -1618,7 +1684,6 @@ class Proposals extends Security_Controller
             if ($alturaNotas > ($bottomLimit2 - $yAntesNotas)) $pdf->AddPage();
 
             $notasStartY = $pdf->GetY();
-            // Render contenido (para medir altura real post-render)
             $pdf->SetXY(20, $notasStartY + 10);
             $pdf->SetFont('Helvetica', '', 8);
             if (!empty($cleanNotasHtml)) {
@@ -1629,7 +1694,6 @@ class Proposals extends Security_Controller
             }
             $notasH = $pdf->GetY() - $notasStartY + 6;
 
-            // Fondo y título sobre el contenido ya renderizado
             $pdf->SetFillColor(255, 240, 247);
             $pdf->SetDrawColor(255, 240, 247);
             $pdf->Rect(15, $notasStartY, $contentW, $notasH, 'F');
@@ -1637,7 +1701,6 @@ class Proposals extends Security_Controller
             $pdf->SetTextColor($brand_r, $brand_g, $brand_b);
             $pdf->SetFont('Helvetica', 'B', 11);
             $pdf->Cell($contentW - 10, 5, 'Notas Adicionales', 0, 1, 'L');
-            // Re-render contenido encima del fondo
             $pdf->SetXY(20, $notasStartY + 10);
             $pdf->SetTextColor(51, 51, 51);
             $pdf->SetFont('Helvetica', '', 8);
@@ -1650,10 +1713,9 @@ class Proposals extends Security_Controller
             $pdf->Ln(4);
         }
 
-        // ── Cláusulas legales RGPD ────────────────────────────────────────
+        // ── Cláusulas legales RGPD (condicionales por compañía) ───────────
         $pdf->Ln(8);
-        $bottomLimitCl = $pdf->getPageHeight() - 45;
-        if (($pdf->GetY() + 85) > $bottomLimitCl) $pdf->AddPage();
+        if (($pdf->GetY() + 85) > $pdf->getPageHeight() - 45) $pdf->AddPage();
 
         $clY = $pdf->GetY();
         $pdf->SetDrawColor($brand_r, $brand_g, $brand_b);
@@ -1667,49 +1729,83 @@ class Proposals extends Security_Controller
         $pdf->Cell($contentW, 5, 'PROTECCIÓN DE DATOS Y CLÁUSULAS LEGALES', 0, 1, 'L');
         $pdf->Ln(2);
 
-        $pdf->SetX(15);
-        $pdf->SetFont('Helvetica', 'B', 6.5);
-        $pdf->SetTextColor(60, 60, 60);
-        $pdf->MultiCell($contentW, 3.2,
-            'Responsable: TIC TAC COMUNICACION DIGITAL SL - CIF: B09912478  ·  Dir. postal: C/ Cruz Conde, 19, Planta 6ª, 14001 de Córdoba  ·  Teléfono: 957786914  ·  E-mail: hola@tictac-comunicacion.es',
-            0, 'L');
-        $pdf->Ln(2);
-
-        $pdf->SetX(15);
-        $pdf->SetFont('Helvetica', '', 6.5);
-        $pdf->SetTextColor(80, 80, 80);
-        $pdf->MultiCell($contentW, 3.2,
-            'Tratamos la información que nos facilita con el fin de prestarles el servicio solicitado. Los datos proporcionados se conservarán durante el tiempo necesario para cumplir con las finalidades previstas. Los datos no se cederán a terceros salvo en los casos en que exista una obligación legal. Usted tiene derecho de acceso, rectificación, supresión y portabilidad de sus datos y oposición y limitación a su tratamiento en la dirección postal o correo electrónico facilitados, adjuntando copia de su DNI o documento equivalente.',
-            0, 'J');
-        $pdf->Ln(2);
-
-        $pdf->SetX(15);
-        $pdf->MultiCell($contentW, 3.2,
-            'Asimismo, solicitamos su autorización para enviarle publicidad relacionada con nuestros productos y servicios por cualquier medio (postal, email o teléfono) e invitarle a eventos organizados por la empresa.',
-            0, 'J');
-        $pdf->Ln(3);
-
-        // Checkboxes SI/NO
-        $checkY = $pdf->GetY();
-        $pdf->SetFont('Helvetica', 'B', 7.5);
-        $pdf->SetTextColor(51, 51, 51);
-        $pdf->SetDrawColor(100, 100, 100);
-        $pdf->SetLineWidth(0.4);
-        $pdf->SetXY(15, $checkY);
-        $pdf->Cell(22, 5, 'SI Autorizo', 0, 0, 'L');
-        $pdf->Rect(38, $checkY + 0.8, 3.5, 3.5);
-        $pdf->SetXY(47, $checkY);
-        $pdf->Cell(22, 5, 'NO Autorizo', 0, 1, 'L');
-        $pdf->Rect(70, $checkY + 0.8, 3.5, 3.5);
-        $pdf->SetDrawColor(230, 230, 230);
-        $pdf->Ln(3);
-
-        $pdf->SetX(15);
-        $pdf->SetFont('Helvetica', '', 6.5);
-        $pdf->SetTextColor(80, 80, 80);
-        $pdf->MultiCell($contentW, 3.2,
-            'El CLIENTE es responsable de garantizar que dispone de los consentimientos y autorizaciones legales necesarias para la publicación de imágenes o datos personales de trabajadores y terceros. TIC TAC COMUNICACION DIGITAL SL quedará exonerada de cualquier responsabilidad derivada de incumplimientos en materia de protección de datos por parte del cliente.',
-            0, 'J');
+        if ($es_tress) {
+            // ── TRESS ─────────────────────────────────────────────────────
+            $pdf->SetX(15);
+            $pdf->SetFont('Helvetica', 'B', 6.5);
+            $pdf->SetTextColor(60, 60, 60);
+            $pdf->MultiCell($contentW, 3.2,
+                'Responsable: PROYECTO TRESS AZAFATAS SL - CIF: B56028293  Dir. postal: C/ Cruz Conde, 19, Planta 6ª, 14001 de Córdoba.  Teléfono: 957963074  E-mail: info@proymer.com',
+                0, 'L');
+            $pdf->Ln(2);
+            $pdf->SetX(15);
+            $pdf->SetFont('Helvetica', '', 6.5);
+            $pdf->SetTextColor(80, 80, 80);
+            $pdf->MultiCell($contentW, 3.2,
+                'Tratamos la información que nos facilita con el fin de prestarles el servicio solicitado. Los datos proporcionados se conservarán durante el tiempo necesario para cumplir con las finalidades previstas. Los datos no se cederán a terceros salvo en los casos en que exista una obligación legal. Usted tiene derecho de acceso, rectificación, supresión y portabilidad de sus datos y oposición y limitación a su tratamiento en la dirección postal o correo electrónico facilitados, adjuntando copia de su DNI o documento equivalente. Asimismo, y especialmente si considera que no ha obtenido satisfacción plena en el ejercicio de sus derechos, podrá presentar una reclamación ante la autoridad nacional de control dirigiéndose a estos efectos a la Agencia Española de Protección de Datos, C/ Jorge Juan, 6 - 28001 Madrid.',
+                0, 'J');
+            $pdf->Ln(2);
+            $pdf->SetX(15);
+            $pdf->MultiCell($contentW, 3.2,
+                'Asimismo, solicitamos su autorización para enviarle publicidad relacionada con nuestros productos y servicios por cualquier medio (postal, email o teléfono) e invitarle a eventos organizados por la empresa.',
+                0, 'J');
+            $pdf->Ln(3);
+            // Checkboxes
+            $checkY = $pdf->GetY();
+            $pdf->SetFont('Helvetica', 'B', 7.5);
+            $pdf->SetTextColor(51, 51, 51);
+            $pdf->SetDrawColor(100, 100, 100);
+            $pdf->SetLineWidth(0.4);
+            $pdf->SetXY(15, $checkY);
+            $pdf->Cell(22, 5, 'SI Autorizo', 0, 0, 'L');
+            $pdf->Rect(38, $checkY + 0.8, 3.5, 3.5);
+            $pdf->SetXY(47, $checkY);
+            $pdf->Cell(22, 5, 'NO Autorizo', 0, 1, 'L');
+            $pdf->Rect(70, $checkY + 0.8, 3.5, 3.5);
+            $pdf->SetDrawColor(230, 230, 230);
+            $pdf->Ln(3);
+        } else {
+            // ── TICTAC ────────────────────────────────────────────────────
+            $pdf->SetX(15);
+            $pdf->SetFont('Helvetica', 'B', 6.5);
+            $pdf->SetTextColor(60, 60, 60);
+            $pdf->MultiCell($contentW, 3.2,
+                'Responsable: TIC TAC COMUNICACION DIGITAL SL - CIF: B09912478  Dir. postal: C/ Cruz Conde, 19, Planta 6ª, 14001 de Córdoba.  Teléfono: 957786914  E-mail: hola@tictac-comunicacion.es',
+                0, 'L');
+            $pdf->Ln(2);
+            $pdf->SetX(15);
+            $pdf->SetFont('Helvetica', '', 6.5);
+            $pdf->SetTextColor(80, 80, 80);
+            $pdf->MultiCell($contentW, 3.2,
+                'Tratamos la información que nos facilita con el fin de prestarles el servicio solicitado. Los datos proporcionados se conservarán durante el tiempo necesario para cumplir con las finalidades previstas. Los datos no se cederán a terceros salvo en los casos en que exista una obligación legal. Usted tiene derecho de acceso, rectificación, supresión y portabilidad de sus datos y oposición y limitación a su tratamiento en la dirección postal o correo electrónico facilitados, adjuntando copia de su DNI o documento equivalente. Asimismo, y especialmente si considera que no ha obtenido satisfacción plena en el ejercicio de sus derechos, podrá presentar una reclamación ante la autoridad nacional de control dirigiéndose a estos efectos a la Agencia Española de Protección de Datos, C/ Jorge Juan, 6 - 28001 Madrid.',
+                0, 'J');
+            $pdf->Ln(2);
+            $pdf->SetX(15);
+            $pdf->MultiCell($contentW, 3.2,
+                'Asimismo, solicitamos su autorización para enviarle publicidad relacionada con nuestros productos y servicios por cualquier medio (postal, email o teléfono) e invitarle a eventos organizados por la empresa.',
+                0, 'J');
+            $pdf->Ln(3);
+            // Checkboxes
+            $checkY = $pdf->GetY();
+            $pdf->SetFont('Helvetica', 'B', 7.5);
+            $pdf->SetTextColor(51, 51, 51);
+            $pdf->SetDrawColor(100, 100, 100);
+            $pdf->SetLineWidth(0.4);
+            $pdf->SetXY(15, $checkY);
+            $pdf->Cell(22, 5, 'SI Autorizo', 0, 0, 'L');
+            $pdf->Rect(38, $checkY + 0.8, 3.5, 3.5);
+            $pdf->SetXY(47, $checkY);
+            $pdf->Cell(22, 5, 'NO Autorizo', 0, 1, 'L');
+            $pdf->Rect(70, $checkY + 0.8, 3.5, 3.5);
+            $pdf->SetDrawColor(230, 230, 230);
+            $pdf->Ln(3);
+            $pdf->SetX(15);
+            $pdf->SetFont('Helvetica', '', 6.5);
+            $pdf->SetTextColor(80, 80, 80);
+            $pdf->MultiCell($contentW, 3.2,
+                'El CLIENTE es responsable de garantizar que dispone de los consentimientos y autorizaciones legales necesarias para la publicación de imágenes o datos personales de trabajadores y terceros. TIC TAC COMUNICACION DIGITAL SL quedará exonerada de cualquier responsabilidad derivada de incumplimientos en materia de protección de datos por parte del cliente.',
+                0, 'J');
+        }
 
         $pdf->SetTextColor(51, 51, 51);
         $pdf->Ln(6);
@@ -1745,12 +1841,94 @@ class Proposals extends Security_Controller
         $pdf->SetFont('Helvetica', '', 9);
         $pdf->SetTextColor(51, 51, 51);
         $pdf->SetX(15);
-        $pdf->Cell($firmaColW, 5, 'Tictac Comunicacion Digital SL', 0, 0, 'C');
+        $nombre_firma_proveedor = $es_tress ? 'Proyecto Tress Azafatas SL' : 'Tictac Comunicacion Digital SL';
+        $pdf->Cell($firmaColW, 5, $nombre_firma_proveedor, 0, 0, 'C');
         $pdf->SetX(15 + $firmaColW + 10);
         $pdf->Cell($firmaColW, 5, $client_info->company_name ?? '', 0, 1, 'C');
 
+        // ── Imagen de firma del cliente (modo signed) ─────────────────────
+        if ($mode === 'signed') {
+            // Leer firma directamente de meta_data de la propuesta
+            $meta_raw = $proposal_info->meta_data ?? '';
+            $meta_arr = @unserialize($meta_raw);
+
+            $sig_path = null;
+            $sig_name = '';
+
+            if ($meta_arr && is_array($meta_arr)) {
+                $sig_name = $meta_arr['name'] ?? ($meta_arr['email'] ?? '');
+
+                if (!empty($meta_arr['signature'])) {
+                    $sig_file = @unserialize($meta_arr['signature']);
+                    if ($sig_file && is_array($sig_file)) {
+                        $fn           = get_array_value($sig_file, 'file_name');
+                        $fp           = get_setting('timeline_file_path');
+                        $service_type = get_array_value($sig_file, 'service_type');
+                        $file_id      = get_array_value($sig_file, 'file_id');
+
+                        if ($service_type === 'google' && $file_id) {
+                            // Descargar desde Google Drive a un archivo temporal
+                            try {
+                                $google     = new \App\Libraries\Google();
+                                $file_data  = $google->download_file($file_id);
+                                if ($file_data) {
+                                    $tmp_sig = sys_get_temp_dir() . '/sig_' . $proposal_id . '_' . time() . '.jpg';
+                                    file_put_contents($tmp_sig, $file_data);
+                                    if (file_exists($tmp_sig) && filesize($tmp_sig) > 0) {
+                                        $sig_path = $tmp_sig;
+                                        log_message('info', '[Tictac] firma descargada de Google Drive: ' . $tmp_sig);
+                                    }
+                                }
+                            } catch (\Throwable $e) {
+                                log_message('error', '[Tictac] error descargando firma de Google Drive: ' . $e->getMessage());
+                            }
+                        } else {
+                            // Archivo local
+                            foreach ([
+                                FCPATH . $fp . $fn,
+                                ROOTPATH . $fp . $fn,
+                                '/home/gestiontictaccom/public_html/' . $fp . $fn,
+                                APPPATH . '../' . $fp . $fn,
+                            ] as $c) {
+                                if ($fn && file_exists($c)) {
+                                    $sig_path = $c;
+                                    log_message('info', '[Tictac] firma local encontrada en: ' . $c);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if ($sig_path) {
+                $sigX = 15 + $firmaColW + 10 + ($firmaColW / 2) - 22;
+                $sigY = $firmasStartY + 8;
+                $pdf->Image($sig_path, $sigX, $sigY, 44, 16, '', '', '', true);
+            } else {
+                log_message('error', '[Tictac] firma NO encontrada — meta_data: ' . substr($meta_raw ?? '', 0, 200));
+            }
+
+            if ($sig_name) {
+                $pdf->SetXY(15 + $firmaColW + 10, $firmaLineY + 6);
+                $pdf->SetFont('Helvetica', 'I', 7.5);
+                $pdf->SetTextColor(120, 120, 120);
+                $pdf->Cell($firmaColW, 5, 'Firmado por: ' . $sig_name, 0, 1, 'C');
+            }
+
+            // Limpiar sesión por si se usó el flujo antiguo
+            $session = \Config\Services::session();
+            $session->remove('tictac_sig_path_' . $proposal_id);
+            $session->remove('tictac_sig_name_' . $proposal_id);
+
+            // Limpiar archivo temporal de firma si se descargó de Google Drive
+            if ($sig_path && strpos($sig_path, sys_get_temp_dir()) === 0 && file_exists($sig_path)) {
+                @unlink($sig_path);
+            }
+        }
+
         // ── Output ────────────────────────────────────────────────────────
-        $filename = 'Presupuesto_' . get_proposal_id($proposal_info->id) . '.pdf';
+        $filename = 'Presupuesto_' . get_proposal_id($proposal_info->id) . ($mode === 'signed' ? '_Firmado' : '') . '.pdf';
 
         if ($mode === 'save') {
             $tmpFile = sys_get_temp_dir() . '/proposal_' . $proposal_id . '_' . time() . '.pdf';
@@ -1859,17 +2037,31 @@ class Proposals extends Security_Controller
             show_404();
         }
 
-        if (!$this->check_proposal_pdf_access_for_clients($this->login_user->user_type)) {
-            show_404();
-        }
-
         validate_numeric_value($proposal_id);
 
-        $proposal_data = get_proposal_making_data($proposal_id);
-        $this->_check_proposal_access_permission($proposal_data);
+        // Acceso público via token de sesión (PDF firmado desde vista pública del cliente)
+        $session      = \Config\Services::session();
+        $public_token = $session->get('tictac_pdf_token_' . $proposal_id);
+        $is_public    = $session->get('tictac_sig_public_' . $proposal_id);
 
-        // Generar PDF con diseño Tictac directamente
-        $this->_generate_tictac_pdf($proposal_id, 'download');
+        if ($is_public && $public_token) {
+            $proposal_check = $this->Proposals_model->get_one($proposal_id);
+            if ($proposal_check->public_key !== $public_token) {
+                show_404();
+            }
+            $session->remove('tictac_pdf_token_' . $proposal_id);
+            $session->remove('tictac_sig_public_' . $proposal_id);
+        } else {
+            // Acceso normal — staff autenticado
+            if (!$this->check_proposal_pdf_access_for_clients($this->login_user->user_type)) {
+                show_404();
+            }
+            $proposal_data = get_proposal_making_data($proposal_id);
+            $this->_check_proposal_access_permission($proposal_data);
+        }
+
+        $pdf_mode = ($mode === 'signed') ? 'signed' : 'download';
+        $this->_generate_tictac_pdf($proposal_id, $pdf_mode);
     }
 
     /* load proposal comment modal */

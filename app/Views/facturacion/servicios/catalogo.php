@@ -38,6 +38,6 @@
 </div>
 <script>
 $(document).ready(function(){
-    $('#tabla-catalogo').DataTable({ language: { url: '<?php echo get_uri("assets/datatables/Spanish.json"); ?>' }, order: [[0,'asc']], drawCallback: function(){ feather.replace(); } });
+    $('#tabla-catalogo').DataTable({ language: { search: 'Buscar:', lengthMenu: 'Mostrar _MENU_ registros', info: 'Mostrando _START_ a _END_ de _TOTAL_ registros', infoEmpty: 'Sin resultados', zeroRecords: 'No se encontraron resultados', paginate: { first: '«', last: '»', next: '›', previous: '‹' } }, order: [[0,'asc']], drawCallback: function(){ feather.replace(); } });
 });
 </script>

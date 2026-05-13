@@ -23,25 +23,26 @@ class Contract extends Security_Controller {
             show_404();
         }
 
-        //check public key
         $contract_info = $this->Contracts_model->get_one($contract_id);
         if ($contract_info->public_key !== $public_key) {
             show_404();
         }
-
-        $view_data = array();
 
         $contract_data = get_contract_making_data($contract_id);
         if (!$contract_data) {
             show_404();
         }
 
-        $view_data['contract_preview'] = prepare_contract_view($contract_data);
-        $view_data['show_close_preview'] = false; //don't show back button
-        $view_data['contract_id'] = $contract_id;
-        $view_data['contract_type'] = "public";
-        $view_data['public_key'] = clean_data($public_key);
-        $view_data['has_pdf_access'] = $this->check_contract_pdf_access_for_clients();
+        $view_data = array();
+        $view_data['contract_info']          = $contract_info;
+        $view_data['client_info']            = $contract_data['client_info'];
+        $view_data['contract_items']         = $this->Contract_items_model->get_details(array('contract_id' => $contract_id))->getResult();
+        $view_data['contract_total_summary'] = $this->Contracts_model->get_contract_total_summary($contract_id);
+        $view_data['show_close_preview']     = false;
+        $view_data['contract_id']            = $contract_id;
+        $view_data['contract_type']          = "public";
+        $view_data['public_key']             = clean_data($public_key);
+        $view_data['has_pdf_access']         = $this->check_contract_pdf_access_for_clients();
 
         return view("contracts/contract_public_preview", $view_data);
     }
@@ -201,6 +202,36 @@ class Contract extends Security_Controller {
 
         if ($this->Contracts_model->ci_save($contract_data, $contract_id)) {
             log_notification("contract_accepted", array("contract_id" => $contract_id), ($name ? "999999996" : $this->login_user->id));
+
+            // ── Notificación interna a Tictac ─────────────────────────
+            try {
+                $client_info   = $this->Clients_model->get_one($contract_info->client_id);
+                $client_nombre = $client_info->company_name ?? 'Cliente #' . $contract_info->client_id;
+                $contract_ref  = get_contract_id($contract_id);
+                $firmante      = $name ?: ($meta_data['name'] ?? ($meta_data['email'] ?? 'Cliente'));
+                $contract_url  = get_uri('contracts/view/' . $contract_id);
+
+                $subj = 'Contrato aceptado: ' . $contract_ref . ' — ' . $client_nombre;
+                $msg  = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:Arial,sans-serif;color:#333;background:#f5f5f5;margin:0;padding:0;">
+<div style="max-width:580px;margin:30px auto;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.1);">
+  <div style="background:#d72173;padding:28px 30px;text-align:center;">
+    <h1 style="color:#fff;margin:0;font-size:22px;">Contrato Aceptado</h1>
+  </div>
+  <div style="padding:30px;">
+    <p>El cliente <strong>' . htmlspecialchars($client_nombre) . '</strong> ha aceptado el contrato <strong>' . htmlspecialchars($contract_ref) . '</strong>.</p>
+    <p>Firmado por: <strong>' . htmlspecialchars($firmante) . '</strong></p>
+    <p style="font-size:12px;color:#aaa;">Puedes ver el contrato en el CRM desde el siguiente enlace: <a href="' . $contract_url . '">' . $contract_url . '</a></p>
+  </div>
+  <div style="background:#1a1a1a;color:#aaa;text-align:center;padding:16px;font-size:12px;">
+    Tictac Comunicacion Digital SL · hola@tictac-comunicacion.es
+  </div>
+</div></body></html>';
+
+                send_app_mail('hola@tictac-comunicacion.es', $subj, $msg);
+            } catch (\Throwable $e) {
+                log_message('error', '[Tictac] accept_contract: fallo email notificacion — ' . $e->getMessage());
+            }
+
             echo json_encode(array("success" => true, "message" => app_lang("contract_accepted")));
         } else {
             echo json_encode(array("success" => false, "message" => app_lang("error_occurred")));
@@ -252,10 +283,9 @@ class Contract extends Security_Controller {
             show_404();
         }
 
-        $contract_data = get_contract_making_data($contract_id);
-        $contract_data['contract_preview'] = prepare_contract_view($contract_data);
-
-        prepare_contract_pdf($contract_data);
+        // Usar el generador Tictac desde Contracts
+        $Contracts = new \App\Controllers\Contracts();
+        $Contracts->download_pdf($contract_id);
     }
 }
 

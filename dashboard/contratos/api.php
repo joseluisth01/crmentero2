@@ -142,6 +142,19 @@ function tiene_contenido($html)
     return $html !== null && pdf_text_plain($html) !== '';
 }
 
+function limpiarHtmlBasico($html)
+{
+    $html = (string)$html;
+
+    // Permitimos solo etiquetas básicas del editor Quill
+    $html = strip_tags($html, '<p><br><strong><b><em><i><u><ul><ol><li>');
+
+    // Eliminamos atributos para evitar estilos raros o código innecesario
+    $html = preg_replace('/<([a-z][a-z0-9]*)\s+[^>]*>/i', '<$1>', $html);
+
+    return trim($html);
+}
+
 // ==============================================================
 // GUARDAR CONTRATO
 // ==============================================================
@@ -171,12 +184,13 @@ function guardarContrato($contratosFile)
         foreach ($_POST['items'] as $item) {
             if (!empty($item['nombre'])) {
                 $items[] = array(
-                    'nombre'      => (string)$item['nombre'],
-                    'descripcion' => isset($item['descripcion']) ? trim(strip_tags((string)$item['descripcion'])) : '',
-                    'cantidad'    => floatval(isset($item['cantidad']) ? $item['cantidad'] : 1),
-                    'precio'      => floatval(isset($item['precio'])   ? $item['precio']   : 0),
-                    'unidad'      => isset($item['unidad']) ? (string)$item['unidad'] : ''
-                );
+    'nombre'          => (string)$item['nombre'],
+    'descripcion'     => isset($item['descripcion']) ? limpiarHtmlBasico((string)$item['descripcion']) : '',
+    'cantidad'        => floatval(isset($item['cantidad']) ? $item['cantidad'] : 1),
+    'precio'          => floatval(isset($item['precio']) ? $item['precio'] : 0),
+    'precio_original' => floatval(isset($item['precio_original']) ? $item['precio_original'] : 0),
+    'unidad'          => isset($item['unidad']) ? (string)$item['unidad'] : ''
+);
             }
         }
     }
@@ -201,7 +215,7 @@ function guardarContrato($contratosFile)
         'subtotal'          => floatval(isset($_POST['subtotal'])         ? $_POST['subtotal']         : 0),
         'descuento_global'  => floatval(isset($_POST['descuento_global'])  ? $_POST['descuento_global']  : 0),
         'total'             => floatval(isset($_POST['total'])            ? $_POST['total']            : 0),
-        'notas'             => isset($_POST['notas'])             ? (string)$_POST['notas']             : '',
+        'notas'             => isset($_POST['notas']) ? limpiarHtmlBasico((string)$_POST['notas']) : '',
         'clausulas_html'             => isset($_POST['clausulas_html'])             ? (string)$_POST['clausulas_html']             : '',
         'kit_digital'                => !empty($_POST['kit_digital']) ? 1 : 0,
         'clausulas_kit_digital_html' => isset($_POST['clausulas_kit_digital_html']) ? (string)$_POST['clausulas_kit_digital_html'] : '',
@@ -413,111 +427,163 @@ function eliminarContrato($contratosFile)
 
 function dibujarTablaItems($pdf, $items, $stX, $cArt, $cCant, $cTar, $cTot, $tW)
 {
-    $pdf->SetFillColor(30, 30, 30);
-    $pdf->Rect($stX, $pdf->GetY(), $tW, 7, 'F');
-    $pdf->SetXY($stX + 2, $pdf->GetY());
-    $pdf->SetTextColor(255, 255, 255);
-    $pdf->SetFont('Helvetica', 'B', 8.5);
-    $pdf->Cell($cArt - 2, 7, 'Articulo', 0, 0, 'L');
-    $pdf->Cell($cCant,    7, 'Cantidad', 0, 0, 'C');
-    $pdf->Cell($cTar,     7, 'Tarifa',   0, 0, 'R');
-    $pdf->Cell($cTot - 2, 7, 'Total',    0, 1, 'R');
-    $pdf->SetTextColor(51, 51, 51);
+    $pageBottomLimit = $pdf->getPageHeight() - 42;
+
+    $drawTableHeader = function () use ($pdf, $stX, $cArt, $cCant, $cTar, $cTot, $tW) {
+        $pdf->SetFillColor(30, 30, 30);
+        $pdf->Rect($stX, $pdf->GetY(), $tW, 7, 'F');
+
+        $pdf->SetXY($stX + 2, $pdf->GetY());
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->SetFont('Helvetica', 'B', 8.5);
+
+        $pdf->Cell($cArt - 2, 7, 'Articulo', 0, 0, 'L');
+        $pdf->Cell($cCant,    7, 'Cantidad', 0, 0, 'C');
+        $pdf->Cell($cTar,     7, 'Tarifa',   0, 0, 'R');
+        $pdf->Cell($cTot - 2, 7, 'Total',    0, 1, 'R');
+
+        $pdf->SetTextColor(51, 51, 51);
+    };
+
+    // Antes de pintar la cabecera, comprobamos que haya espacio real.
+    if (($pdf->GetY() + 18) > $pageBottomLimit) {
+        $pdf->AddPage();
+    }
+
+    $drawTableHeader();
 
     $alt = false;
+
     foreach ($items as $item) {
-        $cant    = floatval(isset($item['cantidad']) ? $item['cantidad'] : 0);
-        $prec    = floatval(isset($item['precio'])   ? $item['precio']   : 0);
-        $iTotal  = $cant * $prec;
-        $uni     = isset($item['unidad'])       ? $item['unidad']      : '';
-        $nom     = isset($item['nombre'])       ? $item['nombre']      : '';
-        $descRaw = isset($item['descripcion'])  ? $item['descripcion'] : '';
-        $desc    = trim(pdf_text_plain($descRaw));
+        $cant   = floatval(isset($item['cantidad']) ? $item['cantidad'] : 0);
+        $prec   = floatval(isset($item['precio']) ? $item['precio'] : 0);
+        $iTotal = $cant * $prec;
+        $uni    = isset($item['unidad']) ? $item['unidad'] : '';
+        $nom    = isset($item['nombre']) ? $item['nombre'] : '';
 
-        $pdf->SetFont('Helvetica', '', 7.5);
-        if ($desc !== '') {
-            $descH = $pdf->getStringHeight($cArt - 6, $desc, false, true, '', 1);
-            $rowH  = 7 + $descH + 4;
-        } else {
-            $rowH = 7;
-        }
-        if ($rowH < 7) $rowH = 7;
+        $descRaw  = isset($item['descripcion']) ? $item['descripcion'] : '';
+        $descHtml = limpiarHtmlBasico($descRaw);
+        $desc     = trim(pdf_text_plain($descHtml));
 
-        $precOrig_pre = floatval(isset($item['precio_original']) ? $item['precio_original'] : 0);
-        if ($precOrig_pre > 0 && $precOrig_pre > floatval($item['precio'] ?? 0)) $rowH = max($rowH, 12);
+        $precOrig     = floatval(isset($item['precio_original']) ? $item['precio_original'] : 0);
+        $hayDescuento = ($precOrig > 0 && $precOrig > $prec);
 
-        if (($pdf->GetY() + $rowH) > $pdf->getPageHeight() - 42) {
+        $mainRowH = $hayDescuento ? 12 : 8;
+
+        // Si no cabe ni la fila principal, saltamos página y repetimos cabecera.
+        if (($pdf->GetY() + $mainRowH + 8) > $pageBottomLimit) {
             $pdf->AddPage();
-            $pdf->SetFillColor(30, 30, 30);
-            $pdf->Rect($stX, $pdf->GetY(), $tW, 7, 'F');
-            $pdf->SetXY($stX + 2, $pdf->GetY());
-            $pdf->SetTextColor(255, 255, 255);
-            $pdf->SetFont('Helvetica', 'B', 8.5);
-            $pdf->Cell($cArt - 2, 7, 'Articulo', 0, 0, 'L');
-            $pdf->Cell($cCant,    7, 'Cantidad', 0, 0, 'C');
-            $pdf->Cell($cTar,     7, 'Tarifa',   0, 0, 'R');
-            $pdf->Cell($cTot - 2, 7, 'Total',    0, 1, 'R');
-            $pdf->SetTextColor(51, 51, 51);
+            $drawTableHeader();
         }
 
         $rowY = $pdf->GetY();
 
         if ($alt) {
             $pdf->SetFillColor(250, 250, 250);
-            $pdf->Rect($stX, $rowY, $tW, $rowH, 'F');
+            $pdf->Rect($stX, $rowY, $tW, $mainRowH, 'F');
         }
 
-        $precOrig    = floatval(isset($item['precio_original']) ? $item['precio_original'] : 0);
-        $hayDescuento = ($precOrig > 0 && $precOrig > $prec);
-
-        if ($hayDescuento) $rowH = max($rowH, 12);
-
+        // Nombre del servicio
         $pdf->SetXY($stX + 2, $rowY + 1);
         $pdf->SetFont('Helvetica', 'B', 8.5);
-        $pdf->Cell($cArt - 2, 5, $nom, 0, 0, 'L');
+        $pdf->SetTextColor(51, 51, 51);
+        $pdf->MultiCell($cArt - 4, 4.5, $nom, 0, 'L', false, 0);
 
+        // Cantidad
+        $pdf->SetXY($stX + $cArt, $rowY + 1);
         $pdf->SetFont('Helvetica', '', 8.5);
+        $pdf->SetTextColor(51, 51, 51);
         $pdf->Cell($cCant, 5, number_format($cant, 2, ',', '.') . ($uni ? ' ' . $uni : ''), 0, 0, 'C');
 
+        // Tarifa
         if ($hayDescuento) {
             $tarifaX = $stX + $cArt + $cCant;
+
             $pdf->SetFont('Helvetica', '', 7);
             $pdf->SetTextColor(160, 160, 160);
+
             $origTxt = number_format($precOrig, 2, ',', '.') . 'E';
             $tw = $pdf->GetStringWidth($origTxt);
             $tx = $stX + $cArt + $cCant + $cTar - $tw - 1;
             $ty = $rowY + 0.5;
+
             $pdf->SetXY($tx, $ty);
             $pdf->Cell($tw, 4, $origTxt, 0, 0, 'L');
+
             $pdf->SetDrawColor(160, 160, 160);
             $pdf->SetLineWidth(0.3);
             $pdf->Line($tx, $ty + 2.2, $tx + $tw, $ty + 2.2);
             $pdf->SetLineWidth(0.2);
+
             $pdf->SetFont('Helvetica', 'B', 8.5);
             $pdf->SetTextColor(215, 33, 115);
             $pdf->SetXY($tarifaX, $rowY + 5);
             $pdf->Cell($cTar, 5, number_format($prec, 2, ',', '.') . 'E', 0, 0, 'R');
+
             $pdf->SetTextColor(51, 51, 51);
         } else {
+            $pdf->SetXY($stX + $cArt + $cCant, $rowY + 1);
+            $pdf->SetFont('Helvetica', '', 8.5);
+            $pdf->SetTextColor(51, 51, 51);
             $pdf->Cell($cTar, 5, number_format($prec, 2, ',', '.') . 'E', 0, 0, 'R');
         }
 
+        // Total
+        $pdf->SetXY($stX + $cArt + $cCant + $cTar, $rowY + 1);
         $pdf->SetFont('Helvetica', 'B', 8.5);
         $pdf->SetTextColor(51, 51, 51);
         $pdf->Cell($cTot - 2, 5, number_format($iTotal, 2, ',', '.') . 'E', 0, 1, 'R');
 
+        // Bajamos después de la fila principal
+        $pdf->SetY($rowY + $mainRowH);
+
+        // Descripción a ancho completo
         if ($desc !== '') {
-            $pdf->SetFont('Helvetica', '', 7.5);
-            $pdf->SetTextColor(100, 100, 100);
-            $pdf->SetXY($stX + 4, $rowY + 7);
-            $pdf->MultiCell($cArt - 6, 4, $desc, 0, 'L');
+            if (($pdf->GetY() + 10) > $pageBottomLimit) {
+                $pdf->AddPage();
+                $drawTableHeader();
+            }
+
+            $descPdfHtml = '
+                <div style="font-family: helvetica; font-size: 7.5px; color: #666666; line-height: 1.25;">
+                    ' . $descHtml . '
+                </div>
+            ';
+
+            $pdf->SetX($stX + 4);
+
+            $pdf->writeHTMLCell(
+                $tW - 8,
+                0,
+                $stX + 4,
+                $pdf->GetY(),
+                $descPdfHtml,
+                0,
+                1,
+                false,
+                true,
+                'L',
+                true
+            );
+
+            $pdf->Ln(2);
             $pdf->SetTextColor(51, 51, 51);
+        }
+
+        // Línea inferior, siempre donde realmente haya terminado el contenido
+        $lineY = $pdf->GetY();
+
+        if ($lineY > $pageBottomLimit) {
+            $pdf->AddPage();
+            $drawTableHeader();
+            $lineY = $pdf->GetY();
         }
 
         $pdf->SetDrawColor(230, 230, 230);
         $pdf->SetLineWidth(0.2);
-        $pdf->Line($stX, $rowY + $rowH, $stX + $tW, $rowY + $rowH);
-        $pdf->SetY($rowY + $rowH);
+        $pdf->Line($stX, $lineY, $stX + $tW, $lineY);
+
+        $pdf->Ln(2);
 
         $alt = !$alt;
     }
@@ -666,7 +732,8 @@ function generarPDF($contratosFile)
     $ivaAmt        = $subtotal * $iva / 100;
     $segAmt        = $subtotal * $seg / 100;
     $totalFinal    = floatval(isset($contrato['total']) ? $contrato['total'] : max(0, $subtotal + $ivaAmt + $segAmt - $descuentoGlob));
-    $notasTexto    = tiene_contenido(isset($contrato['notas']) ? $contrato['notas'] : '') ? pdf_text_plain($contrato['notas']) : '';
+    $notasHtml = isset($contrato['notas']) ? limpiarHtmlBasico($contrato['notas']) : '';
+$notasTexto = tiene_contenido($notasHtml) ? pdf_text_plain($notasHtml) : '';
 
     $clausulasPersonalizadas = isset($contrato['clausulas_html']) && trim(strip_tags($contrato['clausulas_html'])) !== '';
     $esKitDigital            = !empty($contrato['kit_digital']);
@@ -1187,23 +1254,50 @@ function generarPDF($contratosFile)
     }
 
     // ── NOTAS ADHERIDAS (solo para contratos no-Kit Digital) ──────
-    if (!$esKitDigital && $notasTexto) {
-        $pdf->Ln(1);
-        $notaY = $pdf->GetY();
-        $pdf->SetFillColor(255, 248, 225);
-        $pdf->SetDrawColor(255, 248, 225);
-        $pdf->RoundedRect(20, $notaY, $cW, 7, 2, '1111', 'F');
-        $pdf->SetXY(22, $notaY + 1.5);
-        $pdf->SetFont('Helvetica', 'B', 10);
-        $pdf->SetTextColor(100, 80, 0);
-        $pdf->Cell($cW - 4, 5, 'NOTAS ADHERIDAS AL CONTRATO:', 0, 1, 'L');
-        $pdf->SetTextColor(51, 51, 51);
-        $pdf->Ln(2);
-        $pdf->SetX(22);
-        $pdf->SetFont('Helvetica', '', 9);
-        $pdf->MultiCell($cW - 4, 4.3, $notasTexto, 0, 'J');
-        $pdf->Ln(8);
+    // ── NOTAS ADHERIDAS (solo para contratos no-Kit Digital) ──────
+if (!$esKitDigital && $notasTexto) {
+    $pdf->Ln(1);
+
+    if (($pdf->GetY() + 25) > $pdf->getPageHeight() - 40) {
+        $pdf->AddPage();
     }
+
+    $notaY = $pdf->GetY();
+
+    $pdf->SetFillColor(255, 248, 225);
+    $pdf->SetDrawColor(255, 248, 225);
+    $pdf->RoundedRect(20, $notaY, $cW, 7, 2, '1111', 'F');
+
+    $pdf->SetXY(22, $notaY + 1.5);
+    $pdf->SetFont('Helvetica', 'B', 10);
+    $pdf->SetTextColor(100, 80, 0);
+    $pdf->Cell($cW - 4, 5, 'NOTAS ADHERIDAS AL CONTRATO:', 0, 1, 'L');
+
+    $pdf->SetTextColor(51, 51, 51);
+    $pdf->Ln(3);
+
+    $notasPdfHtml = '
+        <div style="font-family: helvetica; font-size: 9px; color: #333333; line-height: 1.35;">
+            ' . $notasHtml . '
+        </div>
+    ';
+
+    $pdf->writeHTMLCell(
+        $cW - 4,
+        0,
+        22,
+        $pdf->GetY(),
+        $notasPdfHtml,
+        0,
+        1,
+        false,
+        true,
+        'J',
+        true
+    );
+
+    $pdf->Ln(8);
+}
 
     // ── CLÁUSULA LOPD ──────────────────────────────────────────────
     if (($pdf->GetY() + 60) > $pdf->getPageHeight() - 40) $pdf->AddPage();

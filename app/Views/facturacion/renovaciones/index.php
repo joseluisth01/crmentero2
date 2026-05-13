@@ -80,7 +80,7 @@
 <script>
 $(document).ready(function(){
     $('#tabla-renovaciones').DataTable({
-        language: { url: '<?php echo get_uri("assets/datatables/Spanish.json"); ?>' },
+        language: { search: 'Buscar:', lengthMenu: 'Mostrar _MENU_ registros', info: 'Mostrando _START_ a _END_ de _TOTAL_ registros', infoEmpty: 'Sin resultados', zeroRecords: 'No se encontraron resultados', paginate: { first: '«', last: '»', next: '›', previous: '‹' } },
         order: [[3,'asc']],
         drawCallback: function(){ feather.replace(); }
     });

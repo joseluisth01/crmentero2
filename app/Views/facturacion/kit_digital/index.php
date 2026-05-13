@@ -62,6 +62,6 @@
 </div>
 <script>
 $(document).ready(function(){
-    $('#tabla-kit').DataTable({ language: { url: '<?php echo get_uri("assets/datatables/Spanish.json"); ?>' }, drawCallback: function(){ feather.replace(); } });
+    $('#tabla-kit').DataTable({ language: { search: 'Buscar:', lengthMenu: 'Mostrar _MENU_ registros', info: 'Mostrando _START_ a _END_ de _TOTAL_ registros', infoEmpty: 'Sin resultados', zeroRecords: 'No se encontraron resultados', paginate: { first: '«', last: '»', next: '›', previous: '‹' } }, drawCallback: function(){ feather.replace(); } });
 });
 </script>

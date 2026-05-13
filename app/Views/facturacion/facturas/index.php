@@ -157,7 +157,7 @@ function cargarTablaFacturas(){
             {data:5},{data:6},{data:7},{data:8},
             {data:9,orderable:false},{data:10,orderable:false},{data:11,orderable:false}
         ],
-        language: { url: '<?php echo get_uri("assets/datatables/Spanish.json"); ?>' },
+        language: { search: 'Buscar:', lengthMenu: 'Mostrar _MENU_ registros', info: 'Mostrando _START_ a _END_ de _TOTAL_ registros', infoEmpty: 'Sin resultados', zeroRecords: 'No se encontraron resultados', paginate: { first: '«', last: '»', next: '›', previous: '‹' } },
         order: [[0,'desc']],
         drawCallback: function(){ feather.replace(); calcularTotalesFacturas(); }
     });

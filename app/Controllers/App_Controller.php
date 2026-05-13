@@ -249,17 +249,9 @@ class App_Controller extends Controller {
             if (ENVIRONMENT === 'production') {
                 $message = app_lang('something_went_wrong');
             } else {
-                $message = $this->validator->getErrors();
+                $message = $this->validator->getErrors();  // ← array de errores en development
             }
-
-            if ($return_errors) {
-                return $message;
-            }
-            if ($json_response) {
-                echo json_encode(array("success" => false, 'message' => json_encode($message)));
-            } else {
-                echo view("errors/html/error_general", array("heading" => "404 Bad Request", "message" => app_lang("re_captcha_error-bad-request")));
-            }
+            echo json_encode(array("success" => false, 'message' => json_encode($message)));
             exit();
         }
 

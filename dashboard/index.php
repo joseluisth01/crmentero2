@@ -575,20 +575,6 @@ $pageTitle = 'Dashboard';
                     <span class="badge">Disponible</span>
                 </a>
 
-                <a href="<?php echo PRESUPUESTOS_URL; ?>" class="dashboard-card active">
-                    <div class="card-icon">📝</div>
-                    <div class="card-title">Presupuestos</div>
-                    <div class="card-description">Crea y genera presupuestos profesionales para tus clientes de forma rápida y sencilla.</div>
-                    <span class="badge">Disponible</span>
-                </a>
-
-                <a href="<?php echo BASE_URL; ?>/contratos" class="dashboard-card active">
-                    <div class="card-icon">📄</div>
-                    <div class="card-title">Contratos</div>
-                    <div class="card-description">Genera contratos de servicios personalizados con todas las cláusulas legales. Envíalos firmados directamente al cliente.</div>
-                    <span class="badge">Disponible</span>
-                </a>
-
                 <a href="https://tictac-comunicacion.es/briefing?ttb_u=tictac&ttb_p=Sipilu2019" target="_blank" class="dashboard-card active">
                     <div class="card-icon">📋</div>
                     <div class="card-title">Portal de Clientes</div>
@@ -601,13 +587,6 @@ $pageTitle = 'Dashboard';
                     <div class="card-title">Gestión de Dominios</div>
                     <div class="card-description">Controla los dominios y hostings de clientes, vencimientos, renovaciones y notificaciones automáticas.</div>
                     <span class="badge">Disponible</span>
-                </a>
-
-                <a href="#" class="dashboard-card disabled" onclick="return false;">
-                    <div class="card-icon">🧾</div>
-                    <div class="card-title">Preparar Factura</div>
-                    <div class="card-description">Genera facturas profesionales y envíalas directamente a tus clientes desde el sistema.</div>
-                    <span class="badge badge-disabled">Próximamente</span>
                 </a>
 
             </div>

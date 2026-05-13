@@ -1,15 +1,12 @@
 <?php
 /**
- * Clase TCPDF personalizada para los presupuestos de Tictac Comunicación.
- * Este archivo se incluye mediante require_once DENTRO de _generate_tictac_pdf(),
- * DESPUÉS de que tcpdf.php ya haya sido cargado, para que TCPDF esté disponible.
- *
- * Ruta en servidor: /home/gestiontictaccom/public_html/app/Libraries/TictacProposalPDF.php
+ * Clase TCPDF personalizada para los contratos de Tictac Comunicación.
+ * Ruta en servidor: /home/gestiontictaccom/public_html/app/Libraries/TictacContractPDF.php
  */
 
-if (!class_exists('TictacProposalPDF')) {
+if (!class_exists('TictacContractPDF')) {
 
-    class TictacProposalPDF extends TCPDF
+    class TictacContractPDF extends TCPDF
     {
         public $brand_r   = 215;
         public $brand_g   = 33;
@@ -20,15 +17,12 @@ if (!class_exists('TictacProposalPDF')) {
         {
             $pageW = $this->getPageWidth();
 
-            // ── Franja superior delgada rosa (solo 2mm) ───────────────────
             $this->SetFillColor($this->brand_r, $this->brand_g, $this->brand_b);
             $this->Rect(0, 0, $pageW, 2, 'F');
 
-            // ── Fondo blanco del header ───────────────────────────────────
             $this->SetFillColor(255, 255, 255);
             $this->Rect(0, 2, $pageW, 26, 'F');
 
-            // ── Bloque rosa izquierda con logo ────────────────────────────
             if ($this->logo_path && file_exists($this->logo_path)) {
                 $this->SetFillColor($this->brand_r, $this->brand_g, $this->brand_b);
                 $this->Rect(0, 2, 48, 26, 'F');
@@ -39,13 +33,11 @@ if (!class_exists('TictacProposalPDF')) {
                 $this->Image($this->logo_path, $logoX, $logoY, $logoW, 0, '', '', '', false, 300, '', false, false, 0, false, false, false);
             }
 
-            // ── "PRESUPUESTO" — centrado verticalmente ────────────────────
             $this->SetTextColor($this->brand_r, $this->brand_g, $this->brand_b);
             $this->SetFont('Helvetica', 'B', 16);
             $this->SetXY(52, 2 + (26 - 8) / 2);
-            $this->Cell(60, 8, 'PRESUPUESTO', 0, 0, 'L');
+            $this->Cell(60, 8, 'CONTRATO', 0, 0, 'L');
 
-            // ── Info empresa — derecha, centrada verticalmente ────────────
             $lineH   = 3.8;
             $nLineas = 3;
             $bloqueH = $nLineas * $lineH;
@@ -63,7 +55,6 @@ if (!class_exists('TictacProposalPDF')) {
             $this->SetX($pageW - 72);
             $this->Cell(70, $lineH, 'www.tictac-comunicacion.es', 0, 1, 'R');
 
-            // ── Línea inferior rosa ───────────────────────────────────────
             $this->SetDrawColor($this->brand_r, $this->brand_g, $this->brand_b);
             $this->SetLineWidth(0.6);
             $this->Line(0, 28, $pageW, 28);
@@ -77,15 +68,12 @@ if (!class_exists('TictacProposalPDF')) {
         {
             $pageW = $this->getPageWidth();
 
-            // ── Barra izquierda de acento en pie ─────────────────────────
             $this->SetFillColor($this->brand_r, $this->brand_g, $this->brand_b);
             $this->Rect(0, $this->getPageHeight() - 14, 6, 14, 'F');
 
-            // ── Fondo gris muy suave ──────────────────────────────────────
             $this->SetFillColor(248, 248, 248);
             $this->Rect(6, $this->getPageHeight() - 14, $pageW - 6, 14, 'F');
 
-            // ── Línea superior del pie ────────────────────────────────────
             $this->SetDrawColor($this->brand_r, $this->brand_g, $this->brand_b);
             $this->SetLineWidth(0.4);
             $this->Line(6, $this->getPageHeight() - 14, $pageW, $this->getPageHeight() - 14);

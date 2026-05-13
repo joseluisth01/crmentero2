@@ -73,7 +73,7 @@ function cargarTablaClientes() {
             {data:0},{data:1},{data:2},{data:3},{data:4},
             {data:5, orderable:false},{data:6, orderable:false}
         ],
-        language: { url: '<?php echo get_uri("assets/datatables/Spanish.json"); ?>' },
+        language: { search: 'Buscar:', lengthMenu: 'Mostrar _MENU_ registros', info: 'Mostrando _START_ a _END_ de _TOTAL_ registros', infoEmpty: 'Sin resultados', zeroRecords: 'No se encontraron resultados', paginate: { first: '«', last: '»', next: '›', previous: '‹' } },
         order: [[0, 'asc']],
         drawCallback: function(){ feather.replace(); }
     });
