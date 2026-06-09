@@ -123,14 +123,51 @@
         .tt-doc-footer a { color: #d72173; text-decoration: none; }
         .tt-doc-footer strong { color: #fff; }
 
+        .tt-topbar-right { position: relative; }
+        .tt-menu-btn {
+            display: none;
+            background: none;
+            border: 2px solid #d72173;
+            border-radius: 8px;
+            padding: 7px 12px;
+            cursor: pointer;
+            color: #d72173;
+            font-size: 13px;
+            font-weight: 700;
+            align-items: center;
+            gap: 6px;
+        }
+        .tt-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            right: 0;
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            padding: 8px;
+            min-width: 210px;
+            z-index: 200;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .tt-dropdown-menu.open { display: flex; }
+        .tt-dropdown-menu .tt-btn { border-radius: 8px; justify-content: flex-start; width: 100%; }
+
         @media (max-width: 640px) {
-            .tt-topbar { padding: 10px 14px; height: auto; flex-wrap: wrap; gap: 8px; }
+            .tt-topbar { padding: 0 14px; height: 56px; }
+            .tt-topbar-actions { display: none !important; }
+            .tt-menu-btn { display: flex; }
             .tt-info-grid { grid-template-columns: 1fr; }
             .tt-doc-header { flex-direction: column; }
-            .tt-doc-header-logo-block { width: 100%; min-height: 60px; }
+            .tt-doc-header-logo-block { width: 100%; min-height: 60px; border-right: none; border-bottom: 4px solid #d72173; }
+            .tt-doc-header-title { padding: 12px 16px; }
             .tt-doc-header-company { text-align: left; padding: 10px 16px; }
             .tt-doc-body { padding: 20px 16px 0; }
-            .tt-btn span { display: none; }
+            .tt-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .tt-totals { overflow-x: auto; }
+            .tt-totals-inner { min-width: 220px; }
         }
     </style>
 </head>
@@ -153,28 +190,56 @@
         <?php if ($contract_info->status === 'accepted'): ?>
             <span class="tt-status-badge tt-status-accepted">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                <?php echo app_lang('contract_accepted'); ?>
+                Contrato firmado
             </span>
         <?php elseif ($contract_info->status === 'declined' || $contract_info->status === 'rejected'): ?>
             <span class="tt-status-badge tt-status-rejected">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                <?php echo app_lang('contract_rejected'); ?>
+                Contrato rechazado
             </span>
         <?php else: ?>
-            <?php echo ajax_anchor(
-                get_uri("contract/update_contract_status/{$contract_info->id}/{$contract_info->public_key}/declined"),
-                '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> <span>' . app_lang('reject') . '</span>',
-                array("class" => "tt-btn tt-btn-danger", "title" => app_lang('reject_contract'), "data-reload-on-success" => "1")
-            ); ?>
-            <?php echo modal_anchor(
-                get_uri("contract/accept_contract_modal_form/{$contract_info->id}/{$contract_info->public_key}"),
-                '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> <span>' . app_lang('accept') . '</span>',
-                array("class" => "tt-btn tt-btn-success", "title" => app_lang('accept_contract'))
-            ); ?>
+            <button type="button" class="tt-btn tt-btn-success" id="btn-firmar-sms" onclick="document.getElementById('tt-firma-panel').style.display='flex'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                <span>Firmar con SMS</span>
+            </button>
         <?php endif; ?>
 
     </div>
+
+    <!-- Móvil: menú desplegable -->
+    <div class="tt-topbar-right" id="tt-mobile-wrap">
+        <button class="tt-menu-btn" onclick="document.getElementById('tt-mobile-dd').classList.toggle('open')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            Acciones
+        </button>
+        <div class="tt-dropdown-menu" id="tt-mobile-dd">
+            <?php if ($has_pdf_access): ?>
+                <a href="<?php echo get_uri('contract/download_pdf/' . $contract_info->id . '/' . $contract_info->public_key); ?>" class="tt-btn tt-btn-outline">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Descargar PDF
+                </a>
+            <?php endif; ?>
+            <?php if ($contract_info->status === 'accepted'): ?>
+                <span class="tt-status-badge tt-status-accepted" style="border-radius:8px;font-size:12px;">✓ Contrato firmado</span>
+            <?php elseif ($contract_info->status !== 'declined' && $contract_info->status !== 'rejected'): ?>
+                <button onclick="document.getElementById('tt-mobile-dd').classList.remove('open'); document.getElementById('tt-firma-panel').style.display='flex'" class="tt-btn tt-btn-success">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                    Firmar con SMS
+                </button>
+            <?php endif; ?>
+        </div>
+    </div>
 </div>
+
+<script>
+document.addEventListener('click', function(e) {
+    var wrap = document.getElementById('tt-mobile-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+        var dd = document.getElementById('tt-mobile-dd');
+        if (dd) dd.classList.remove('open');
+    }
+});
+</script>
 
 <!-- ═══ DOCUMENTO ════════════════════════════════════════════════ -->
 <div class="tt-doc-wrap">
@@ -234,6 +299,7 @@
             ** El contrato tendrá validez hasta la fecha indicada arriba
         </div>
 
+        <div class="tt-table-wrap">
         <table class="tt-table">
             <thead>
                 <tr>
@@ -249,7 +315,7 @@
                     <td>
                         <div class="item-name"><?php echo htmlspecialchars($item->title); ?></div>
                         <?php if (!empty($item->description)): ?>
-                            <div class="item-desc"><?php echo custom_nl2br(strip_tags($item->description)); ?></div>
+                            <div class="item-desc"><?php echo $item->description; ?></div>
                         <?php endif; ?>
                     </td>
                     <td><?php echo to_decimal_format($item->quantity); ?> <?php echo htmlspecialchars($item->unit_type ?? ''); ?></td>
@@ -259,6 +325,7 @@
                 <?php endforeach; ?>
             </tbody>
         </table>
+        </div>
 
         <?php $ts = $contract_total_summary; ?>
         <div class="tt-totals">
@@ -427,6 +494,127 @@
 
 <?php echo view('modal/index'); ?>
 <?php echo view('contracts/print_contract_helper_js'); ?>
+
+<?php
+// Teléfono prellenado desde meta_data si se guardó al enviar el email
+$meta_preview = @unserialize($contract_info->meta_data ?? '') ?: array();
+$phone_prellenado = $meta_preview['contact_phone'] ?? $meta_preview['lleida_phone'] ?? '';
+// Leer también del contacto principal
+if (!$phone_prellenado && !empty($client_info->id)) {
+    $ci_contact = model('App\Models\Users_model')->get_details(array(
+        'client_id' => $client_info->id,
+        'is_primary_contact' => true,
+        'user_type' => 'client',
+    ))->getRow();
+    $phone_prellenado = $ci_contact->phone ?? '';
+}
+$lleida_endpoint = 'https://gestion-tictac-comunicacion.es/lleida_sign.php';
+?>
+
+<!-- ═══ PANEL FIRMA SMS ══════════════════════════════════════════ -->
+<?php if ($contract_info->status !== 'accepted' && $contract_info->status !== 'declined' && $contract_info->status !== 'rejected'): ?>
+<div id="tt-firma-panel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:16px;max-width:440px;width:100%;padding:36px 32px;box-shadow:0 20px 60px rgba(0,0,0,0.25);position:relative;">
+        <button onclick="document.getElementById('tt-firma-panel').style.display='none'"
+            style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:22px;cursor:pointer;color:#aaa;line-height:1;">×</button>
+
+        <div style="text-align:center;margin-bottom:24px;">
+            <div style="width:56px;height:56px;background:#fff0f7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#d72173" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            </div>
+            <h2 style="margin:0 0 6px;font-size:20px;font-weight:800;color:#1a1a1a;">Firmar con SMS</h2>
+            <p style="margin:0;font-size:13px;color:#888;">Confirma tu número de móvil y te enviaremos un código para firmar el contrato.</p>
+        </div>
+
+        <div id="tt-firma-step1">
+            <label style="font-size:13px;font-weight:600;color:#444;display:block;margin-bottom:6px;">Tu número de móvil</label>
+            <input type="tel" id="tt-firma-phone" value="<?php echo htmlspecialchars($phone_prellenado); ?>"
+                placeholder="600 000 000"
+                style="width:100%;padding:12px 16px;border:2px solid #e0e0e0;border-radius:10px;font-size:16px;outline:none;transition:border 0.2s;"
+                onfocus="this.style.borderColor='#d72173'" onblur="this.style.borderColor='#e0e0e0'">
+            <div id="tt-firma-phone-warn" style="display:none;color:#c0392b;font-size:12px;margin-top:6px;">
+                ⚠️ Introduce un número de móvil español válido (empieza por 6 o 7)
+            </div>
+
+            <label style="font-size:13px;font-weight:600;color:#444;display:block;margin-top:16px;margin-bottom:6px;">Tu nombre completo</label>
+            <input type="text" id="tt-firma-name" placeholder="Nombre y apellidos"
+                style="width:100%;padding:12px 16px;border:2px solid #e0e0e0;border-radius:10px;font-size:15px;outline:none;transition:border 0.2s;"
+                onfocus="this.style.borderColor='#d72173'" onblur="this.style.borderColor='#e0e0e0'">
+
+            <div id="tt-firma-error" style="display:none;background:#fff0f5;border-left:3px solid #d72173;padding:10px 14px;border-radius:0 8px 8px 0;font-size:13px;color:#c0392b;margin-top:14px;"></div>
+
+            <button id="tt-firma-enviar" onclick="ttEnviarSMS()"
+                style="width:100%;margin-top:20px;padding:14px;background:#d72173;color:#fff;border:none;border-radius:50px;font-size:16px;font-weight:700;cursor:pointer;transition:background 0.2s;">
+                Enviar código SMS →
+            </button>
+            <p style="text-align:center;font-size:11px;color:#bbb;margin-top:12px;">
+                Al firmar aceptas los términos del contrato. La firma tiene validez legal.
+            </p>
+        </div>
+
+        <div id="tt-firma-step2" style="display:none;text-align:center;">
+            <div style="width:64px;height:64px;background:#e8f8ef;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1a7f4b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.62 3.38 2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </div>
+            <h3 style="margin:0 0 10px;font-size:18px;font-weight:800;color:#1a7f4b;">¡SMS enviado!</h3>
+            <p style="font-size:14px;color:#555;margin:0 0 6px;">Hemos enviado un código a tu móvil.</p>
+            <p style="font-size:13px;color:#888;margin:0;">Sigue las instrucciones del SMS para completar la firma. Una vez firmado, esta página se actualizará automáticamente.</p>
+            <button onclick="location.reload()" style="margin-top:20px;padding:10px 24px;background:#f5f5f5;border:none;border-radius:50px;font-size:14px;cursor:pointer;color:#555;">Actualizar página</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function ttEnviarSMS() {
+    var phone = document.getElementById('tt-firma-phone').value.trim();
+    var name  = document.getElementById('tt-firma-name').value.trim();
+    var clean = phone.replace(/\s+/g,'').replace(/^\+34/,'').replace(/^0034/,'');
+
+    document.getElementById('tt-firma-phone-warn').style.display = 'none';
+    document.getElementById('tt-firma-error').style.display = 'none';
+
+    if (!/^[67]\d{8}$/.test(clean)) {
+        document.getElementById('tt-firma-phone-warn').style.display = 'block';
+        return;
+    }
+
+    var btn = document.getElementById('tt-firma-enviar');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    var formData = new FormData();
+    formData.append('phone', phone);
+    formData.append('name', name);
+    formData.append('contract_id', '<?php echo $contract_info->id; ?>');
+    formData.append('public_key', '<?php echo $contract_info->public_key; ?>');
+
+    fetch('<?php echo $lleida_endpoint; ?>', {
+        method: 'POST',
+        body: formData
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            document.getElementById('tt-firma-step1').style.display = 'none';
+            document.getElementById('tt-firma-step2').style.display = 'block';
+        } else {
+            var errEl = document.getElementById('tt-firma-error');
+            errEl.textContent = data.message || 'Error al enviar el SMS. Inténtalo de nuevo.';
+            errEl.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Enviar código SMS →';
+        }
+    })
+    .catch(function() {
+        var errEl = document.getElementById('tt-firma-error');
+        errEl.textContent = 'Error de conexión. Inténtalo de nuevo.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Enviar código SMS →';
+    });
+}
+</script>
+<?php endif; ?>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {

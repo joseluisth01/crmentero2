@@ -1,3 +1,8 @@
+<?php
+$mes  = $mes  ?? date('n');
+$anno = $anno ?? date('Y');
+$meses_nombres = $meses_nombres ?? [1=>'Enero',2=>'Febrero',3=>'Marzo',4=>'Abril',5=>'Mayo',6=>'Junio',7=>'Julio',8=>'Agosto',9=>'Septiembre',10=>'Octubre',11=>'Noviembre',12=>'Diciembre'];
+?>
 <div class="modal-header">
     <h5 class="modal-title"><i data-feather="zap" class="icon-16"></i> Generar facturas recurrentes del mes</h5>
     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -15,15 +20,15 @@
                 <label class="form-label">Mes *</label>
                 <select class="form-select" name="mes" required>
                     <?php foreach ($meses_nombres as $n => $nombre): ?>
-                        <option value="<?php echo $n; ?>" <?php echo $mes_actual == $n ? 'selected' : ''; ?>><?php echo $nombre; ?></option>
+                        <option value="<?php echo $n; ?>" <?php echo date("n") == $n ? 'selected' : ''; ?>><?php echo $nombre; ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
             <div class="col-md-4 mb-3">
                 <label class="form-label">Año *</label>
                 <select class="form-select" name="anno" required>
-                    <?php foreach (range($anno_actual+1, $anno_actual-2) as $a): ?>
-                        <option value="<?php echo $a; ?>" <?php echo $anno_actual == $a ? 'selected' : ''; ?>><?php echo $a; ?></option>
+                    <?php foreach (range(date("Y")+1, date("Y")-2) as $a): ?>
+                        <option value="<?php echo $a; ?>" <?php echo date("Y") == $a ? 'selected' : ''; ?>><?php echo $a; ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -31,11 +36,23 @@
                 <label class="form-label">Estado inicial de las facturas</label>
                 <select class="form-select" name="estado_inicial">
                     <option value="borrador">Borrador (revisar antes de enviar)</option>
-                    <option value="emitida">Emitida directamente</option>
+                    <option value="emitida" selected>Emitida directamente</option>
                 </select>
             </div>
         </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Generar quinquena</label>
+                <select class="form-select" name="quinquena">
+                    <option value="">1ª y 2ª (todas)</option>
+                    <option value="1">Solo 1ª (primeros del mes)</option>
+                    <option value="2">Solo 2ª (finales del mes)</option>
+                </select>
+                <small class="text-muted">Filtra qué facturas recurrentes generar según su configuración de cobro</small>
+            </div>
+        </div>
     </form>
+        </div>
     <div id="resultado-generacion" style="display:none" class="mt-3"></div>
 </div>
 <div class="modal-footer">
@@ -54,13 +71,16 @@ $('#btn-ejecutar-generacion').on('click', function(){
         btn.prop('disabled', false).html('<i data-feather="zap" class="icon-14"></i> Generar facturas');
         feather.replace();
         if (res.success) {
-            var r = res.resultado;
             $('#resultado-generacion').removeClass('d-none').show().html(
                 '<div class="alert alert-success">' +
                 '<strong>✅ Proceso completado</strong><br>' +
-                'Líneas generadas: <strong>' + r.generadas + '</strong><br>' +
-                (r.errores.length ? 'Errores: ' + r.errores.join(', ') : '') +
+                'Facturas generadas: <strong>' + (res.generadas || 0) + '</strong>' +
                 '</div>'
+            );
+            if (typeof recargarFacturas === 'function') recargarFacturas();
+        } else {
+            $('#resultado-generacion').removeClass('d-none').show().html(
+                '<div class="alert alert-danger">Error: ' + (res.message || 'Error desconocido') + '</div>'
             );
         }
     }, 'json');

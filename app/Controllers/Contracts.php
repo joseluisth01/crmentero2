@@ -430,15 +430,15 @@ function save() {
 
         $contract_url = "";
         if ($this->can_edit_contracts()) {
-            $contract_url = anchor(get_uri("contracts/view/" . $data->id), $data->title);
+            $contract_url = anchor(get_uri("contracts/view/" . $data->id), $data->title ?? get_contract_id($data->id));
         } else {
-            //for client
-            $contract_url = anchor(get_uri("contracts/preview/" . $data->id), $data->title);
+            $contract_url = anchor(get_uri("contracts/preview/" . $data->id), $data->title ?? get_contract_id($data->id));
         }
 
-        $client = anchor(get_uri("clients/view/" . $data->client_id), $data->company_name);
+        $company_name = $data->company_name ?? '—';
+        $client = anchor(get_uri("clients/view/" . $data->client_id), $company_name);
         if ($data->is_lead) {
-            $client = anchor(get_uri("leads/view/" . $data->client_id), $data->company_name);
+            $client = anchor(get_uri("leads/view/" . $data->client_id), $company_name);
         }
 
         $contract_status = $this->_get_contract_status_label($data);
@@ -730,6 +730,10 @@ function save() {
             $item_id = $this->Items_model->ci_save($library_item_data);
         }
 
+        $tipo_pago    = $this->request->getPost('tipo_pago') ?: 'mensual';
+        $num_periodos = intval($this->request->getPost('num_periodos') ?: ($tipo_pago === 'unico' ? 1 : 12));
+        if ($tipo_pago === 'unico') $num_periodos = 1;
+ 
         $contract_item_data = array(
             "contract_id" => $contract_id,
             "title" => $contract_item_title,
@@ -738,7 +742,9 @@ function save() {
             "unit_type" => $this->request->getPost('contract_unit_type'),
             "rate" => unformat_currency($this->request->getPost('contract_item_rate')),
             "total" => $rate * $quantity,
-            "item_id" => $item_id
+            "item_id" => $item_id,
+            "tipo_pago" => $tipo_pago,
+            "num_periodos" => $num_periodos,
         );
 
         $contract_item_id = $this->Contract_items_model->ci_save($contract_item_data, $id);
@@ -883,8 +889,9 @@ function save() {
         $view_data['can_edit_contracts'] = $this->can_edit_contracts($contract_id, true);
 
         if ($is_editor_preview) {
-            $view_data["is_editor_preview"] = true;
-            return $this->template->view("contracts/contract_preview", $view_data);
+            // Redirigir al preview público Tictac en vez del nativo
+            app_redirect('contract/preview/' . $contract_id . '/' . $contract_info->public_key);
+            return;
         } else {
             return $this->template->rander("contracts/contract_preview", $view_data);
         }
@@ -950,6 +957,25 @@ function save() {
             }
 
             $view_data['contacts_dropdown'] = $contacts_dropdown;
+
+            // Teléfonos de cada contacto para prellenar el campo SMS
+            $contact_phones = array();
+            foreach ($contacts as $contact) {
+                $contact_phones[$contact->id] = $contact->phone ?? '';
+            }
+            $view_data['contact_phones'] = $contact_phones;
+
+            // Proyectos tipo (custom field id=12, value='Si')
+            $db = \Config\Database::connect();
+            $view_data['proyectos_tipo'] = $db->query("
+                SELECT p.id, p.title
+                FROM {$db->prefixTable('projects')} p
+                JOIN {$db->prefixTable('custom_field_values')} cfv ON cfv.related_to_id = p.id
+                WHERE cfv.custom_field_id = 12
+                AND cfv.value = 'Si'
+                AND p.deleted = 0
+                ORDER BY p.title ASC
+            ")->getResult();
 
             $template_data = $this->get_send_contract_template($contract_id, 0, "", $contract_info, $primary_contact_info);
             $view_data['message'] = get_array_value($template_data, "message");
@@ -1133,7 +1159,17 @@ function save() {
                     echo json_encode(array("success" => false, 'message' => app_lang("attachment_size_is_too_large")));
                     return;
                 }
-                $attachments[] = array("file_path" => $tmp_pdf_path);
+                // Nombre limpio para el adjunto del email
+                $client_info_mail = $this->Clients_model->get_one($contract_info->client_id);
+                $client_name_mail = '';
+                if (!empty($client_info_mail->company_name)) {
+                    $client_name_mail = '_' . preg_replace('/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\-]/u', '', $client_info_mail->company_name);
+                    $client_name_mail = trim(str_replace(' ', '_', $client_name_mail));
+                }
+                $attachments[] = array(
+                    "file_path" => $tmp_pdf_path,
+                    "file_name" => 'Contrato' . $client_name_mail . '.pdf',
+                );
             }
         }
 
@@ -1153,6 +1189,31 @@ function save() {
             if ($tmp_pdf_path && file_exists($tmp_pdf_path)) {
                 @unlink($tmp_pdf_path);
             }
+
+            $contact_phone     = trim($this->request->getPost('contact_phone') ?? '');
+            $proyecto_tipo_ids = $this->request->getPost('proyecto_tipo_ids') ?? array();
+            $proyecto_nombres  = $this->request->getPost('proyecto_nombres') ?? array(); // mapa [id => nombre]
+
+            if (!is_array($proyecto_tipo_ids)) {
+                $proyecto_tipo_ids = $proyecto_tipo_ids ? array($proyecto_tipo_ids) : array();
+            }
+            $proyecto_tipo_ids = array_filter(array_map('intval', $proyecto_tipo_ids));
+
+            log_message('info', '[Tictac] send_contract: contact_phone=' . $contact_phone . ' proyecto_tipo_ids=' . json_encode($proyecto_tipo_ids) . ' proyecto_nombres=' . json_encode($proyecto_nombres));
+
+            if ($contact_phone || !empty($proyecto_tipo_ids)) {
+                $db = \Config\Database::connect();
+                $contracts_table = $db->prefixTable('contracts');
+                $contract_raw    = $this->Contracts_model->get_one($contract_id);
+                $meta_raw        = @unserialize($contract_raw->meta_data ?? '') ?: array();
+                if ($contact_phone)             $meta_raw['contact_phone']     = $contact_phone;
+                if (!empty($proyecto_tipo_ids)) $meta_raw['proyecto_tipo_ids'] = $proyecto_tipo_ids;
+                if (!empty($proyecto_nombres))  $meta_raw['proyecto_nombres']  = $proyecto_nombres;
+                $meta_serialized = $db->escapeString(serialize($meta_raw));
+                $db->query("UPDATE {$contracts_table} SET meta_data='{$meta_serialized}' WHERE id={$contract_id}");
+                log_message('info', '[Tictac] send_contract: meta_data guardado OK para contrato #' . $contract_id);
+            }
+
             $status_data = array("status" => "sent", "last_email_sent_date" => get_my_local_time());
             if ($this->Contracts_model->ci_save($status_data, $contract_id)) {
                 echo json_encode(array('success' => true, 'message' => app_lang("contract_sent_message"), "contract_id" => $contract_id));
@@ -1284,7 +1345,7 @@ function save() {
         $this->_generate_tictac_contract_pdf($contract_id, 'download');
     }
 
-    private function _generate_tictac_contract_pdf($contract_id, $mode = 'download') {
+    public function _generate_tictac_contract_pdf($contract_id, $mode = 'download') {
         // ── Cargar TCPDF ─────────────────────────────────────────────────
         $tcpdf_path = APPPATH . '../app/ThirdParty/tcpdf/tcpdf.php';
         if (!file_exists($tcpdf_path)) {
@@ -1436,8 +1497,8 @@ function save() {
         $pdf->SetY($pdf->GetY() + 5);
 
         // ── Tabla artículos ──────────────────────────────────────────────
-        $cArticulo = 80; $cCantidad = 22; $cTarifa = 28; $cTotal = 30;
-        $tableW = $cArticulo + $cCantidad + $cTarifa + $cTotal;
+        $cArticulo = 96; $cCantidad = 28; $cTarifa = 28; $cTotal = 28;
+        $tableW = $contentW; // 180mm — ocupa todo el ancho
 
         $printHeader = function () use ($pdf, $cArticulo, $cCantidad, $cTarifa, $cTotal, $tableW, $brand_r, $brand_g, $brand_b) {
             $hy = $pdf->GetY();
@@ -1789,7 +1850,12 @@ function save() {
         $pdf->Cell($firmaColW, 5, $client_info->company_name ?? '', 0, 1, 'C');
 
         // ── Output ───────────────────────────────────────────────────────
-        $filename = 'Contrato_' . get_contract_id($contract_info->id) . '.pdf';
+        $client_name_pdf = '';
+        if (!empty($client_info->company_name)) {
+            $client_name_pdf = '_' . preg_replace('/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\-]/u', '', $client_info->company_name);
+            $client_name_pdf = trim(str_replace(' ', '_', $client_name_pdf));
+        }
+        $filename = 'Contrato' . $client_name_pdf . '.pdf';
         if ($mode === 'save') {
             $tmpFile = sys_get_temp_dir() . '/contract_' . $contract_id . '_' . time() . '.pdf';
             $pdf->Output($tmpFile, 'F');
@@ -1829,6 +1895,179 @@ function save() {
         }
     }
 
+    // Notificación interna tras firma Lleida (llamado desde lleida_webhook.php)
+    function lleida_notify_internal($contract_id = 0) {
+        validate_numeric_value($contract_id);
+        $contract_info = $this->Contracts_model->get_one($contract_id);
+        if (!$contract_info->id) return;
+
+        try {
+            log_notification("contract_accepted", array("contract_id" => $contract_id), "999999996");
+        } catch (\Throwable $e) {}
+
+        try {
+            $client_info   = $this->Clients_model->get_one($contract_info->client_id);
+            $client_nombre = $client_info->company_name ?? 'Cliente #' . $contract_info->client_id;
+            $contract_ref  = get_contract_id($contract_id);
+            $meta_raw      = @unserialize($contract_info->meta_data ?? '') ?: array();
+            $firmante      = $meta_raw['lleida_phone'] ?? 'vía SMS';
+            $contract_url  = get_uri('contracts/view/' . $contract_id);
+
+            $subj = 'Contrato firmado por SMS: ' . $contract_ref . ' — ' . $client_nombre;
+            $msg  = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:Arial,sans-serif;background:#f5f5f5;">
+<div style="max-width:580px;margin:30px auto;background:#fff;border-radius:10px;overflow:hidden;">
+  <div style="background:#d72173;padding:28px;text-align:center;"><h1 style="color:#fff;margin:0;">✅ Contrato Firmado por SMS</h1></div>
+  <div style="padding:30px;">
+    <p>El cliente <strong>' . htmlspecialchars($client_nombre) . '</strong> ha firmado el contrato <strong>' . htmlspecialchars($contract_ref) . '</strong>.</p>
+    <p>Teléfono firmante: <strong>' . htmlspecialchars($firmante) . '</strong></p>
+    <p><a href="' . $contract_url . '">' . $contract_url . '</a></p>
+  </div>
+</div></body></html>';
+            send_app_mail('hola@tictac-comunicacion.es', $subj, $msg);
+        } catch (\Throwable $e) {
+            log_message('error', '[Lleida] notify_internal email error: ' . $e->getMessage());
+        }
+        echo 'OK';
+    }
+
+    // Endpoint interno para clonar proyecto tipo — llamado desde lleida_webhook.php
+    // Autenticado por API key, no por sesión de usuario
+    function clonar_proyecto_interno() {
+        $key = $this->request->getPost('key') ?? $this->request->getVar('key');
+        if ($key !== 'ea088539d42bf7e87dc7d4b171dfdcf7be3416322cb88eec6a504f701c4bd7dc') {
+            echo json_encode(array('success' => false, 'message' => 'No autorizado'));
+            return;
+        }
+
+        $proyecto_tipo_id = intval($this->request->getPost('proyecto_tipo_id'));
+        $nombre_nuevo     = trim($this->request->getPost('nombre_nuevo') ?? '');
+        $client_id        = intval($this->request->getPost('client_id'));
+        $contract_id      = intval($this->request->getPost('contract_id'));
+
+        if (!$proyecto_tipo_id || !$client_id) {
+            echo json_encode(array('success' => false, 'message' => 'Parámetros incompletos'));
+            return;
+        }
+
+        $orig = $this->Projects_model->get_one($proyecto_tipo_id);
+        if (!$orig->id) {
+            echo json_encode(array('success' => false, 'message' => 'Proyecto tipo no encontrado'));
+            return;
+        }
+
+        $client_info = $this->Clients_model->get_one($client_id);
+        $title       = $nombre_nuevo ?: ($orig->title . ' — ' . ($client_info->company_name ?? 'Cliente'));
+        $today       = date('Y-m-d');
+        $now         = get_current_utc_time();
+
+        // Deadline proporcional
+        $deadline = null;
+        if ($orig->deadline && $orig->start_date) {
+            $diff     = max(0, floor((strtotime($orig->deadline) - strtotime($orig->start_date)) / 86400));
+            $deadline = date('Y-m-d', strtotime($today . ' +' . $diff . ' days'));
+        }
+
+        // Crear proyecto nuevo con los mismos campos que usa save_cloned_project
+        $project_data = array(
+            'title'        => $title,
+            'description'  => $orig->description ?? '',
+            'client_id'    => $client_id,
+            'start_date'   => $today,
+            'deadline'     => $deadline ?: null,
+            'project_type' => $orig->project_type ?? 'client_project',
+            'price'        => $orig->price ?? 0,
+            'labels'       => $orig->labels ?? '',
+            'status_id'    => 1,
+            'created_date' => $now,
+            'created_by'   => 1,
+        );
+        $project_data = clean_data($project_data);
+        $new_id = $this->Projects_model->ci_save($project_data);
+
+        if (!$new_id) {
+            echo json_encode(array('success' => false, 'message' => 'Error creando proyecto'));
+            return;
+        }
+
+        log_message('info', "[Tictac] clonar_proyecto_interno: nuevo proyecto #$new_id '$title'");
+
+        // Clonar milestones
+        $milestones = $this->Milestones_model->get_all_where(array('project_id' => $proyecto_tipo_id, 'deleted' => 0))->getResult();
+        $ms_map     = array();
+        foreach ($milestones as $ms) {
+            $ms_data = (array) $ms;
+            unset($ms_data['id']);
+            $ms_data['project_id'] = $new_id;
+            if ($ms->due_date && $orig->start_date) {
+                $diff = max(0, floor((strtotime($ms->due_date) - strtotime($orig->start_date)) / 86400));
+                $ms_data['due_date'] = date('Y-m-d', strtotime($today . ' +' . $diff . ' days'));
+            }
+            $new_ms_id = $this->Milestones_model->ci_save($ms_data);
+            $ms_map[$ms->id] = $new_ms_id;
+        }
+
+        // Clonar tareas (primero las principales, luego subtareas)
+        $task_map = array();
+        foreach (array(0, 1) as $pass) {
+            $where = $pass ? array('project_id' => $proyecto_tipo_id, 'deleted' => 0, 'parent_task_id !=' => 0)
+                           : array('project_id' => $proyecto_tipo_id, 'deleted' => 0, 'parent_task_id' => 0);
+            $tasks = $this->Tasks_model->get_all_where($where)->getResult();
+            foreach ($tasks as $task) {
+                $task_data = (array) $task;
+                unset($task_data['id']);
+                $task_data['project_id']     = $new_id;
+                $task_data['milestone_id']   = $ms_map[$task->milestone_id] ?? 0;
+                $task_data['status']         = 'to_do';
+                $task_data['status_id']      = 1;
+                $task_data['parent_task_id'] = $pass ? ($task_map[$task->parent_task_id] ?? 0) : 0;
+
+                // Ajustar fechas relativas al inicio
+                if ($task->start_date && $orig->start_date) {
+                    $diff = max(0, floor((strtotime($task->start_date) - strtotime($orig->start_date)) / 86400));
+                    $task_data['start_date'] = date('Y-m-d', strtotime($today . ' +' . $diff . ' days'));
+                } else {
+                    $task_data['start_date'] = null;
+                }
+                if ($task->deadline && $orig->start_date) {
+                    $diff = max(0, floor((strtotime($task->deadline) - strtotime($orig->start_date)) / 86400));
+                    $task_data['deadline'] = date('Y-m-d', strtotime($today . ' +' . $diff . ' days'));
+                } else {
+                    $task_data['deadline'] = null;
+                }
+
+                $task_data['created_by']   = 1;
+                $task_data['created_date'] = $now;
+                $task_data = clean_data($task_data);
+                $new_task_id = $this->Tasks_model->ci_save($task_data);
+                if ($new_task_id) $task_map[$task->id] = $new_task_id;
+            }
+        }
+
+        // Clonar miembros del proyecto
+        $members = $this->Project_members_model->get_all_where(array('project_id' => $proyecto_tipo_id, 'deleted' => 0))->getResult();
+        foreach ($members as $member) {
+            $this->Project_members_model->save_member(array(
+                'project_id' => $new_id,
+                'user_id'    => $member->user_id,
+                'is_leader'  => $member->is_leader,
+            ));
+        }
+
+        // Guardar en meta_data del contrato
+        if ($contract_id) {
+            $contract_raw = $this->Contracts_model->get_one($contract_id);
+            $meta         = @unserialize($contract_raw->meta_data ?? '') ?: array();
+            $meta['proyecto_clonado_id'] = $new_id;
+            $db = \Config\Database::connect();
+            $ct = $db->prefixTable('contracts');
+            $ms = $db->escapeString(serialize($meta));
+            $db->query("UPDATE {$ct} SET meta_data='{$ms}' WHERE id={$contract_id}");
+        }
+
+        log_message('info', "[Tictac] clonar_proyecto_interno: OK #$new_id con " . count($task_map) . " tareas y " . count($members) . " miembros");
+        echo json_encode(array('success' => true, 'id' => $new_id, 'tareas' => count($task_map), 'miembros' => count($members)));
+    }
+
     function compact_view($contract_id = 0) {
         validate_numeric_value($contract_id);
 
@@ -1837,6 +2076,459 @@ function save() {
         }
 
         return $this->index($contract_id);
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // LLEIDA / CLICK&SIGN — Firma por SMS
+    // ══════════════════════════════════════════════════════════════════
+
+    // Credenciales Click&Sign
+    private function _lleida_credentials() {
+        return array(
+            'user'      => 'ticta-comunicacion',
+            'apikey'    => 'nfb70Z9BhqgqpMnJAJRX0ga80tuTqQvW',
+            'endpoint'  => 'https://api.lleida.net/cs/v1/',
+        );
+    }
+
+    // Versión pública del generador de PDF (sin login requerido)
+    function _generate_tictac_contract_pdf_public($contract_id) {
+        return $this->_generate_tictac_contract_pdf($contract_id, 'save');
+    }
+
+    // Método estático para generar PDF de contrato sin requerir sesión
+    public static function generate_contract_pdf_static($contract_id, $mode = 'download') {
+        $rc = new \ReflectionClass(\App\Controllers\Contracts::class);
+        $instance = $rc->newInstanceWithoutConstructor();
+        $instance->Contracts_model      = model('App\Models\Contracts_model', false);
+        $instance->Contract_items_model = model('App\Models\Contract_items_model', false);
+        $instance->Clients_model        = model('App\Models\Clients_model', false);
+        $instance->Companies_model      = model('App\Models\Companies_model', false);
+        return $instance->_generate_tictac_contract_pdf($contract_id, $mode);
+    }
+
+    // Obtener o crear config_id en Click&Sign
+    private function _lleida_get_or_create_config($creds, $webhook_url) {
+        // Buscar config existente activa
+        $list_payload = array(
+            "request" => "GET_CONFIG_LIST",
+            "user"    => $creds['user'],
+            "status"  => "enabled",
+        );
+        $ch = curl_init($creds['endpoint'] . 'get_config_list');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($list_payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            'Content-Type: application/json',
+            'Accept: application/json',
+            'Authorization: x-api-key ' . $creds['apikey'],
+        ));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        $resp = curl_exec($ch);
+        curl_close($ch);
+
+        $list = @json_decode($resp, true);
+        log_message('info', '[Lleida] GET_CONFIG_LIST response: ' . $resp);
+
+        if (!empty($list['config'])) {
+            foreach ($list['config'] as $cfg) {
+                if (($cfg['name'] ?? '') === 'TictacContrato') {
+                    return $cfg['config_id'];
+                }
+            }
+        }
+
+        // Crear nueva configuración
+        $set_payload = array(
+            "request" => "SET_CONFIG",
+            "user"    => $creds['user'],
+            "config"  => array(
+                "name"                      => "TictacContrato",
+                "expire_lapse"              => 168,
+                "default_sms_sender"        => "Tictac",
+                "default_email_from_name"   => "Tictac Comunicacion",
+                "signatory_cb_url"          => $webhook_url,
+                "registered_company_name"   => "Tictac Comunicacion Digital SL",
+                "registered_company_vat_number" => "B09912478",
+                "registered_langs"          => "ES",
+                "lang"                      => "ES",
+                "sms" => array(
+                    array(
+                        "registered" => "Y",
+                        "type"       => "start",
+                        "sender"     => "Tictac",
+                        "text"       => "Hola #name#, tiene un contrato pendiente de firma. Acceda aqui: #url#",
+                    ),
+                    array(
+                        "registered" => "Y",
+                        "type"       => "otp",
+                        "sender"     => "Tictac",
+                        "text"       => "Su codigo de firma es: #otp#",
+                    ),
+                ),
+                "landing" => array(
+                    "signature_type" => "on_sign",
+                    "signature_on_sign_required_elements" => array(
+                        "otp"        => "Y",
+                        "otp_length" => 6,
+                    ),
+                    "enable_button" => "on_open",
+                    "landing_access_max_retries" => 5,
+                    "declinable_signature" => "N",
+                ),
+            ),
+        );
+
+        $ch = curl_init($creds['endpoint'] . 'set_config');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($set_payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            'Content-Type: application/json',
+            'Accept: application/json',
+            'Authorization: x-api-key ' . $creds['apikey'],
+        ));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        $resp = curl_exec($ch);
+        curl_close($ch);
+
+        $result = @json_decode($resp, true);
+        log_message('info', '[Lleida] SET_CONFIG response: ' . $resp);
+
+        return $result['config']['config_id'] ?? null;
+    }
+
+    // Modal de confirmación antes de enviar
+    function lleida_modal_form($contract_id = 0) {
+        validate_numeric_value($contract_id);
+
+        if (!$this->can_edit_contracts($contract_id)) {
+            app_redirect("forbidden");
+        }
+
+        $contract_info = $this->Contracts_model->get_one($contract_id);
+        $client_info   = $this->Clients_model->get_one($contract_info->client_id);
+
+        // Obtener contacto principal
+        $contact = $this->Users_model->get_details(array(
+            "client_id"          => $contract_info->client_id,
+            "is_primary_contact" => true,
+            "user_type"          => "client",
+        ))->getRow();
+
+        $view_data = array(
+            'contract_info' => $contract_info,
+            'client_info'   => $client_info,
+            'contact'       => $contact,
+            'contract_ref'  => get_contract_id($contract_id),
+        );
+
+        return $this->template->view("contracts/lleida_modal_form", $view_data);
+    }
+
+    // Enviar a Lleida desde el preview público (sin login de staff)
+    function send_to_lleida_from_preview($contract_id = 0, $public_key = "") {
+        validate_numeric_value($contract_id);
+
+        $contract_info = $this->Contracts_model->get_one($contract_id);
+
+        // Verificar clave pública
+        if (!$contract_info->id || $contract_info->public_key !== $public_key) {
+            echo json_encode(array('success' => false, 'message' => 'No autorizado'));
+            return;
+        }
+
+        if ($contract_info->status === 'accepted') {
+            echo json_encode(array('success' => false, 'message' => 'Este contrato ya está firmado'));
+            return;
+        }
+
+        $phone = trim($this->request->getPost('phone') ?? '');
+        $name  = trim($this->request->getPost('name') ?? '');
+        $email = trim($this->request->getPost('email') ?? '');
+
+        // Validar móvil
+        $phone_clean = preg_replace('/\s+/', '', $phone);
+        $phone_clean = preg_replace('/^\+34/', '', $phone_clean);
+        $phone_clean = preg_replace('/^0034/', '', $phone_clean);
+        if (!preg_match('/^[67]\d{8}$/', $phone_clean)) {
+            echo json_encode(array('success' => false, 'message' => 'Introduce un número de móvil válido (debe empezar por 6 o 7)'));
+            return;
+        }
+        $phone_e164 = '+34' . $phone_clean;
+
+        // Generar PDF
+        try {
+            $pdf_path = $this->_generate_tictac_contract_pdf($contract_id, 'save');
+        } catch (\Throwable $e) {
+            echo json_encode(array('success' => false, 'message' => 'Error generando PDF'));
+            return;
+        }
+
+        if (!$pdf_path || !file_exists($pdf_path)) {
+            echo json_encode(array('success' => false, 'message' => 'No se pudo generar el PDF'));
+            return;
+        }
+
+        $contract_ref = get_contract_id($contract_id);
+        $creds        = $this->_lleida_credentials();
+        $webhook_url  = get_uri('contract/lleida_webhook_global');
+
+        $config_id = $this->_lleida_get_or_create_config($creds, $webhook_url);
+        if (!$config_id) {
+            @unlink($pdf_path);
+            echo json_encode(array('success' => false, 'message' => 'Error conectando con Click&Sign'));
+            return;
+        }
+
+        $payload = array(
+            "request"    => "START_SIGNATURE",
+            "request_id" => 'preview-' . $contract_id . '-' . time(),
+            "user"       => $creds['user'],
+            "signature"  => array(
+                "config_id"   => $config_id,
+                "contract_id" => 'TICTAC-' . $contract_ref,
+                "level"       => array(array(
+                    "level_order"                            => 0,
+                    "required_signatories_to_complete_level" => 1,
+                    "signatories" => array(array(
+                        "phone"       => $phone_e164,
+                        "email"       => $email ?: null,
+                        "name"        => explode(' ', $name)[0] ?? ($name ?: 'Cliente'),
+                        "surname"     => implode(' ', array_slice(explode(' ', $name), 1)) ?: '',
+                        "external_id" => "1",
+                    )),
+                )),
+                "file" => array(array(
+                    "filename"        => 'Contrato_' . $contract_ref . '.pdf',
+                    "content"         => base64_encode(file_get_contents($pdf_path)),
+                    "file_group"      => "contract_files",
+                    "sign_on_landing" => "Y",
+                )),
+            ),
+        );
+
+        $ch = curl_init($creds['endpoint'] . 'start_signature');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            'Content-Type: application/json',
+            'Accept: application/json',
+            'Authorization: x-api-key ' . $creds['apikey'],
+        ));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+        $response  = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_err  = curl_error($ch);
+        curl_close($ch);
+
+        @unlink($pdf_path);
+
+        log_message('info', '[Lleida] from_preview HTTP=' . $http_code . ' ' . $response);
+
+        if ($curl_err) {
+            echo json_encode(array('success' => false, 'message' => 'Error de conexión: ' . $curl_err));
+            return;
+        }
+
+        $result = @json_decode($response, true);
+
+        if ($http_code === 200 && ($result['code'] ?? 0) == 200) {
+            $signature_id = $result['signature']['signature_id'] ?? ('lleida_' . time());
+            $meta_raw     = @unserialize($contract_info->meta_data ?? '') ?: array();
+            $meta_raw['lleida_transaction_id'] = $signature_id;
+            $meta_raw['lleida_phone']          = $phone_e164;
+            $meta_raw['lleida_sent_at']        = date('Y-m-d H:i:s');
+            $meta_raw['lleida_config_id']      = $config_id;
+
+            $db = \Config\Database::connect();
+            $contracts_table = $db->prefixTable('contracts');
+            $meta_serialized = $db->escapeString(serialize($meta_raw));
+            $db->query("UPDATE {$contracts_table} SET meta_data='{$meta_serialized}' WHERE id={$contract_id}");
+
+            echo json_encode(array('success' => true, 'message' => '¡Perfecto! Te hemos enviado un SMS con el código para firmar.'));
+        } else {
+            $err = $result['status'] ?? ('Error HTTP ' . $http_code);
+            echo json_encode(array('success' => false, 'message' => 'Error Click&Sign: ' . $err));
+        }
+    }
+
+    // Enviar a Click&Sign desde el CRM (requiere login de staff)
+    function send_to_lleida() {
+        $contract_id = $this->request->getPost('contract_id');
+        $phone       = trim($this->request->getPost('phone') ?? '');
+        $name        = trim($this->request->getPost('signer_name') ?? '');
+        $email       = trim($this->request->getPost('signer_email') ?? '');
+
+        if (!$contract_id || !is_numeric($contract_id)) {
+            echo json_encode(array('success' => false, 'message' => 'ID de contrato no válido'));
+            return;
+        }
+        if (!$this->can_edit_contracts($contract_id)) {
+            echo json_encode(array('success' => false, 'message' => 'Sin permisos'));
+            return;
+        }
+
+        // Validar que sea móvil (empieza por 6 o 7, con o sin +34)
+        $phone_clean = preg_replace('/\s+/', '', $phone);
+        $phone_clean = preg_replace('/^\+34/', '', $phone_clean);
+        $phone_clean = preg_replace('/^0034/', '', $phone_clean);
+        if (!preg_match('/^[67]\d{8}$/', $phone_clean)) {
+            echo json_encode(array('success' => false, 'message' => 'El número debe ser un móvil español (empieza por 6 o 7)'));
+            return;
+        }
+        $phone_e164 = '+34' . $phone_clean;
+
+        // Generar PDF del contrato
+        try {
+            $pdf_path = $this->_generate_tictac_contract_pdf($contract_id, 'save');
+        } catch (\Throwable $e) {
+            echo json_encode(array('success' => false, 'message' => 'Error generando PDF: ' . $e->getMessage()));
+            return;
+        }
+
+        if (!$pdf_path || !file_exists($pdf_path)) {
+            echo json_encode(array('success' => false, 'message' => 'No se pudo generar el PDF del contrato'));
+            return;
+        }
+
+        $contract_info = $this->Contracts_model->get_one($contract_id);
+        $contract_ref  = get_contract_id($contract_id);
+        $creds         = $this->_lleida_credentials();
+
+        // Webhook URL para recibir la notificación de firma
+        $webhook_url = get_uri('contract/lleida_webhook_global');
+
+        // Obtener o crear config_id
+        $config_id = $this->_lleida_get_or_create_config($creds, $webhook_url);
+        if (!$config_id) {
+            echo json_encode(array('success' => false, 'message' => 'Error creando configuración en Click&Sign. Revisa el log del servidor.'));
+            return;
+        }
+
+        // Llamada a la API de Click&Sign — START_SIGNATURE
+        $payload = array(
+            "request"    => "START_SIGNATURE",
+            "request_id" => 'crm-contract-' . $contract_id . '-' . time(),
+            "user"       => $creds['user'],
+            "signature"  => array(
+                "config_id"   => $config_id,
+                "contract_id" => 'TICTAC-' . $contract_ref,
+                "level"       => array(
+                    array(
+                        "level_order"                            => 0,
+                        "required_signatories_to_complete_level" => 1,
+                        "signatories" => array(
+                            array(
+                                "phone"       => $phone_e164,
+                                "email"       => $email,
+                                "name"        => explode(' ', $name)[0] ?? $name,
+                                "surname"     => implode(' ', array_slice(explode(' ', $name), 1)) ?: '',
+                                "external_id" => "1",
+                            )
+                        ),
+                    )
+                ),
+                "file" => array(
+                    array(
+                        "filename"        => 'Contrato_' . $contract_ref . '.pdf',
+                        "content"         => base64_encode(file_get_contents($pdf_path)),
+                        "file_group"      => "contract_files",
+                        "sign_on_landing" => "Y",
+                    )
+                ),
+            ),
+        );
+
+        $ch = curl_init($creds['endpoint'] . 'start_signature');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            'Content-Type: application/json',
+            'Accept: application/json',
+            'Authorization: x-api-key ' . $creds['apikey'],
+        ));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        $response     = curl_exec($ch);
+        $http_code    = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_error   = curl_error($ch);
+        curl_close($ch);
+
+        @unlink($pdf_path);
+
+        if ($curl_error) {
+            log_message('error', '[Lleida] curl error: ' . $curl_error);
+            echo json_encode(array('success' => false, 'message' => 'Error de conexión con Click&Sign: ' . $curl_error));
+            return;
+        }
+
+        $result = @json_decode($response, true);
+        log_message('info', '[Lleida] send_to_lleida HTTP=' . $http_code . ' response=' . $response);
+
+        if ($http_code === 200 || $http_code === 201) {
+            $signature_id = $result['signature']['signature_id'] ?? $result['signature_id'] ?? ('lleida_' . time());
+
+            $meta_raw = @unserialize($contract_info->meta_data ?? '') ?: array();
+            $meta_raw['lleida_transaction_id'] = $signature_id;
+            $meta_raw['lleida_phone']          = $phone_e164;
+            $meta_raw['lleida_sent_at']        = date('Y-m-d H:i:s');
+            $meta_raw['lleida_config_id']      = $config_id;
+
+            $db = \Config\Database::connect();
+            $contracts_table = $db->prefixTable('contracts');
+            $meta_serialized = $db->escapeString(serialize($meta_raw));
+            $db->query("UPDATE {$contracts_table} SET status='sent', meta_data='{$meta_serialized}' WHERE id={$contract_id}");
+
+            echo json_encode(array(
+                'success' => true,
+                'message' => 'Contrato enviado a Click&Sign correctamente. El cliente recibirá un SMS para firmar.',
+            ));
+        } else {
+            $error_msg = $result['message'] ?? $result['error'] ?? ('Error HTTP ' . $http_code . ': ' . $response);
+            log_message('error', '[Lleida] Error: ' . $error_msg);
+            echo json_encode(array('success' => false, 'message' => 'Error Click&Sign: ' . $error_msg));
+        }
+    }
+
+    // Consultar estado del envío en Click&Sign (para polling desde el CRM si se necesita)
+    function lleida_check_status($contract_id = 0) {
+        validate_numeric_value($contract_id);
+
+        $contract_info = $this->Contracts_model->get_one($contract_id);
+        $meta_raw      = @unserialize($contract_info->meta_data ?? '') ?: array();
+        $transaction_id = $meta_raw['lleida_transaction_id'] ?? null;
+
+        if (!$transaction_id) {
+            echo json_encode(array('success' => false, 'message' => 'No hay envío pendiente en Click&Sign para este contrato'));
+            return;
+        }
+
+        $creds = $this->_lleida_credentials();
+        $check_payload = array(
+            "request"      => "GET_SIGNATURE_STATUS",
+            "user"         => $creds['user'],
+            "signature_id" => $transaction_id,
+        );
+        $ch = curl_init($creds['endpoint'] . 'get_signature_status');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($check_payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            'Content-Type: application/json',
+            'Accept: application/json',
+            'Authorization: x-api-key ' . $creds['apikey'],
+        ));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+        $response  = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $result = @json_decode($response, true);
+        echo json_encode(array('success' => true, 'http_code' => $http_code, 'data' => $result));
     }
 }
 

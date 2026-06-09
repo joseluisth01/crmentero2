@@ -96,8 +96,7 @@ class Proposals_model extends Crud_model {
             $where .= " AND $proposals_table.status!='draft' ";
         }
 
-
-        //prepare custom fild binding query
+        //prepare custom field binding query
         $custom_fields = get_array_value($options, "custom_fields");
         $custom_field_filter = get_array_value($options, "custom_field_filter");
         $custom_field_query_info = $this->prepare_custom_field_query_string("proposals", $custom_fields, $proposals_table, $custom_field_filter);
@@ -146,8 +145,12 @@ class Proposals_model extends Crud_model {
         WHERE $proposals_table.deleted=0 AND $proposals_table.id=$proposal_id";
         $proposal = $this->db->query($proposal_sql)->getRow();
 
-        $client_sql = "SELECT $clients_table.currency_symbol, $clients_table.currency FROM $clients_table WHERE $clients_table.id=$proposal->client_id";
-        $client = $this->db->query($client_sql)->getRow();
+        // ── FIX: cliente puede ser null si la propuesta no tiene cliente aún ──
+        $client = null;
+        if ($proposal->client_id) {
+            $client_sql = "SELECT $clients_table.currency_symbol, $clients_table.currency FROM $clients_table WHERE $clients_table.id=$proposal->client_id";
+            $client = $this->db->query($client_sql)->getRow();
+        }
 
         $result = new \stdClass();
         $result->proposal_subtotal = $item->proposal_subtotal;
@@ -185,8 +188,10 @@ class Proposals_model extends Crud_model {
         $result->discount_total = is_null($result->discount_total) ? 0 : $result->discount_total;
         $result->proposal_total = $proposal_total - number_format($result->discount_total, 2, ".", "");
 
-        $result->currency_symbol = $client->currency_symbol ? $client->currency_symbol : get_setting("currency_symbol");
-        $result->currency = $client->currency ? $client->currency : get_setting("default_currency");
+        // Si no hay cliente, usar moneda por defecto del sistema
+        $result->currency_symbol = ($client && $client->currency_symbol) ? $client->currency_symbol : get_setting("currency_symbol");
+        $result->currency        = ($client && $client->currency)        ? $client->currency        : get_setting("default_currency");
+
         return $result;
     }
 

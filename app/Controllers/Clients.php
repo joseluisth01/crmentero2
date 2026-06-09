@@ -311,6 +311,170 @@ class Clients extends Security_Controller {
         return $row_data;
     }
 
+
+    // ── Notas de línea de tiempo del cliente ──────────────────────────
+
+    function get_timeline_notes($client_id = 0) {
+        if (ob_get_level()) ob_clean();
+        header('Content-Type: application/json; charset=utf-8');
+        validate_numeric_value($client_id);
+        $this->access_only_team_members_or_client_contact($client_id);
+
+        $db = \Config\Database::connect();
+        $nt = $db->prefixTable('notes');
+        $ut = $db->prefixTable('users');
+
+        $rows = $db->query("
+            SELECT n.id, n.title, n.description, n.color, n.created_at,
+                   CONCAT(u.first_name, ' ', u.last_name) AS author
+            FROM {$nt} n
+            LEFT JOIN {$ut} u ON u.id = n.created_by
+            WHERE n.client_id = {$client_id} AND n.deleted = 0
+            ORDER BY n.created_at DESC
+        ")->getResult();
+
+        $notes = array();
+        foreach ($rows as $row) {
+            $color_raw = $row->color ?? '';
+            $pinned    = strpos($color_raw, '__pinned__') !== false;
+            $color     = str_replace('__pinned__', '', $color_raw);
+            $color     = trim($color, '_');
+
+            $notes[] = array(
+                'id'          => intval($row->id),
+                'title'       => $row->title ?? '',
+                'description' => $row->description ?? '',
+                'color'       => $color,
+                'pinned'      => $pinned,
+                'author'      => trim($row->author ?? 'Equipo'),
+                'date'        => format_to_relative_time($row->created_at),
+            );
+        }
+
+        // Ordenar: primero fijadas, luego por fecha
+        usort($notes, function($a, $b) {
+            if ($a['pinned'] && !$b['pinned']) return -1;
+            if (!$a['pinned'] && $b['pinned']) return 1;
+            return 0;
+        });
+
+        echo json_encode(array('success' => true, 'notes' => $notes));
+    }
+
+    function save_timeline_note() {
+        if (ob_get_level()) ob_clean();
+        header('Content-Type: application/json; charset=utf-8');
+        $this->access_only_team_members();
+
+        $id          = intval($this->request->getPost('id') ?? 0);
+        $client_id   = intval($this->request->getPost('client_id') ?? 0);
+        $title       = trim($this->request->getPost('title') ?? '');
+        $description = trim($this->request->getPost('description') ?? '');
+        $color       = trim($this->request->getPost('color') ?? '');
+
+        validate_numeric_value($client_id);
+
+        if (!$client_id) {
+            echo json_encode(array('success' => false, 'message' => 'Cliente requerido'));
+            return;
+        }
+
+        $db  = \Config\Database::connect();
+        $nt  = $db->prefixTable('notes');
+        $now = get_current_utc_time();
+
+        if ($id) {
+            $existing  = $db->query("SELECT color FROM {$nt} WHERE id={$id} LIMIT 1")->getRow();
+            $was_pinned = $existing && strpos($existing->color ?? '', '__pinned__') !== false;
+            $new_color  = $was_pinned ? ($color ? $color . '__pinned__' : '__pinned__') : $color;
+            $t_e = $db->escapeString($title);
+            $d_e = $db->escapeString($description);
+            $c_e = $db->escapeString($new_color);
+            $db->query("UPDATE {$nt} SET title='{$t_e}', description='{$d_e}', color='{$c_e}' WHERE id={$id}");
+        } else {
+            $t_e = $db->escapeString($title);
+            $d_e = $db->escapeString($description);
+            $c_e = $db->escapeString($color);
+            $db->query("INSERT INTO {$nt} (title, description, color, client_id, created_by, created_at, deleted)
+                VALUES ('{$t_e}', '{$d_e}', '{$c_e}', {$client_id}, {$this->login_user->id}, '{$now}', 0)");
+        }
+
+        echo json_encode(array('success' => true));
+    }
+
+    function toggle_note_pin($note_id = 0) {
+        if (ob_get_level()) ob_clean();
+        header('Content-Type: application/json; charset=utf-8');
+        $this->access_only_team_members();
+        validate_numeric_value($note_id);
+
+        $db   = \Config\Database::connect();
+        $nt   = $db->prefixTable('notes');
+        $note = $db->query("SELECT id, color FROM {$nt} WHERE id={$note_id} AND deleted=0 LIMIT 1")->getRow();
+
+        if (!$note) { echo json_encode(array('success' => false)); return; }
+
+        $is_pinned  = strpos($note->color ?? '', '__pinned__') !== false;
+        $base_color = str_replace('__pinned__', '', $note->color ?? '');
+        $base_color = trim($base_color, '_');
+        $new_color  = $is_pinned ? $base_color : ($base_color ? $base_color . '__pinned__' : '__pinned__');
+        $c_e        = $db->escapeString($new_color);
+        $db->query("UPDATE {$nt} SET color='{$c_e}' WHERE id={$note_id}");
+
+        echo json_encode(array('success' => true, 'pinned' => !$is_pinned));
+    }
+
+    function delete_timeline_note($note_id = 0) {
+        if (ob_get_level()) ob_clean();
+        header('Content-Type: application/json; charset=utf-8');
+        $this->access_only_team_members();
+        validate_numeric_value($note_id);
+
+        $db = \Config\Database::connect();
+        $nt = $db->prefixTable('notes');
+        $db->query("UPDATE {$nt} SET deleted=1 WHERE id={$note_id}");
+
+        echo json_encode(array('success' => true));
+    }
+
+    function get_sidebar_projects($client_id = 0) {
+        if (ob_get_level()) ob_clean();
+        header('Content-Type: application/json; charset=utf-8');
+        $this->access_only_team_members();
+        validate_numeric_value($client_id);
+
+        $db = \Config\Database::connect();
+        $pt = $db->prefixTable('projects');
+
+        $rows = $db->query("
+            SELECT id, title, status
+            FROM {$pt}
+            WHERE client_id = {$client_id} AND deleted = 0
+            ORDER BY id DESC
+        ")->getResult();
+
+        $labels = array(
+            'open'      => 'Abierto',
+            'completed' => 'Completado',
+            'hold'      => 'En espera',
+            'canceled'  => 'Cancelado',
+        );
+
+        $data = array();
+        foreach ($rows as $r) {
+            $data[] = array(
+                'id'           => intval($r->id),
+                'title'        => $r->title,
+                'status'       => $r->status,
+                'status_label' => $labels[$r->status] ?? $r->status,
+            );
+        }
+
+        echo json_encode(array('data' => $data));
+    }
+
+
+
     /* load client details view */
 
     function view($client_id = 0, $tab = "", $folder_id = 0) {

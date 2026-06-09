@@ -15,7 +15,7 @@
                         </div>
                         <div class="text-end">
                             <div class="fs-3 fw-bold"><?php echo number_format($factura->total, 2, ',', '.'); ?> €</div>
-                            <small>IVA incluido</small>
+                            
                         </div>
                     </div>
                     <div class="card-body">
@@ -23,7 +23,7 @@
                             <div class="col-md-6">
                                 <strong>Cliente:</strong><br>
                                 <a href="<?php echo get_uri("facturacion/cliente_view/$factura->cliente_id"); ?>"><?php echo $factura->cliente_nombre; ?></a><br>
-                                <small class="text-muted"><?php echo $factura->cif_nif; ?></small>
+                                <small class="text-muted"><?php echo $factura->vat_number ?? ''; ?></small>
                             </div>
                             <div class="col-md-6">
                                 <strong>Emisión:</strong> <?php echo $factura->fecha_emision; ?><br>
@@ -35,7 +35,19 @@
                                     <?php echo $factura->fecha_vencimiento ?: '-'; ?>
                                     <?php if ($vencido): ?> <i data-feather="alert-triangle" class="icon-14"></i><?php endif; ?>
                                 </span><br>
-                                <strong>Forma de pago:</strong> <?php echo ucfirst($factura->forma_pago); ?>
+                                <strong>Forma de pago:</strong> <?php echo ucfirst($factura->forma_pago); ?><br>
+                                <strong>Recurrente:</strong>
+                                <?php if ($factura->recurrente): ?>
+                                    <span class="badge bg-info">🔄 Sí</span>
+                                    <button class="btn btn-outline-secondary btn-sm ms-2" style="font-size:11px"
+                                        onclick="cambiarRecurrente(<?php echo $factura->id; ?>, 0)"
+                                        title="Desactivar recurrencia">✕ Quitar recurrencia</button>
+                                <?php else: ?>
+                                    <span class="badge bg-secondary">Puntual</span>
+                                    <button class="btn btn-outline-info btn-sm ms-2" style="font-size:11px"
+                                        onclick="cambiarRecurrente(<?php echo $factura->id; ?>, 1)"
+                                        title="Activar recurrencia">🔄 Hacer recurrente</button>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <hr>
@@ -116,8 +128,7 @@
                     <div class="card-body">
                         <table class="table table-sm">
                             <tr><td>Subtotal</td><td class="text-end"><?php echo number_format($factura->subtotal, 2, ',', '.'); ?> €</td></tr>
-                            <tr><td>IVA</td><td class="text-end"><?php echo number_format($factura->iva_total, 2, ',', '.'); ?> €</td></tr>
-                            <tr class="fw-bold border-top"><td>TOTAL</td><td class="text-end fs-5"><?php echo number_format($factura->total, 2, ',', '.'); ?> €</td></tr>
+                                                        <tr class="fw-bold border-top"><td>TOTAL</td><td class="text-end fs-5"><?php echo number_format($factura->total, 2, ',', '.'); ?> €</td></tr>
                             <tr class="text-success"><td>Cobrado</td><td class="text-end"><?php echo number_format($factura->importe_cobrado, 2, ',', '.'); ?> €</td></tr>
                             <tr class="text-warning fw-bold"><td>Pendiente</td><td class="text-end"><?php echo number_format($factura->total - $factura->importe_cobrado, 2, ',', '.'); ?> €</td></tr>
                         </table>
@@ -142,9 +153,6 @@
                             <th>Tipo</th>
                             <th class="text-center">Cantidad</th>
                             <th class="text-end">Precio unit.</th>
-                            <th class="text-center">IVA %</th>
-                            <th class="text-end">Subtotal</th>
-                            <th class="text-end">IVA</th>
                             <th class="text-end">Total</th>
                             <th width="80"></th>
                         </tr>
@@ -156,9 +164,7 @@
                             <td><span class="badge bg-secondary"><?php echo $linea->tipo_linea; ?></span></td>
                             <td class="text-center"><?php echo number_format($linea->cantidad, 2, ',', '.'); ?></td>
                             <td class="text-end"><?php echo number_format($linea->precio_unitario, 2, ',', '.'); ?> €</td>
-                            <td class="text-center"><?php echo $linea->iva_porcentaje; ?>%</td>
-                            <td class="text-end"><?php echo number_format($linea->subtotal, 2, ',', '.'); ?> €</td>
-                            <td class="text-end"><?php echo number_format($linea->iva_importe, 2, ',', '.'); ?> €</td>
+                            
                             <td class="text-end fw-bold"><?php echo number_format($linea->total, 2, ',', '.'); ?> €</td>
                             <td class="text-center">
                                 <button class="btn btn-outline-danger btn-sm" onclick="eliminarLinea(<?php echo $linea->id; ?>, <?php echo $linea->factura_id; ?>)">
@@ -170,10 +176,8 @@
                     </tbody>
                     <tfoot>
                         <tr class="table-light fw-bold">
-                            <td colspan="5" class="text-end">TOTALES:</td>
-                            <td class="text-end" id="footer-subtotal"><?php echo number_format($factura->subtotal, 2, ',', '.'); ?> €</td>
-                            <td class="text-end" id="footer-iva"><?php echo number_format($factura->iva_total, 2, ',', '.'); ?> €</td>
-                            <td class="text-end fs-6" id="footer-total"><?php echo number_format($factura->total, 2, ',', '.'); ?> €</td>
+                            <td colspan="4" class="text-end">TOTALES:</td>
+                            <td class="text-end fs-5 fw-bold" id="footer-total"><?php echo number_format($factura->total, 2, ',', '.'); ?> €</td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -185,22 +189,7 @@
                 <form id="form-linea">
                     <input type="hidden" name="factura_id" value="<?php echo $factura->id; ?>">
                     <div class="row g-2 align-items-end">
-                        <div class="col-md-3">
-                            <label class="form-label small mb-1">Servicio del cliente (opcional)</label>
-                            <select class="form-select form-select-sm" name="cliente_servicio_id" id="sel-servicio-linea">
-                                <option value="">— Manual —</option>
-                                <?php foreach ($cliente_servicios as $cs): ?>
-                                    <option value="<?php echo $cs->id; ?>"
-                                        data-concepto="<?php echo htmlspecialchars($cs->concepto); ?>"
-                                        data-importe="<?php echo $cs->importe; ?>"
-                                        data-iva="<?php echo $cs->iva_porcentaje; ?>"
-                                        data-tipo="<?php echo $cs->es_recurrente ? 'recurrente' : 'puntual'; ?>">
-                                        <?php echo $cs->concepto; ?> (<?php echo number_format($cs->importe,2,',','.'); ?> €)
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label small mb-1">Descripción *</label>
                             <input type="text" class="form-control form-control-sm" name="descripcion" id="inp-descripcion-linea" required>
                         </div>
@@ -225,10 +214,7 @@
                             <label class="form-label small mb-1">Precio unit. *</label>
                             <input type="number" class="form-control form-control-sm" name="precio_unitario" step="0.01" id="inp-precio-linea" required>
                         </div>
-                        <div class="col-md-1">
-                            <label class="form-label small mb-1">IVA %</label>
-                            <input type="number" class="form-control form-control-sm" name="iva_porcentaje" value="21" step="0.01" id="inp-iva-linea">
-                        </div>
+
                         <div class="col-md-1">
                             <button type="button" class="btn btn-success btn-sm w-100" onclick="guardarLinea()">
                                 <i data-feather="plus" class="icon-14"></i> Añadir
@@ -349,41 +335,28 @@ function mostrarFormLinea(){ $('#form-linea-wrapper').slideDown(); }
 function ocultarFormLinea(){ $('#form-linea-wrapper').slideUp(); }
 function mostrarFormPago() { $('#form-pago-wrapper').slideDown(); }
 
-// Auto-rellenar al seleccionar servicio
-$('#sel-servicio-linea').on('change', function(){
-    var opt = $(this).find(':selected');
-    if (opt.val()) {
-        $('#inp-descripcion-linea').val(opt.data('concepto'));
-        $('#inp-precio-linea').val(opt.data('importe'));
-        $('#inp-iva-linea').val(opt.data('iva'));
-        $('#sel-tipo-linea').val(opt.data('tipo'));
-    }
-});
-
 function guardarLinea(){
     var form = $('#form-linea');
     if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
     $.post('<?php echo get_uri("facturacion/save_linea"); ?>', form.serialize(), function(res){
         if (res.success) {
-            actualizarTotalesFactura(res.factura);
             location.reload();
         }
-    }, 'json');
+    }, 'json').fail(function(){
+        appAlert.danger('Error al guardar la línea.');
+    });
 }
 
 function eliminarLinea(id, facturaId){
     if (!confirm('¿Eliminar esta línea?')) return;
     $.post('<?php echo get_uri("facturacion/delete_linea"); ?>', {id:id, factura_id:facturaId}, function(res){
-        if (res.success) {
-            $('#linea-'+id).fadeOut(300, function(){ $(this).remove(); });
-            actualizarTotalesFactura(res.factura);
-        }
+        if (res.success) { location.reload(); }
     }, 'json');
 }
 
 function actualizarTotalesFactura(f){
     $('#footer-subtotal').text(formatMoney(f.subtotal) + ' €');
-    $('#footer-iva').text(formatMoney(f.iva_total) + ' €');
+    
     $('#footer-total').text(formatMoney(f.total) + ' €');
 }
 
@@ -428,5 +401,16 @@ function cambiarEstadoCobro(facturaId, estadoCobro, tipoPago) {
                 }
             }, 'json');
     }
+}
+
+function cambiarRecurrente(factura_id, valor) {
+    var msg = valor ? '¿Marcar esta factura como recurrente?' : '¿Quitar la recurrencia? Esta factura NO se generará el mes siguiente.';
+    if (!confirm(msg)) return;
+    $.post('<?php echo get_uri("facturacion/toggle_recurrente"); ?>', {factura_id: factura_id, recurrente: valor}, function(res){
+        if (res.success) {
+            appAlert.success(valor ? '🔄 Marcada como recurrente.' : '✕ Recurrencia eliminada.');
+            setTimeout(function(){ location.reload(); }, 800);
+        }
+    }, 'json');
 }
 </script>

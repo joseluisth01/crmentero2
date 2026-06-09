@@ -442,7 +442,82 @@ class Projects extends Security_Controller
 
         $view_data["custom_fields"] = $this->Custom_fields_model->get_combined_details("projects", $view_data['model_info']->id, 1, "staff")->getResult(); //we have to keep this regarding as an admin user because non-admin user also can acquire the access to clone a project
 
+        // Al clonar un proyecto tipo/plantilla, el nuevo proyecto debe salir como proyecto real.
+        // Por eso forzamos el campo personalizado "¿Proyecto Tipo?" a "No" en el modal de clonación.
+        $view_data["custom_fields"] = $this->_set_project_template_custom_field_default_no($view_data["custom_fields"]);
+
         return $this->template->view('projects/clone_project_modal_form', $view_data);
+    }
+
+    private function _is_project_template_custom_field_title($title)
+    {
+        $title = trim((string) $title);
+        $project_template_titles = array(
+            "¿Proyecto Tipo?",
+            "Proyecto Tipo",
+            "¿Proyecto tipo?",
+            "Proyecto tipo",
+            "¿Es Proyecto Tipo?",
+            "Es Proyecto Tipo",
+            "¿Es proyecto tipo?",
+            "Es proyecto tipo"
+        );
+
+        return in_array($title, $project_template_titles);
+    }
+
+    private function _set_project_template_custom_field_default_no($custom_fields)
+    {
+        foreach ($custom_fields as $field) {
+            $field_title = isset($field->title) ? $field->title : "";
+
+            if ($this->_is_project_template_custom_field_title($field_title)) {
+                // RISE normalmente usa "value" para pintar el valor actual del campo.
+                // Dejamos varias propiedades cubiertas por compatibilidad entre versiones.
+                $field->value = "No";
+                $field->default_value = "No";
+                $field->field_value = "No";
+            }
+        }
+
+        return $custom_fields;
+    }
+
+    private function _force_cloned_project_template_custom_field_to_no($project_id)
+    {
+        if (!$project_id) {
+            return;
+        }
+
+        $custom_fields_table = $this->db->prefixTable('custom_fields');
+        $custom_field_values_table = $this->db->prefixTable('custom_field_values');
+
+        $project_template_titles = array(
+            "¿Proyecto Tipo?",
+            "Proyecto Tipo",
+            "¿Proyecto tipo?",
+            "Proyecto tipo",
+            "¿Es Proyecto Tipo?",
+            "Es Proyecto Tipo",
+            "¿Es proyecto tipo?",
+            "Es proyecto tipo"
+        );
+
+        $title_placeholders = implode(",", array_fill(0, count($project_template_titles), "?"));
+
+        $sql = "UPDATE $custom_field_values_table cfv
+                INNER JOIN $custom_fields_table cf ON cf.id = cfv.custom_field_id
+                SET cfv.value = ?
+                WHERE cfv.deleted = 0
+                    AND cf.deleted = 0
+                    AND cf.related_to = ?
+                    AND cfv.related_to_type = ?
+                    AND cfv.related_to_id = ?
+                    AND cf.title IN ($title_placeholders)";
+
+        $binds = array_merge(array("No", "projects", "projects", $project_id), $project_template_titles);
+
+        $this->db->query($sql, $binds);
     }
 
     /* create a new project from another project */
@@ -673,6 +748,9 @@ class Projects extends Security_Controller
         if ($new_project_id) {
             //save custom fields of project
             save_custom_fields("projects", $new_project_id, 1, "staff"); //we have to keep this regarding as an admin user because non-admin user also can acquire the access to clone a project
+
+            // Aunque el campo venga de un proyecto tipo con valor "Si", el proyecto clonado debe guardarse como "No".
+            $this->_force_cloned_project_template_custom_field_to_no($new_project_id);
 
             log_notification("project_created", array("project_id" => $new_project_id));
 

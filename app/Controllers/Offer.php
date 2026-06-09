@@ -47,16 +47,33 @@ class Offer extends Security_Controller
             }
         }
 
-        $view_data['proposal_preview'] = prepare_proposal_view($proposal_data);
-        $view_data['show_close_preview'] = true;
-        $view_data['proposal_id'] = $proposal_id;
-        $view_data['proposal_type'] = "public";
-        $view_data['public_key'] = clean_data($public_key);
-        $view_data["has_pdf_access"] = $this->check_proposal_pdf_access_for_clients();
-        $view_data['client_info']            = $proposal_data['client_info'];
-        $view_data['proposal_items']         = $proposal_data['proposal_items'];
+        $view_data['contract_preview']      = prepare_proposal_view($proposal_data);
+        $view_data['show_close_preview']    = true;
+        $view_data['proposal_id']           = $proposal_id;
+        $view_data['proposal_type']         = "public";
+        $view_data['public_key']            = clean_data($public_key);
+        $view_data["has_pdf_access"]        = true; // Acceso público — el cliente siempre puede descargar
+        $view_data['proposal_items']        = $proposal_data['proposal_items'];
         $view_data['proposal_total_summary'] = $proposal_data['proposal_total_summary'];
-        $view_data['proposal_info']          = $proposal_info; // incluye status, meta_data, public_key
+        $view_data['proposal_info']         = $proposal_info;
+
+        // Leer client_info — real o desde meta_data (cliente pendiente)
+        $client_info = $proposal_data['client_info'];
+        if (empty($client_info->id)) {
+            $meta_raw = @unserialize($proposal_info->meta_data ?? '');
+            if ($meta_raw && !empty($meta_raw['pending_client'])) {
+                $pc = $meta_raw['pending_client'];
+                $client_info = new \stdClass();
+                $client_info->id           = 0;
+                $client_info->company_name = $pc['company'] ?? '';
+                $client_info->address      = $pc['address'] ?? '';
+                $client_info->city         = $pc['city'] ?? '';
+                $client_info->zip          = $pc['zip'] ?? '';
+                $client_info->vat_number   = $pc['vat'] ?? '';
+                $client_info->country      = '';
+            }
+        }
+        $view_data['client_info'] = $client_info;
 
         return view("proposals/proposal_public_preview", $view_data);
     }
@@ -70,6 +87,56 @@ class Offer extends Security_Controller
     {
         $proposal_info = $this->Proposals_model->get_one($proposal_id);
         if (!$proposal_info->id) return;
+
+        // ── Crear cliente pendiente si no hay client_id real ──────────────
+        if (!$proposal_info->client_id || $proposal_info->client_id == 0) {
+            $meta_raw = @unserialize($proposal_info->meta_data ?? '');
+            if ($meta_raw && !empty($meta_raw['pending_client'])) {
+                $pc = $meta_raw['pending_client'];
+                try {
+                    $client_data = array(
+                        "company_name" => $pc['company'] ?? '',
+                        "vat_number"   => $pc['vat'] ?? '',
+                        "address"      => $pc['address'] ?? '',
+                        "city"         => $pc['city'] ?? '',
+                        "zip"          => $pc['zip'] ?? '',
+                        "phone"        => $pc['phone'] ?? '',
+                        "currency"     => get_setting("default_currency"),
+                        "deleted"      => 0,
+                        "is_lead"      => 0,
+                    );
+                    $client_data = clean_data($client_data);
+                    $new_client_id = $this->Clients_model->ci_save($client_data);
+
+                    if ($new_client_id) {
+                        // Crear contacto principal
+                        $name_parts = explode(' ', $pc['name'] ?? '', 2);
+                        $contact_data = array(
+                            "first_name"         => $name_parts[0] ?? ($pc['company'] ?? ''),
+                            "last_name"          => $name_parts[1] ?? '',
+                            "email"              => $pc['email'] ?? '',
+                            "phone"              => $pc['phone'] ?? '',
+                            "client_id"          => $new_client_id,
+                            "is_primary_contact" => 1,
+                            "user_type"          => "client",
+                            "deleted"            => 0,
+                        );
+                        $contact_data = clean_data($contact_data);
+                        $this->Users_model->ci_save($contact_data);
+
+                        // Actualizar client_id en la propuesta via modelo
+                        $db = \Config\Database::connect();
+                        $proposals_table = $db->prefixTable('proposals');
+                        $db->query("UPDATE {$proposals_table} SET client_id = {$new_client_id} WHERE id = {$proposal_id}");
+                        $proposal_info->client_id = $new_client_id;
+
+                        log_message('info', '[Tictac] _on_proposal_accepted: cliente ID=' . $new_client_id . ' creado y asignado a propuesta #' . $proposal_id);
+                    }
+                } catch (\Throwable $e) {
+                    log_message('error', '[Tictac] _on_proposal_accepted: error creando cliente — ' . $e->getMessage());
+                }
+            }
+        }
 
         $client_info   = $this->Clients_model->get_one($proposal_info->client_id);
         $proposal_ref  = get_proposal_id($proposal_id);
@@ -325,6 +392,10 @@ class Offer extends Security_Controller
             $proposal_data["accepted_by"] = $this->login_user->id;
         }
 
+        // Preservar meta_data existente (pending_client, etc.) y añadir datos de firma encima
+        $existing_meta = @unserialize($proposal_info->meta_data ?? '') ?: array();
+        $meta_data = array_merge($existing_meta, $meta_data);
+
         $proposal_data["meta_data"] = serialize($meta_data);
         $proposal_data["status"]    = "accepted";
 
@@ -350,28 +421,15 @@ class Offer extends Security_Controller
     function download_pdf($proposal_id = 0, $public_key = "")
     {
         validate_numeric_value($proposal_id);
-        if (!$proposal_id) {
-            show_404();
-        }
-
-        if (!$this->check_proposal_pdf_access_for_clients()) {
-            show_404();
-        }
+        if (!$proposal_id) show_404();
 
         $proposal_info = $this->Proposals_model->get_one($proposal_id);
-        if ($proposal_info->public_key !== $public_key) {
-            show_404();
-        }
+        if (!$proposal_info->id || $proposal_info->public_key !== $public_key) show_404();
 
-        // Redirigir a la ruta privada que genera el PDF Tictac.
-        app_redirect("proposals/download_pdf/" . $proposal_id);
+        // Generar PDF sin instanciar Proposals (que requeriría login)
+        \App\Controllers\Proposals::generate_pdf_static($proposal_id, 'download');
     }
 
-    /**
-     * Descarga el PDF firmado — mismo PDF pero con la imagen de firma
-     * del cliente insertada en el hueco de firma y sello del cliente.
-     * Se genera directamente aquí para no requerir sesión CRM del cliente.
-     */
     function download_signed_pdf($proposal_id = 0, $public_key = "")
     {
         validate_numeric_value($proposal_id);
@@ -381,118 +439,9 @@ class Offer extends Security_Controller
         if (!$proposal_info->id || $proposal_info->public_key !== $public_key) show_404();
         if ($proposal_info->status !== 'accepted') show_404();
 
-        // Extraer datos de firma de meta_data
-        $meta           = @unserialize($proposal_info->meta_data);
-        $signature_path = null;
-        $signer_name    = '';
-
-        if ($meta && is_array($meta)) {
-            $signer_name = $meta['name'] ?? ($meta['email'] ?? '');
-
-            if (!empty($meta['signature'])) {
-                $signature_file = @unserialize($meta['signature']);
-                log_message('info', '[Tictac] download_signed_pdf: signature_file=' . var_export($signature_file, true));
-
-                if ($signature_file && is_array($signature_file)) {
-                    $file_name = get_array_value($signature_file, 'file_name');
-                    $file_path = get_setting('timeline_file_path');
-
-                    // Probar varias rutas posibles
-                    $candidatos = [
-                        ROOTPATH . $file_path . $file_name,
-                        FCPATH . $file_path . $file_name,
-                        '/home/gestiontictaccom/public_html/' . $file_path . $file_name,
-                        APPPATH . '../' . $file_path . $file_name,
-                    ];
-
-                    log_message('info', '[Tictac] download_signed_pdf: file_path=' . $file_path . ' file_name=' . $file_name);
-                    foreach ($candidatos as $c) {
-                        log_message('info', '[Tictac] download_signed_pdf: probando ' . $c . ' → ' . (file_exists($c) ? 'EXISTE' : 'NO'));
-                        if (file_exists($c)) {
-                            $signature_path = $c;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        // Cargar TCPDF
-        $tcpdf_path = APPPATH . '../app/ThirdParty/tcpdf/tcpdf.php';
-        if (!file_exists($tcpdf_path)) {
-            $tcpdf_path = APPPATH . '../dashboard/tcpdf/tcpdf.php';
-        }
-        if (!file_exists($tcpdf_path)) show_404();
-
-        require_once($tcpdf_path);
-        require_once(APPPATH . '../app/Libraries/TictacProposalPDF.php');
-
-        // Obtener datos de la propuesta
-        $proposal_data = get_proposal_making_data($proposal_id);
-        if (!$proposal_data) show_404();
-
-        $client_info   = $proposal_data['client_info'];
-        $items         = $proposal_data['proposal_items'];
-        $total_summary = $proposal_data['proposal_total_summary'];
-
-        // Instanciar y configurar el PDF (mismo proceso que _generate_tictac_pdf)
-        // Pasamos signature_path y signer_name para pintarlos
-        $brand_r = 215; $brand_g = 33; $brand_b = 115;
-
-        $pdf = new \TictacProposalPDF('P', 'mm', 'A4', true, 'UTF-8', false);
-        $pdf->brand_r = $brand_r;
-        $pdf->brand_g = $brand_g;
-        $pdf->brand_b = $brand_b;
-
-        $logo_candidatos = [
-            APPPATH . '../assets/images/logoblanco.png',
-            APPPATH . '../uploads/logoblanco.png',
-            APPPATH . '../dashboard/assets/img/logoblanco.png',
-        ];
-        foreach ($logo_candidatos as $c) {
-            if (file_exists($c)) { $pdf->logo_path = $c; break; }
-        }
-
-        $pdf->SetAutoPageBreak(true, 20);
-        $pdf->SetCreator('Tictac Comunicación');
-        $pdf->SetAuthor('Tictac Comunicación Digital SL');
-        $pdf->SetTitle('Presupuesto Firmado ' . get_proposal_id($proposal_info->id));
-        $pdf->AddPage();
-        $pdf->SetMargins(15, 34, 15);
-        $pdf->SetY(34);
-
-        // ── Reutilizar _generate_tictac_pdf con modo signed via sesión ──
-        // Es más limpio pasar por sesión ya que el método privado está en Proposals
-        // En cambio, hacemos una llamada interna al controlador Proposals
-        // cargando el método directamente tras autenticar por public_key
-
-        // La forma más limpia: instanciar Proposals y llamar al método
-        // Pero _generate_tictac_pdf es privado. Solución: mover la firma a sesión
-        // y redirigir a una URL especial que no requiera login del CRM.
-
-        // → Guardamos firma en sesión y llamamos a un endpoint público en Offer
-        // que renderiza el PDF usando el mismo código que Proposals pero sin
-        // requerir sesión CRM.
-
-        // Como el código del PDF es largo, lo incluimos directamente aquí
-        // delegando al método de Proposals a través de un trick:
-        // instanciamos Proposals con parent::__construct(false) ya hecho.
-
-        // La solución real más limpia: extraer _generate_tictac_pdf a una Library.
-        // Por ahora, ponemos la firma en sesión y redirigimos a un endpoint
-        // autenticado que sí puede llamar a Proposals::download_pdf.
-
-        // Como el cliente público no tiene sesión CRM, hacemos el PDF aquí
-        // directamente incluyendo el archivo del controlador y llamando al método:
-        $session = \Config\Services::session();
-        $session->set('tictac_sig_path_' . $proposal_id, $signature_path);
-        $session->set('tictac_sig_name_' . $proposal_id, $signer_name);
-        $session->set('tictac_sig_public_' . $proposal_id, true); // flag de acceso público
-
-        // Usar un token temporal en sesión para que download_pdf lo acepte sin login
-        $session->set('tictac_pdf_token_' . $proposal_id, $public_key);
-
-        app_redirect("proposals/download_pdf/" . $proposal_id . "/signed");
+        // Generar PDF firmado usando método estático (sin login)
+        // El modo 'signed' lee la firma directamente de meta_data
+        \App\Controllers\Proposals::generate_pdf_static($proposal_id, 'signed');
     }
 }
 

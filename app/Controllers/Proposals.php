@@ -136,16 +136,58 @@ class Proposals extends Security_Controller
 
     function save()
     {
+        $client_id = $this->request->getPost('proposal_client_id');
+        $id        = $this->request->getPost('id');
+        $is_clone  = $this->request->getPost('is_clone');
+
+        // ── Nuevo cliente pendiente de creación ───────────────────────────
+        // Los datos se guardan en meta_data, el cliente se crea al aceptar
+        $pending_client_data = null;
+        if ($client_id === 'new') {
+            $new_company = trim($this->request->getPost('new_client_company') ?? '');
+            $new_name    = trim($this->request->getPost('new_client_name') ?? '');
+            $new_email   = trim($this->request->getPost('new_client_email') ?? '');
+
+            if (!$new_company || !$new_email) {
+                echo json_encode(array("success" => false, 'message' => 'El nombre de empresa y el email son obligatorios'));
+                return;
+            }
+
+            $pending_client_data = array(
+                'company'  => $new_company,
+                'name'     => $new_name,
+                'email'    => $new_email,
+                'phone'    => trim($this->request->getPost('new_client_phone') ?? ''),
+                'vat'      => trim($this->request->getPost('new_client_vat') ?? ''),
+                'address'  => trim($this->request->getPost('new_client_address') ?? ''),
+                'city'     => trim($this->request->getPost('new_client_city') ?? ''),
+                'zip'      => trim($this->request->getPost('new_client_zip') ?? ''),
+            );
+            $client_id = null; // sin cliente real aún
+        }
+
+        // Al editar un presupuesto existente sin cliente real, recuperar pending_client del meta_data
+        if (!$client_id && !$pending_client_data && $id) {
+            $existing_proposal = $this->Proposals_model->get_one($id);
+            if ($existing_proposal->id && (!$existing_proposal->client_id || $existing_proposal->client_id == 0)) {
+                $existing_meta = @unserialize($existing_proposal->meta_data ?? '');
+                if ($existing_meta && !empty($existing_meta['pending_client'])) {
+                    $pending_client_data = $existing_meta['pending_client'];
+                }
+            }
+        }
+
         $this->validate_submitted_data(array(
-            "id" => "numeric",
-            "proposal_client_id" => "required|numeric",
-            "proposal_date" => "required",
-            "valid_until" => "required"
+            "id"             => "numeric",
+            "proposal_date"  => "required",
+            "valid_until"    => "required"
         ));
 
-        $client_id = $this->request->getPost('proposal_client_id');
-        $id = $this->request->getPost('id');
-        $is_clone = $this->request->getPost('is_clone');
+        // Si no hay cliente ni datos de nuevo cliente, error
+        if (!$client_id && !$pending_client_data) {
+            echo json_encode(array("success" => false, 'message' => 'Selecciona un cliente o crea uno nuevo'));
+            return;
+        }
 
         $this->validate_proposal_access($id);
         if (!$this->_is_proposal_editable($id, $is_clone)) {
@@ -153,14 +195,26 @@ class Proposals extends Security_Controller
         }
 
         $proposal_data = array(
-            "client_id" => $client_id,
+            "client_id"  => $client_id ?: 0,
             "proposal_date" => $this->request->getPost('proposal_date'),
-            "valid_until" => $this->request->getPost('valid_until'),
-            "tax_id" => $this->request->getPost('tax_id') ? $this->request->getPost('tax_id') : 0,
-            "tax_id2" => $this->request->getPost('tax_id2') ? $this->request->getPost('tax_id2') : 0,
+            "valid_until"   => $this->request->getPost('valid_until'),
+            "tax_id"     => $this->request->getPost('tax_id') ? $this->request->getPost('tax_id') : 0,
+            "tax_id2"    => $this->request->getPost('tax_id2') ? $this->request->getPost('tax_id2') : 0,
             "company_id" => $this->request->getPost('company_id') ? $this->request->getPost('company_id') : get_default_company_id(),
-            "note" => $this->request->getPost('proposal_note')
+            "note"       => $this->request->getPost('proposal_note')
         );
+
+        // Guardar datos del futuro cliente en meta_data
+        if ($pending_client_data) {
+            // Preservar otros datos del meta_data existente si los hay
+            $existing_meta = array();
+            if ($id) {
+                $existing_proposal = $this->Proposals_model->get_one($id);
+                $existing_meta = @unserialize($existing_proposal->meta_data ?? '') ?: array();
+            }
+            $existing_meta['pending_client'] = $pending_client_data;
+            $proposal_data["meta_data"] = serialize($existing_meta);
+        }
 
         //save random code for new proposal
         if (!$id) {
@@ -898,27 +952,42 @@ class Proposals extends Security_Controller
             $proposal_info = $this->Proposals_model->get_details($options)->getRow();
             $view_data['proposal_info'] = $proposal_info;
 
-            $is_lead = $this->request->getPost('is_lead');
-            if ($is_lead) {
-                $contacts_options = array("user_type" => "lead", "client_id" => $proposal_info->client_id);
-            } else {
-                $contacts_options = array("user_type" => "client", "client_id" => $proposal_info->client_id);
-            }
-
-            $contacts = $this->Users_model->get_details($contacts_options)->getResult();
-
+            $contacts_dropdown    = array();
             $primary_contact_info = "";
-            $contacts_dropdown = array();
-            foreach ($contacts as $contact) {
-                if ($contact->is_primary_contact) {
-                    $primary_contact_info = $contact;
-                    $contacts_dropdown[$contact->id] = $contact->first_name . " " . $contact->last_name . " (" . app_lang("primary_contact") . ")";
-                }
-            }
 
-            foreach ($contacts as $contact) {
-                if (!$contact->is_primary_contact) {
-                    $contacts_dropdown[$contact->id] = $contact->first_name . " " . $contact->last_name;
+            if ($proposal_info->client_id) {
+                // Cliente real — cargar contactos normalmente
+                $is_lead = $this->request->getPost('is_lead');
+                $contacts_options = array(
+                    "user_type" => $is_lead ? "lead" : "client",
+                    "client_id" => $proposal_info->client_id
+                );
+                $contacts = $this->Users_model->get_details($contacts_options)->getResult();
+                foreach ($contacts as $contact) {
+                    if ($contact->is_primary_contact) {
+                        $primary_contact_info = $contact;
+                        $contacts_dropdown[$contact->id] = $contact->first_name . " " . $contact->last_name . " (" . app_lang("primary_contact") . ")";
+                    }
+                }
+                foreach ($contacts as $contact) {
+                    if (!$contact->is_primary_contact) {
+                        $contacts_dropdown[$contact->id] = $contact->first_name . " " . $contact->last_name;
+                    }
+                }
+            } else {
+                // Propuesta sin cliente real — usar datos del pending_client
+                $meta_raw = @unserialize($proposal_info->meta_data ?? '');
+                if ($meta_raw && !empty($meta_raw['pending_client'])) {
+                    $pc = $meta_raw['pending_client'];
+                    // Mostrar como contacto "0" — lo gestionamos en send_proposal
+                    $contacts_dropdown[0] = ($pc['name'] ?? $pc['company'] ?? '') . ' (' . ($pc['email'] ?? '') . ')';
+                    $primary_contact_info = (object)[
+                        'id'         => 0,
+                        'first_name' => explode(' ', $pc['name'] ?? '', 2)[0] ?? '',
+                        'last_name'  => explode(' ', $pc['name'] ?? '', 2)[1] ?? '',
+                        'email'      => $pc['email'] ?? '',
+                        'language'   => 'spanish',
+                    ];
                 }
             }
 
@@ -1017,6 +1086,18 @@ class Proposals extends Security_Controller
         $proposal_info  = $proposal_data['proposal_info'];
         $total_summary  = $proposal_data['proposal_total_summary'];
         $contact        = $this->Users_model->get_one($contact_id);
+
+        // Si no hay cliente real, usar datos del pending_client para el email
+        if ((!$proposal_info->client_id || $proposal_info->client_id == 0) && !$contact->email) {
+            $meta_raw = @unserialize($proposal_info->meta_data ?? '');
+            if ($meta_raw && !empty($meta_raw['pending_client'])) {
+                $pc = $meta_raw['pending_client'];
+                $contact = new \stdClass();
+                $contact->email      = $pc['email'] ?? '';
+                $contact->first_name = explode(' ', $pc['name'] ?? '', 2)[0] ?? ($pc['company'] ?? '');
+                $contact->last_name  = explode(' ', $pc['name'] ?? '', 2)[1] ?? '';
+            }
+        }
 
         log_message('info', '[Tictac] send_proposal(): contact email=' . ($contact->email ?? 'VACÍO'));
 
@@ -1189,7 +1270,64 @@ class Proposals extends Security_Controller
      * @param string $mode         'download' → fuerza descarga | 'save' → guarda en tmp y devuelve la ruta
      * @return string|void         Ruta al archivo temporal si $mode='save', void en otro caso
      */
-    private function _generate_tictac_pdf($proposal_id, $mode = 'download')
+    // Método estático para generar PDF sin requerir sesión (llamado desde Offer.php)
+    // Guardar nota de propuesta inline
+    function save_note($proposal_id = 0) {
+        validate_numeric_value($proposal_id);
+        $this->validate_proposal_access($proposal_id);
+        if (!$this->_is_proposal_editable($proposal_id)) {
+            echo json_encode(array('success' => false, 'message' => app_lang('error_occurred')));
+            return;
+        }
+        $note      = $this->request->getPost('note') ?? '';
+        $save_data = array('note' => $note);
+        $save_id   = $this->Proposals_model->ci_save($save_data, $proposal_id);
+        if ($save_id) {
+            $note_html = (!empty($note) && strip_tags($note) !== '') ? $note : '<em style="color:#bbb;">Sin notas</em>';
+            echo json_encode(array('success' => true, 'note_html' => $note_html, 'message' => 'Nota guardada'));
+        } else {
+            echo json_encode(array('success' => false, 'message' => app_lang('error_occurred')));
+        }
+    }
+
+    public static function generate_pdf_static($proposal_id, $mode = 'download', $signature_path = null, $signer_name = '') {
+        // Cargar TCPDF
+        $tcpdf_paths = array(
+            APPPATH . '../app/ThirdParty/tcpdf/tcpdf.php',
+            APPPATH . '../dashboard/tcpdf/tcpdf.php',
+        );
+        foreach ($tcpdf_paths as $p) {
+            if (file_exists($p)) { require_once($p); break; }
+        }
+        if (!class_exists('TCPDF')) {
+            log_message('error', 'Tictac PDF: No se encontró TCPDF');
+            return null;
+        }
+        if (!file_exists(APPPATH . '../app/Libraries/TictacProposalPDF.php')) {
+            log_message('error', 'Tictac PDF: No se encontró TictacProposalPDF.php');
+            return null;
+        }
+        require_once(APPPATH . '../app/Libraries/TictacProposalPDF.php');
+
+        // Crear instancia de Proposals sin pasar por __construct usando ReflectionClass
+        $rc = new \ReflectionClass(\App\Controllers\Proposals::class);
+        $instance = $rc->newInstanceWithoutConstructor();
+        // Inyectar los modelos necesarios manualmente
+        $instance->Proposals_model      = model('App\Models\Proposals_model', false);
+        $instance->Proposal_items_model = model('App\Models\Proposal_items_model', false);
+        $instance->Clients_model        = model('App\Models\Clients_model', false);
+        $instance->Companies_model      = model('App\Models\Companies_model', false);
+
+        // Si hay firma, guardarla temporalmente en el objeto para que _generate_tictac_pdf la lea
+        if ($signature_path) {
+            $instance->_static_signature_path = $signature_path;
+            $instance->_static_signer_name    = $signer_name;
+        }
+
+        return $instance->_generate_tictac_pdf($proposal_id, $mode);
+    }
+
+    public function _generate_tictac_pdf($proposal_id, $mode = 'download')
     {
         // ── Cargar TCPDF ─────────────────────────────────────────────────
         $tcpdf_path = APPPATH . '../app/ThirdParty/tcpdf/tcpdf.php';
@@ -1217,6 +1355,21 @@ class Proposals extends Security_Controller
         $client_info    = $proposal_data['client_info'];
         $items          = $proposal_data['proposal_items'];
         $total_summary  = $proposal_data['proposal_total_summary'];
+
+        // Si no hay cliente real, leer de meta_data (cliente pendiente de creación)
+        if (!$proposal_info->client_id || !$client_info->id) {
+            $meta_raw = @unserialize($proposal_info->meta_data ?? '');
+            if ($meta_raw && !empty($meta_raw['pending_client'])) {
+                $pc = $meta_raw['pending_client'];
+                $client_info = new \stdClass();
+                $client_info->company_name = $pc['company'] ?? '';
+                $client_info->address      = $pc['address'] ?? '';
+                $client_info->city         = $pc['city'] ?? '';
+                $client_info->zip          = $pc['zip'] ?? '';
+                $client_info->vat_number   = $pc['vat'] ?? '';
+                $client_info->country      = '';
+            }
+        }
 
         // ── Colores corporativos ─────────────────────────────────────────
         $brand_r = 215; $brand_g = 33; $brand_b = 115;
@@ -1432,11 +1585,11 @@ class Proposals extends Security_Controller
         // TABLA DE ARTÍCULOS
         // ════════════════════════════════════════════════════════════════
 
-        $cArticulo = 80;
-        $cCantidad = 22;
+        $cArticulo = 96;
+        $cCantidad = 28;
         $cTarifa   = 28;
-        $cTotal    = 30;
-        $tableW    = $cArticulo + $cCantidad + $cTarifa + $cTotal;
+        $cTotal    = 28;
+        $tableW    = $contentW; // 180mm — ocupa todo el ancho
 
         $printTableHeader = function () use ($pdf, $cArticulo, $cCantidad, $cTarifa, $cTotal, $tableW, $brand_r, $brand_g, $brand_b) {
             $headerY = $pdf->GetY();
@@ -1928,7 +2081,12 @@ class Proposals extends Security_Controller
         }
 
         // ── Output ────────────────────────────────────────────────────────
-        $filename = 'Presupuesto_' . get_proposal_id($proposal_info->id) . ($mode === 'signed' ? '_Firmado' : '') . '.pdf';
+        $client_name_pdf = '';
+        if (!empty($client_info->company_name)) {
+            $client_name_pdf = '_' . preg_replace('/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\-]/u', '', $client_info->company_name);
+            $client_name_pdf = trim(str_replace(' ', '_', $client_name_pdf));
+        }
+        $filename = 'Presupuesto' . $client_name_pdf . ($mode === 'signed' ? '_Firmado' : '') . '.pdf';
 
         if ($mode === 'save') {
             $tmpFile = sys_get_temp_dir() . '/proposal_' . $proposal_id . '_' . time() . '.pdf';

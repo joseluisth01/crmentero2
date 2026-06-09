@@ -123,6 +123,32 @@ class Tasks_model extends Crud_model {
         );
     }
 
+
+
+    private function _get_project_template_exclusion_query($tasks_table) {
+        $custom_fields_table = $this->db->prefixTable('custom_fields');
+        $custom_field_values_table = $this->db->prefixTable('custom_field_values');
+
+        return " AND NOT (
+            $tasks_table.context='project'
+            AND $tasks_table.project_id!=0
+            AND EXISTS (
+                SELECT 1
+                FROM $custom_field_values_table cfv_project_template
+                LEFT JOIN $custom_fields_table cf_project_template ON cf_project_template.id = cfv_project_template.custom_field_id
+                WHERE cfv_project_template.deleted=0
+                    AND cf_project_template.deleted=0
+                    AND cf_project_template.related_to='projects'
+                    AND cfv_project_template.related_to_type='projects'
+                    AND cfv_project_template.related_to_id=$tasks_table.project_id
+                    AND cf_project_template.title IN ('¿Proyecto Tipo?', 'Proyecto Tipo', '¿Proyecto tipo?', 'Proyecto tipo')
+                    AND LOWER(TRIM(cfv_project_template.value)) IN ('si', 'sí', 'yes', '1', 'true')
+                LIMIT 1
+            )
+        )";
+    }
+
+
     function get_details($options = array()) {
         $tasks_table = $this->db->prefixTable('tasks');
         $users_table = $this->db->prefixTable('users');
@@ -154,6 +180,14 @@ class Tasks_model extends Crud_model {
             $where .= " AND $tasks_table.project_id=$project_id";
         }
 
+        $task_ids = $this->_get_clean_value($options, "task_ids");
+
+        // Hide tasks from template projects in global task lists/dashboards.
+        // Keep them visible when opening the template project itself, a specific task, or dependency task rows.
+        if (!$project_id && !$id && !$task_ids) {
+            $where .= $this->_get_project_template_exclusion_query($tasks_table);
+        }
+
         $parent_task_id = $this->_get_clean_value($options, "parent_task_id");
         if ($parent_task_id) {
             $where .= " AND $tasks_table.parent_task_id=$parent_task_id";
@@ -169,7 +203,6 @@ class Tasks_model extends Crud_model {
             $where .= " AND FIND_IN_SET($tasks_table.status_id,'$status_ids')";
         }
 
-        $task_ids = $this->_get_clean_value($options, "task_ids");
         if ($task_ids) {
             $where .= " AND $tasks_table.ID IN($task_ids)";
         }
@@ -657,6 +690,12 @@ class Tasks_model extends Crud_model {
             $where .= " AND $tasks_table.project_id=$project_id";
         }
 
+        // Hide tasks from template projects in global kanban/task overviews.
+        // Keep them visible when opening the template project itself or a specific task.
+        if (!$project_id && !$id) {
+            $where .= $this->_get_project_template_exclusion_query($tasks_table);
+        }
+
         $client_id = $this->_get_clean_value($options, "client_id");
         if ($client_id) {
             $where .= " AND $projects_table.client_id=$client_id";
@@ -869,10 +908,11 @@ class Tasks_model extends Crud_model {
         $projects_table = $this->db->prefixTable('projects');
 
         $user_id =  $this->_get_clean_value($user_id);
+        $exclude_project_templates = $this->_get_project_template_exclusion_query($tasks_table);
 
         $sql = "SELECT COUNT($tasks_table.id) AS total
         FROM $tasks_table
-        WHERE $tasks_table.deleted=0 AND (($tasks_table.assigned_to=$user_id OR FIND_IN_SET('$user_id', $tasks_table.collaborators)) AND $tasks_table.status_id !=3
+        WHERE $tasks_table.deleted=0 $exclude_project_templates AND (($tasks_table.assigned_to=$user_id OR FIND_IN_SET('$user_id', $tasks_table.collaborators)) AND $tasks_table.status_id !=3
         AND ($tasks_table.project_id IN (
             SELECT $projects_table.id
             FROM $projects_table
@@ -925,6 +965,11 @@ class Tasks_model extends Crud_model {
         $project_id = $this->_get_clean_value($options, "project_id");
         if ($project_id) {
             $where .= " AND $tasks_table.project_id=$project_id";
+        }
+
+        // Hide template-project tasks only in global statistics.
+        if (!$project_id) {
+            $where .= $this->_get_project_template_exclusion_query($tasks_table);
         }
 
         $user_id = $this->_get_clean_value($options, "user_id");

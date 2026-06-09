@@ -8,10 +8,7 @@
                     </li>
                     <div class="tab-title clearfix no-border">
                         <div class="title-button-group">
-                            <a href="https://gestion-tictac-comunicacion.es/dashboard/presupuestos/editor.php"
-                                class="btn btn-default">
-                                <i data-feather="plus-circle"></i> Agregar propuesta
-                            </a>
+                            <?php echo modal_anchor(get_uri("proposals/modal_form"), "<i data-feather='plus-circle'></i> " . app_lang('add_proposal'), array("class" => "btn btn-default", "title" => app_lang('add_proposal'))); ?>
                         </div>
                     </div>
                 </ul>
@@ -19,10 +16,7 @@
                 <div class="page-title clearfix b-a">
                     <h1><?php echo app_lang('proposals'); ?></h1>
                     <div class="title-button-group">
-                        <a href="https://gestion-tictac-comunicacion.es/dashboard/presupuestos/editor.php"
-                            class="btn btn-default">
-                            <i data-feather="plus-circle"></i> Agregar propuesta
-                        </a>
+                        <?php echo modal_anchor(get_uri("proposals/modal_form"), "<i data-feather='plus-circle'></i> " . app_lang('add_proposal'), array("class" => "btn btn-default", "title" => app_lang('add_proposal'))); ?>
                     </div>
                 </div>
             <?php } ?>

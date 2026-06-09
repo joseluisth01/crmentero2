@@ -37,6 +37,34 @@ $anno_actual = $anno ?? date('Y');
 </style>
 
 <div class="container-fluid p-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex gap-2 align-items-end">
+            <div>
+                <label class="form-label small mb-1">Año</label>
+                <select id="res-anno" class="form-select form-select-sm" onchange="cambiarAnnoResumen()">
+                    <?php foreach (range(date('Y'), date('Y')-3) as $a): ?>
+                        <option value="<?php echo $a; ?>" <?php echo $anno == $a ? 'selected' : ''; ?>><?php echo $a; ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div>
+                <label class="form-label small mb-1">Cobro</label>
+                <select id="res-quinquena" class="form-select form-select-sm">
+                    <option value="">1ª y 2ª</option>
+                    <option value="1">1ª (primeros)</option>
+                    <option value="2">2ª (finales)</option>
+                </select>
+            </div>
+            <div>
+                <button class="btn btn-secondary btn-sm" onclick="filtrarResumen()">
+                    <i data-feather="search" class="icon-14"></i> Filtrar
+                </button>
+            </div>
+        </div>
+        <button class="btn btn-outline-success btn-sm" onclick="exportarExcelResumen()">
+            <i data-feather="download" class="icon-14"></i> Exportar Excel
+        </button>
+    </div>
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div>
             <h5 class="mb-0" style="color:#d72173"><strong>TIC TAC COMUNICACIÓN DIGITAL</strong></h5>
@@ -81,7 +109,7 @@ $anno_actual = $anno ?? date('Y');
 
     <!-- TABLA MAESTRA -->
     <div class="resumen-wrap">
-    <table class="resumen-tabla">
+    <table id="tabla-resumen-general" class="resumen-tabla">
         <thead>
             <tr>
                 <th class="col-cliente th-mes" rowspan="2">CLIENTES</th>
@@ -270,5 +298,48 @@ $anno_actual = $anno ?? date('Y');
         }
     });
 })();
+
+function exportarExcelResumen(){
+    var tabla = document.getElementById('tabla-resumen-general');
+    if (!tabla) { appAlert.danger('No hay tabla para exportar'); return; }
+    var wb = XLSX.utils.book_new();
+    var ws = XLSX.utils.table_to_sheet(tabla, {raw: false});
+    // Estilos básicos de cabecera
+    var range = XLSX.utils.decode_range(ws['!ref']);
+    for (var C = range.s.c; C <= range.e.c; C++) {
+        var addr = XLSX.utils.encode_cell({r:0, c:C});
+        if (!ws[addr]) continue;
+        ws[addr].s = {font:{bold:true}, fill:{fgColor:{rgb:"D72173"}}, alignment:{horizontal:"center"}};
+    }
+    XLSX.utils.book_append_sheet(wb, ws, 'Resumen ' + (new Date().getFullYear()));
+    XLSX.writeFile(wb, 'resumen_facturacion_' + (document.getElementById('res-anno')?.value || '') + '.xlsx');
+}
+
+// Pre-seleccionar quinquena desde URL al cargar
+(function(){
+    var urlParams = new URLSearchParams(window.location.search);
+    var q = urlParams.get('quinquena');
+    if (q) {
+        var sel = document.getElementById('res-quinquena');
+        if (sel) sel.value = q;
+    }
+})();
+
+function cambiarAnnoResumen(){
+    var anno      = document.getElementById('res-anno').value;
+    var quinquena = document.getElementById('res-quinquena').value;
+    var url = '<?php echo get_uri("facturacion/resumen/"); ?>' + anno;
+    if (quinquena) url += '?quinquena=' + quinquena;
+    window.location.href = url;
+}
+
+function filtrarResumen(){
+    var anno     = document.getElementById('res-anno').value;
+    var quinquena = document.getElementById('res-quinquena').value;
+    var url = '<?php echo get_uri("facturacion/resumen/"); ?>' + anno;
+    if (quinquena) url += '?quinquena=' + quinquena;
+    window.location.href = url;
+}
 </script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </div>

@@ -38,16 +38,57 @@
             z-index: 100;
             box-shadow: 0 2px 12px rgba(215,33,115,0.10);
         }
+        .tt-topbar-logo { height: 36px; width: auto; }
+        .tt-topbar-actions { display: flex; align-items: center; gap: 10px; }
 
-        .tt-topbar-logo {
-            height: 36px;
-            width: auto;
-        }
-
-        .tt-topbar-actions {
-            display: flex;
+        /* Menú desplegable móvil */
+        .tt-menu-btn {
+            display: none;
+            background: none;
+            border: 2px solid #d72173;
+            border-radius: 8px;
+            padding: 7px 12px;
+            cursor: pointer;
+            color: #d72173;
+            font-size: 13px;
+            font-weight: 700;
             align-items: center;
-            gap: 10px;
+            gap: 6px;
+        }
+        .tt-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            padding: 8px;
+            min-width: 200px;
+            z-index: 200;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .tt-dropdown-menu.open { display: flex; }
+        .tt-dropdown-menu .tt-btn {
+            border-radius: 8px;
+            justify-content: flex-start;
+            width: 100%;
+        }
+        .tt-topbar-right { position: relative; }
+
+        @media (max-width: 640px) {
+            .tt-topbar { padding: 0 14px; height: 56px; }
+            .tt-topbar-actions { display: none; }
+            .tt-menu-btn { display: flex; }
+            .tt-info-grid { grid-template-columns: 1fr; }
+            .tt-doc-header { flex-direction: column; }
+            .tt-doc-header-logo-block { width: 100%; min-height: 60px; }
+            .tt-doc-header-company { text-align: left; padding: 10px 16px; }
+            .tt-doc-body { padding: 20px 16px 0; }
+            .tt-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .tt-totals { overflow-x: auto; }
         }
 
         .tt-btn {
@@ -393,16 +434,52 @@
         .tt-doc-footer strong { color: #fff; }
 
         /* ── Responsivo ───────────────────────────────────────────── */
+        .tt-topbar-right { position: relative; }
+        .tt-menu-btn {
+            display: none;
+            background: none;
+            border: 2px solid #d72173;
+            border-radius: 8px;
+            padding: 7px 12px;
+            cursor: pointer;
+            color: #d72173;
+            font-size: 13px;
+            font-weight: 700;
+            align-items: center;
+            gap: 6px;
+        }
+        .tt-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            right: 0;
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            padding: 8px;
+            min-width: 210px;
+            z-index: 200;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .tt-dropdown-menu.open { display: flex; }
+        .tt-dropdown-menu .tt-btn { border-radius: 8px; justify-content: flex-start; width: 100%; }
+
         @media (max-width: 640px) {
-            .tt-topbar { padding: 0 14px; height: auto; flex-wrap: wrap; gap: 8px; padding: 10px 14px; }
+            .tt-topbar { padding: 0 14px; height: 56px; }
+            .tt-topbar-actions { display: none !important; }
+            .tt-menu-btn { display: flex; }
             .tt-info-grid { grid-template-columns: 1fr; }
             .tt-doc-header { flex-direction: column; }
-            .tt-doc-header-logo-block { width: 100%; min-height: 60px; }
+            .tt-doc-header-logo-block { width: 100%; min-height: 60px; border-right: none; border-bottom: 4px solid #d72173; }
+            .tt-doc-header-title { padding: 12px 16px; }
             .tt-doc-header-company { text-align: left; padding: 10px 16px; }
             .tt-doc-body { padding: 20px 16px 0; }
-            .tt-btn span { display: none; }
+            .tt-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .tt-totals { overflow-x: auto; }
         }
-    </style>
+        </style>
 </head>
 <body>
 
@@ -410,57 +487,91 @@
 <div class="tt-topbar">
     <img src="<?php echo get_logo_url(); ?>" class="tt-topbar-logo" alt="Tictac Comunicación">
 
+    <!-- Desktop: botones inline -->
     <div class="tt-topbar-actions">
-
         <?php if ($has_pdf_access): ?>
             <a href="<?php echo get_uri('offer/download_pdf/' . $proposal_info->id . '/' . $proposal_info->public_key); ?>"
-               class="tt-btn tt-btn-outline" title="<?php echo app_lang('download_pdf'); ?>">
+               class="tt-btn tt-btn-outline">
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 <span><?php echo app_lang('download_pdf'); ?></span>
             </a>
         <?php endif; ?>
-
         <?php
-        $meta_raw   = $proposal_info->meta_data ?? '';
-        $meta_arr   = @unserialize($meta_raw);
-        $tiene_firma = (
-            $proposal_info->status === 'accepted' &&
-            $meta_arr && is_array($meta_arr) &&
-            (!empty($meta_arr['signature']) || !empty($meta_arr['name']))
-        );
+        $tiene_firma = false;
+        if (!empty($proposal_info->meta_data)) {
+            $meta_check = @unserialize($proposal_info->meta_data);
+            $tiene_firma = $meta_check && !empty($meta_check['signature']);
+        }
         if ($tiene_firma && $has_pdf_access):
         ?>
             <a href="<?php echo get_uri('offer/download_signed_pdf/' . $proposal_info->id . '/' . $proposal_info->public_key); ?>"
-               class="tt-btn tt-btn-outline" style="border-color:#1a7f4b;color:#1a7f4b;" title="Descargar PDF con firma del cliente">
+               class="tt-btn tt-btn-outline" style="color:#1a7f4b;border-color:#1a7f4b;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 <span>PDF Firmado</span>
             </a>
         <?php endif; ?>
-
         <?php if ($proposal_info->status === 'accepted'): ?>
             <span class="tt-status-badge tt-status-accepted">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                <?php echo app_lang('proposal_accepted'); ?>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                Propuesta aceptada
             </span>
-        <?php elseif ($proposal_info->status === 'declined' || $proposal_info->status === 'rejected'): ?>
+        <?php elseif ($proposal_info->status === 'declined'): ?>
             <span class="tt-status-badge tt-status-rejected">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                <?php echo app_lang('proposal_rejected'); ?>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                Propuesta rechazada
             </span>
         <?php else: ?>
-            <?php echo ajax_anchor(
-                get_uri("offer/update_proposal_status/{$proposal_info->id}/{$proposal_info->public_key}/declined"),
-                '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> <span>' . app_lang('reject') . '</span>',
-                array("class" => "tt-btn tt-btn-danger", "title" => app_lang('reject_proposal'), "data-reload-on-success" => "1")
-            ); ?>
-            <?php echo modal_anchor(
-                get_uri("offer/accept_proposal_modal_form/{$proposal_info->id}/{$proposal_info->public_key}"),
-                '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> <span>' . app_lang('accept') . '</span>',
-                array("class" => "tt-btn tt-btn-success", "title" => app_lang('accept_proposal'))
-            ); ?>
+            <?php echo ajax_anchor(get_uri("offer/update_proposal_status/{$proposal_info->id}/{$proposal_info->public_key}/declined"), '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> <span>Rechazar</span>', array("class" => "tt-btn tt-btn-danger", "data-reload-on-success" => "1")); ?>
+            <?php echo modal_anchor(get_uri("offer/accept_proposal_modal_form/{$proposal_info->id}/{$proposal_info->public_key}"), '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> <span>Aceptar</span>', array("class" => "tt-btn tt-btn-success")); ?>
         <?php endif; ?>
     </div>
+
+    <!-- Móvil: botón con menú desplegable -->
+    <div class="tt-topbar-right" style="display:none;" id="tt-mobile-menu-wrap">
+        <button class="tt-menu-btn" onclick="document.getElementById('tt-mobile-dropdown').classList.toggle('open')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            Acciones
+        </button>
+        <div class="tt-dropdown-menu" id="tt-mobile-dropdown">
+            <?php if ($has_pdf_access): ?>
+                <a href="<?php echo get_uri('offer/download_pdf/' . $proposal_info->id . '/' . $proposal_info->public_key); ?>" class="tt-btn tt-btn-outline">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Descargar PDF
+                </a>
+            <?php endif; ?>
+            <?php if ($tiene_firma && $has_pdf_access): ?>
+                <a href="<?php echo get_uri('offer/download_signed_pdf/' . $proposal_info->id . '/' . $proposal_info->public_key); ?>" class="tt-btn tt-btn-outline" style="color:#1a7f4b;border-color:#1a7f4b;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    PDF Firmado
+                </a>
+            <?php endif; ?>
+            <?php if ($proposal_info->status === 'accepted'): ?>
+                <span class="tt-status-badge tt-status-accepted" style="border-radius:8px;">✓ Propuesta aceptada</span>
+            <?php elseif ($proposal_info->status === 'declined'): ?>
+                <span class="tt-status-badge tt-status-rejected" style="border-radius:8px;">✗ Propuesta rechazada</span>
+            <?php else: ?>
+                <?php echo ajax_anchor(get_uri("offer/update_proposal_status/{$proposal_info->id}/{$proposal_info->public_key}/declined"), '✗ Rechazar', array("class" => "tt-btn tt-btn-danger", "data-reload-on-success" => "1")); ?>
+                <?php echo modal_anchor(get_uri("offer/accept_proposal_modal_form/{$proposal_info->id}/{$proposal_info->public_key}"), '✓ Aceptar propuesta', array("class" => "tt-btn tt-btn-success")); ?>
+            <?php endif; ?>
+        </div>
+    </div>
 </div>
+
+<script>
+// Mostrar menú móvil solo en móvil
+if (window.innerWidth <= 640) {
+    document.querySelector('.tt-topbar-actions').style.display = 'none';
+    document.getElementById('tt-mobile-menu-wrap').style.display = 'block';
+}
+// Cerrar dropdown al hacer click fuera
+document.addEventListener('click', function(e) {
+    var wrap = document.getElementById('tt-mobile-menu-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+        var dd = document.getElementById('tt-mobile-dropdown');
+        if (dd) dd.classList.remove('open');
+    }
+});
+</script>
 
 <!-- ═══ DOCUMENTO ════════════════════════════════════════════════ -->
 <div class="tt-doc-wrap">
@@ -500,15 +611,33 @@
             <div class="tt-info-box">
                 <div class="tt-info-box-header">Información del Cliente</div>
                 <div class="tt-info-box-body">
-                    <strong>Empresa:</strong> <?php echo htmlspecialchars($client_info->company_name ?? ''); ?><br>
-                    <?php if (!empty($client_info->address)): ?>
-                        <strong>Dirección:</strong> <?php echo htmlspecialchars($client_info->address); ?><br>
+                    <?php
+                    // Si no hay cliente real, leer de meta_data (pending_client)
+                    $display_client = $client_info;
+                    if (empty($client_info->id) && !empty($proposal_info->meta_data)) {
+                        $meta_tmp = @unserialize($proposal_info->meta_data);
+                        if ($meta_tmp && !empty($meta_tmp['pending_client'])) {
+                            $pc = $meta_tmp['pending_client'];
+                            $display_client = (object)[
+                                'company_name' => $pc['company'] ?? '',
+                                'address'      => $pc['address'] ?? '',
+                                'city'         => $pc['city'] ?? '',
+                                'zip'          => $pc['zip'] ?? '',
+                                'vat_number'   => $pc['vat'] ?? '',
+                                'country'      => '',
+                            ];
+                        }
+                    }
+                    ?>
+                    <strong>Empresa:</strong> <?php echo htmlspecialchars($display_client->company_name ?? ''); ?><br>
+                    <?php if (!empty($display_client->address)): ?>
+                        <strong>Dirección:</strong> <?php echo htmlspecialchars($display_client->address); ?><br>
                     <?php endif; ?>
-                    <?php if (!empty($client_info->city)): ?>
-                        <strong>Ciudad:</strong> <?php echo htmlspecialchars($client_info->city); ?> <?php echo htmlspecialchars($client_info->zip ?? ''); ?><br>
+                    <?php if (!empty($display_client->city)): ?>
+                        <strong>Ciudad:</strong> <?php echo htmlspecialchars($display_client->city); ?> <?php echo htmlspecialchars($display_client->zip ?? ''); ?><br>
                     <?php endif; ?>
-                    <?php if (!empty($client_info->vat_number)): ?>
-                        <strong>CIF/NIF:</strong> <?php echo htmlspecialchars($client_info->vat_number); ?>
+                    <?php if (!empty($display_client->vat_number)): ?>
+                        <strong>CIF/NIF:</strong> <?php echo htmlspecialchars($display_client->vat_number); ?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -526,6 +655,7 @@
         </div>
 
         <!-- Tabla artículos -->
+        <div class="tt-table-wrap">
         <table class="tt-table">
             <thead>
                 <tr>
@@ -541,7 +671,7 @@
                     <td>
                         <div class="item-name"><?php echo htmlspecialchars($item->title); ?></div>
                         <?php if (!empty($item->description)): ?>
-                            <div class="item-desc"><?php echo custom_nl2br(strip_tags($item->description)); ?></div>
+                            <div class="item-desc"><?php echo $item->description; ?></div>
                         <?php endif; ?>
                     </td>
                     <td><?php echo to_decimal_format($item->quantity); ?> <?php echo htmlspecialchars($item->unit_type ?? ''); ?></td>
@@ -551,6 +681,7 @@
                 <?php endforeach; ?>
             </tbody>
         </table>
+        </div>
 
         <!-- Totales -->
         <?php $ts = $proposal_total_summary; ?>

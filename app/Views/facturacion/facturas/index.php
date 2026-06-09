@@ -94,6 +94,7 @@
                     <tr>
                         <th>Nº Factura</th>
                         <th>Cliente</th>
+                        <th>Concepto</th>
                         <th>Período</th>
                         <th>Emisión</th>
                         <th>Vencimiento</th>
@@ -109,7 +110,7 @@
                 <tbody></tbody>
                 <tfoot>
                     <tr>
-                        <td colspan="5" class="text-end fw-bold">TOTALES:</td>
+                        <td colspan="6" class="text-end fw-bold">TOTALES:</td>
                         <td id="total-facturado-footer" class="fw-bold"></td>
                         <td id="total-cobrado-footer" class="fw-bold text-success"></td>
                         <td id="total-pendiente-footer" class="fw-bold text-warning"></td>
@@ -153,9 +154,9 @@ function cargarTablaFacturas(){
             },
         },
         columns: [
-            {data:0},{data:1},{data:2},{data:3},{data:4},
-            {data:5},{data:6},{data:7},{data:8},
-            {data:9,orderable:false},{data:10,orderable:false},{data:11,orderable:false}
+            {data:0},{data:1},{data:2,orderable:false},{data:3},{data:4},{data:5},
+            {data:6},{data:7},{data:8},{data:9},
+            {data:10,orderable:false},{data:11,orderable:false},{data:12,orderable:false}
         ],
         language: { search: 'Buscar:', lengthMenu: 'Mostrar _MENU_ registros', info: 'Mostrando _START_ a _END_ de _TOTAL_ registros', infoEmpty: 'Sin resultados', zeroRecords: 'No se encontraron resultados', paginate: { first: '«', last: '»', next: '›', previous: '‹' } },
         order: [[0,'desc']],
@@ -163,12 +164,12 @@ function cargarTablaFacturas(){
     });
 }
 function calcularTotalesFacturas(){
-    // Los totales se calculan sobre los datos visibles
+    if (!tablaFacturas) return;
     var total = 0, cobrado = 0, pendiente = 0;
     tablaFacturas.rows({search:'applied'}).data().each(function(row){
-        total    += parseMoney(row[5]);
-        cobrado  += parseMoney(row[6]);
-        pendiente+= parseMoney(row[7]);
+        total    += parseMoney(row[6]);
+        cobrado  += parseMoney(row[7]);
+        pendiente+= parseMoney(row[8]);
     });
     $('#total-facturado-footer').text(formatMoney(total) + ' €');
     $('#total-cobrado-footer').text(formatMoney(cobrado) + ' €');
@@ -176,4 +177,16 @@ function calcularTotalesFacturas(){
 }
 function parseMoney(str){ return parseFloat(str.replace(/\./g,'').replace(',','.')) || 0; }
 function formatMoney(n){ return n.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+
+function borrarFactura(id) {
+    if (!confirm('¿Borrar esta factura? Esta acción no se puede deshacer.')) return;
+    $.post('<?php echo get_uri("facturacion/delete_factura"); ?>', {id: id}, function(res){
+        if (res.success) {
+            appAlert.success('Factura eliminada.');
+            if (typeof recargarFacturas === 'function') recargarFacturas();
+        } else {
+            appAlert.danger('No se pudo eliminar la factura.');
+        }
+    }, 'json');
+}
 </script>
